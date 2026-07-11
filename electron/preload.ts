@@ -1,6 +1,8 @@
-import { contextBridge } from 'electron'
+import { contextBridge, ipcRenderer } from 'electron'
 
-// IPC bridges get added here as each domain (collections, certificates, etc.) is built
 contextBridge.exposeInMainWorld('api', {
-    // e.g. collections: { list: () => ipcRenderer.invoke('collections:list') }
+    collections: {
+        list: () => ipcRenderer.invoke('collections:list'),
+        create: (name: string) => ipcRenderer.invoke('collections:create', name),
+    },
 })
