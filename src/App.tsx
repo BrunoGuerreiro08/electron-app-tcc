@@ -1,25 +1,29 @@
 import './index.css'
-import { useEffect, useState } from 'react'
-import { Button } from "./components/ui/button"
+import { useEffect } from 'react'
+import { useAuthStore } from '@/store/authStore'
+import { LoginScreen } from '@/components/auth/loginScreen'
 
 function App() {
-  const [collections, setCollections] = useState<any[]>([])
+  const { session, initializing, init, logout } = useAuthStore()
 
   useEffect(() => {
-    if (!window.api) return
-    window.api.collections.list().then(setCollections)
-  }, [])
+    init()
+  }, [init])
 
-  const addOne = async () => {
-    if (!window.api) return
-    await window.api.collections.create('Test Collection')
-    setCollections(await window.api.collections.list())
+  if (initializing) {
+    return <div className="flex min-h-screen items-center justify-center text-sm text-muted-foreground">Loading…</div>
+  }
+
+  if (!session) {
+    return <LoginScreen />
   }
 
   return (
     <div className="p-4">
-      <Button onClick={addOne}>Add test collection</Button>
-      <pre>{JSON.stringify(collections, null, 2)}</pre>
+      <p className="text-sm text-muted-foreground">Signed in as {session.email}</p>
+      <button onClick={logout} className="text-sm underline">
+        Log out
+      </button>
     </div>
   )
 }

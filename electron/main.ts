@@ -1,8 +1,9 @@
-import { app, BrowserWindow } from 'electron'
+import { app, BrowserWindow, globalShortcut } from 'electron'
 import path from 'node:path'
 import { fileURLToPath } from 'node:url'
 import { initSchema } from './db'
 import { registerCollectionHandlers } from './ipc/collections'
+import { registerSessionHandlers } from './ipc/session'
 
 const __filename = fileURLToPath(import.meta.url)
 const __dirname = path.dirname(__filename)
@@ -26,12 +27,25 @@ function createWindow() {
     } else {
         win.loadFile(path.join(__dirname, '../dist/index.html'))
     }
+
+    // Reopen DevTools any time — useful once closed accidentally
+    globalShortcut.register('F12', () => {
+        win.webContents.toggleDevTools()
+    })
+    globalShortcut.register('CommandOrControl+Shift+I', () => {
+        win.webContents.toggleDevTools()
+    })
 }
 
 app.whenReady().then(() => {
     initSchema()
     registerCollectionHandlers()
+    registerSessionHandlers()
     createWindow()
+})
+
+app.on('will-quit', () => {
+    globalShortcut.unregisterAll()
 })
 
 app.on('window-all-closed', () => {
