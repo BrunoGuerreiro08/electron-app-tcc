@@ -7,8 +7,11 @@ import { Label } from '@/components/ui/label'
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card'
 import { InputOTP, InputOTPGroup, InputOTPSlot } from '@/components/ui/input-otp'
 import { Sun, Moon, Monitor } from 'lucide-react'
+import { useServerStatusStore } from '@/store/serverStatusStore'
+import { ServerStatusIndicator } from '@/components/layout/serverStatusIndicator'
 
 export function LoginScreen() {
+  const serverStatus = useServerStatusStore((s) => s.status)
   const { step, email, loading, error, requestCode, verifyCode, completeProfile, reset } =
     useAuthStore()
   const { theme, setTheme } = useTheme()
@@ -77,7 +80,11 @@ export function LoginScreen() {
                   />
                 </div>
                 {error && <p className="text-sm text-destructive">{error}</p>}
-                <Button type="submit" className="w-full" disabled={loading || !emailInput}>
+                <Button
+                  type="submit"
+                  className="w-full"
+                  disabled={loading || !emailInput || serverStatus === 'offline'}
+                >
                   {loading ? 'Sending code…' : 'Send code'}
                 </Button>
               </form>
@@ -144,6 +151,7 @@ export function LoginScreen() {
 
           </CardContent>
         </Card>
+        <ServerStatusIndicator />
       </div>
     </div>
   )
