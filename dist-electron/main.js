@@ -10,7 +10,7 @@ var __privateAdd = (obj, member, value) => member.has(obj) ? __typeError("Cannot
 var __privateSet = (obj, member, value, setter) => (__accessCheck(obj, member, "write to private field"), setter ? setter.call(obj, value) : member.set(obj, value), value);
 var __privateMethod = (obj, member, method) => (__accessCheck(obj, member, "access private method"), method);
 var _validator, _encryptionKey, _encryptionAlgorithm, _options, _defaultValues, _isInMigration, _watcher, _watchFile, _debouncedChangeHandler, _Conf_instances, prepareOptions_fn, setupValidator_fn, captureSchemaDefaults_fn, applyDefaultValues_fn, configureSerialization_fn, resolvePath_fn, initializeStore_fn, runMigrations_fn;
-import electron, { app as app$1, ipcMain as ipcMain$1, globalShortcut, BrowserWindow } from "electron";
+import electron, { app as app$1, ipcMain as ipcMain$1, dialog, BrowserWindow, globalShortcut } from "electron";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import Database from "better-sqlite3";
@@ -860,7 +860,7 @@ if (!IS_WINDOWS) {
 if (IS_LINUX) {
   Signals.push("SIGIO", "SIGPOLL", "SIGPWR", "SIGSTKFLT");
 }
-let Interceptor$1 = class Interceptor {
+class Interceptor {
   /* CONSTRUCTOR */
   constructor() {
     this.callbacks = /* @__PURE__ */ new Set();
@@ -897,9 +897,9 @@ let Interceptor$1 = class Interceptor {
     };
     this.hook();
   }
-};
-const Interceptor2 = new Interceptor$1();
-const whenExit = Interceptor2.register;
+}
+const Interceptor$1 = new Interceptor();
+const whenExit = Interceptor$1.register;
 const Temp = {
   /* VARIABLES */
   store: {},
@@ -16669,7 +16669,8 @@ class ElectronStore extends Conf {
 }
 const store = new ElectronStore({
   defaults: {
-    session: null
+    session: null,
+    storageFolder: null
   }
 });
 function registerSessionHandlers() {
@@ -16681,6 +16682,75 @@ function registerSessionHandlers() {
   });
   ipcMain$1.handle("session:clear", () => {
     store.set("session", null);
+  });
+}
+const DEFAULT_SUBDIR = "document-files";
+function defaultStorageRoot() {
+  return path.join(app$1.getPath("userData"), DEFAULT_SUBDIR);
+}
+function getStorageRoot() {
+  const configured = store.get("storageFolder");
+  const root = configured ?? defaultStorageRoot();
+  fs.mkdirSync(root, { recursive: true });
+  return root;
+}
+function getConfiguredStorageFolder() {
+  return store.get("storageFolder");
+}
+async function pickStorageFolder(win) {
+  const result = await dialog.showOpenDialog(win, {
+    properties: ["openDirectory", "createDirectory"],
+    title: "Choose a folder for document storage"
+  });
+  if (result.canceled || result.filePaths.length === 0) return null;
+  return result.filePaths[0];
+}
+function migrateStorageFolder(newRoot) {
+  const oldRoot = getStorageRoot();
+  fs.mkdirSync(newRoot, { recursive: true });
+  const result = { moved: 0, failed: 0, errors: [] };
+  if (path.resolve(oldRoot) === path.resolve(newRoot)) {
+    store.set("storageFolder", newRoot);
+    return result;
+  }
+  const rows = db.prepare(`SELECT id, file_path FROM documents WHERE file_path IS NOT NULL`).all();
+  const updateStmt = db.prepare("UPDATE documents SET file_path = ? WHERE id = ?");
+  for (const row of rows) {
+    const relative = path.relative(oldRoot, row.file_path);
+    const isInsideOldRoot = !relative.startsWith("..") && !path.isAbsolute(relative);
+    if (!isInsideOldRoot) {
+      result.failed++;
+      result.errors.push(`${row.file_path} is not under the current storage folder — skipped.`);
+      continue;
+    }
+    const destination = path.join(newRoot, relative);
+    try {
+      fs.mkdirSync(path.dirname(destination), { recursive: true });
+      fs.renameSync(row.file_path, destination);
+      updateStmt.run(destination, row.id);
+      result.moved++;
+    } catch (err) {
+      result.failed++;
+      result.errors.push(`Failed to move ${row.file_path}: ${err.message}`);
+    }
+  }
+  store.set("storageFolder", newRoot);
+  return result;
+}
+function registerSettingsHandlers() {
+  ipcMain$1.handle("settings:getStorageFolder", () => {
+    return {
+      path: getStorageRoot(),
+      isCustom: getConfiguredStorageFolder() !== null
+    };
+  });
+  ipcMain$1.handle("settings:pickStorageFolder", async (event) => {
+    const win = BrowserWindow.fromWebContents(event.sender);
+    if (!win) return null;
+    return pickStorageFolder(win);
+  });
+  ipcMain$1.handle("settings:changeStorageFolder", (_event, newFolder) => {
+    return migrateStorageFolder(newFolder);
   });
 }
 const __filename$1 = fileURLToPath(import.meta.url);
@@ -16714,6 +16784,7 @@ app$1.whenReady().then(() => {
   registerTagHandlers();
   registerDocumentCategoryLinkHandlers();
   registerSessionHandlers();
+  registerSettingsHandlers();
   createWindow();
 });
 app$1.on("will-quit", () => {

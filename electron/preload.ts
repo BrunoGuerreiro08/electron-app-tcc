@@ -60,4 +60,10 @@ contextBridge.exposeInMainWorld('api', {
         set: (session: unknown) => ipcRenderer.invoke('session:set', session),
         clear: () => ipcRenderer.invoke('session:clear'),
     },
+    settings: {
+        getStorageFolder: () => ipcRenderer.invoke('settings:getStorageFolder'),
+        pickStorageFolder: () => ipcRenderer.invoke('settings:pickStorageFolder'),
+        changeStorageFolder: (newFolder: string) =>
+            ipcRenderer.invoke('settings:changeStorageFolder', newFolder),
+    },
 })

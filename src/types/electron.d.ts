@@ -47,6 +47,13 @@ declare global {
                 set: (session: import('./auth').Session) => Promise<void>
                 clear: () => Promise<void>
             }
+            settings: {
+                getStorageFolder: () => Promise<{ path: string; isCustom: boolean }>
+                pickStorageFolder: () => Promise<string | null>
+                changeStorageFolder: (
+                    newFolder: string
+                ) => Promise<{ moved: number; failed: number; errors: string[] }>
+            }
         }
     }
 }

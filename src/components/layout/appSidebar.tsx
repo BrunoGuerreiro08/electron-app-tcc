@@ -16,7 +16,8 @@ import {
     LifeBuoy,
     Shield,
     User,
-    Library
+    Library,
+    Home
 } from "lucide-react"
 import {
     Sidebar,
@@ -90,16 +91,26 @@ export function AppSidebar() {
 
             <SidebarContent className="py-2">
                 <SidebarGroup>
-                    {/* The label is only visible when expanded, automatically hiding when collapsed */}
                     <SidebarGroupLabel className="text-xs font-medium px-3 text-muted-foreground">
                         Menu
                     </SidebarGroupLabel>
 
                     <SidebarGroupContent>
-                        {/* One unified menu container ensures perfect layout alignment for all items */}
                         <SidebarMenu className="space-y-1">
 
-                            {/* 1. Dashboard */}
+                            <SidebarMenuItem>
+                                <SidebarMenuButton
+                                    asChild
+                                    tooltip="Home"
+                                    isActive={location.pathname === "/"}
+                                >
+                                    <NavLink to="/" className="flex items-center gap-3">
+                                        <Home className="h-4 w-4 shrink-0" />
+                                        <span>Home</span>
+                                    </NavLink>
+                                </SidebarMenuButton>
+                            </SidebarMenuItem>
+
                             <SidebarMenuItem>
                                 <SidebarMenuButton
                                     asChild
@@ -113,7 +124,6 @@ export function AppSidebar() {
                                 </SidebarMenuButton>
                             </SidebarMenuItem>
 
-                            {/* 2. Exportar */}
                             <SidebarMenuItem>
                                 <SidebarMenuButton
                                     asChild
@@ -127,7 +137,6 @@ export function AppSidebar() {
                                 </SidebarMenuButton>
                             </SidebarMenuItem>
 
-                            {/* 3. Configurações */}
                             <Collapsible
                                 asChild
                                 defaultOpen={location.pathname.startsWith("/settings")}
@@ -172,10 +181,8 @@ export function AppSidebar() {
                                 </SidebarMenuItem>
                             </Collapsible>
 
-                            {/* CLEAN DIVIDER */}
                             <SidebarSeparator className="my-2 mx-auto w-[calc(100%-1rem)] group-data-[collapsible=icon]:w-8" />
 
-                            {/* 4. Coleções */}
                             <Collapsible
                                 asChild
                                 defaultOpen={location.pathname.startsWith("/collections")}
@@ -215,10 +222,8 @@ export function AppSidebar() {
                                 </SidebarMenuItem>
                             </Collapsible>
 
-                            {/* CLEAN DIVIDER */}
                             <SidebarSeparator className="my-2 mx-auto w-[calc(100%-1rem)] group-data-[collapsible=icon]:w-8" />
 
-                            {/* 5. Ajuda */}
                             <Collapsible
                                 asChild
                                 defaultOpen={location.pathname.startsWith("/help")}

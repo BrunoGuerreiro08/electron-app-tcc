@@ -13,7 +13,7 @@ export function AppRoutes() {
     return (
         <Routes>
             <Route path="/" element={<HomeScreen />} />
-
+            <Route path="/documents" element={<ComingSoon label="Document library" />} />
             <Route path="/collections/:collectionId" element={<ComingSoon label="Collection detail" />} />
             <Route path="/collections/:collectionId/report" element={<ComingSoon label="Report preview" />} />
 
