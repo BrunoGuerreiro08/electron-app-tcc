@@ -3,6 +3,11 @@ import path from 'node:path'
 import { fileURLToPath } from 'node:url'
 import { initSchema } from './db'
 import { registerCollectionHandlers } from './ipc/collections'
+import { registerSubgroupHandlers } from './ipc/subgroups'
+import { registerCategoryHandlers } from './ipc/categories'
+import { registerDocumentHandlers } from './ipc/documents'
+import { registerTagHandlers } from './ipc/tags'
+import { registerDocumentCategoryLinkHandlers } from './ipc/documentCategoryLinks'
 import { registerSessionHandlers } from './ipc/session'
 
 const __filename = fileURLToPath(import.meta.url)
@@ -28,18 +33,18 @@ function createWindow() {
         win.loadFile(path.join(__dirname, '../dist/index.html'))
     }
 
-    // Reopen DevTools any time — useful once closed accidentally
-    globalShortcut.register('F12', () => {
-        win.webContents.toggleDevTools()
-    })
-    globalShortcut.register('CommandOrControl+Shift+I', () => {
-        win.webContents.toggleDevTools()
-    })
+    globalShortcut.register('F12', () => win.webContents.toggleDevTools())
+    globalShortcut.register('CommandOrControl+Shift+I', () => win.webContents.toggleDevTools())
 }
 
 app.whenReady().then(() => {
     initSchema()
     registerCollectionHandlers()
+    registerSubgroupHandlers()
+    registerCategoryHandlers()
+    registerDocumentHandlers()
+    registerTagHandlers()
+    registerDocumentCategoryLinkHandlers()
     registerSessionHandlers()
     createWindow()
 })

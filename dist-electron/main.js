@@ -35,17 +35,348 @@ function initSchema() {
       created_at TEXT NOT NULL DEFAULT (datetime('now')),
       updated_at TEXT NOT NULL DEFAULT (datetime('now'))
     );
+
+    CREATE TABLE IF NOT EXISTS subgroups (
+      id TEXT PRIMARY KEY,
+      collection_id TEXT NOT NULL REFERENCES collections(id) ON DELETE CASCADE,
+      name TEXT NOT NULL,
+      display_order INTEGER NOT NULL DEFAULT 0,
+      min_points REAL,
+      max_points REAL
+    );
+
+    CREATE TABLE IF NOT EXISTS categories (
+      id TEXT PRIMARY KEY,
+      subgroup_id TEXT NOT NULL REFERENCES subgroups(id) ON DELETE CASCADE,
+      name TEXT NOT NULL,
+      rule TEXT NOT NULL,
+      display_order INTEGER NOT NULL DEFAULT 0
+    );
+
+    -- Global document pool. Not owned by any collection/category directly.
+    -- created_at = when logged into the app; issued_at = date on the document.
+    CREATE TABLE IF NOT EXISTS documents (
+      id TEXT PRIMARY KEY,
+      title TEXT NOT NULL,
+      issuer TEXT,
+      issued_at TEXT,
+      created_at TEXT NOT NULL DEFAULT (datetime('now')),
+      quantity REAL NOT NULL DEFAULT 1,
+      hours REAL,
+      notes TEXT,
+      file_path TEXT,
+      file_status TEXT NOT NULL DEFAULT 'pending'
+    );
+
+    CREATE TABLE IF NOT EXISTS tags (
+      id TEXT PRIMARY KEY,
+      name TEXT NOT NULL UNIQUE,
+      color TEXT
+    );
+
+    CREATE TABLE IF NOT EXISTS document_tags (
+      document_id TEXT NOT NULL REFERENCES documents(id) ON DELETE CASCADE,
+      tag_id TEXT NOT NULL REFERENCES tags(id) ON DELETE CASCADE,
+      PRIMARY KEY (document_id, tag_id)
+    );
+
+    -- The core decoupling: M:N between documents and categories.
+    -- Deleting a category/collection cascades here (unlinks) but never
+    -- touches the document row or its file.
+    CREATE TABLE IF NOT EXISTS document_category_links (
+      id TEXT PRIMARY KEY,
+      document_id TEXT NOT NULL REFERENCES documents(id) ON DELETE CASCADE,
+      category_id TEXT NOT NULL REFERENCES categories(id) ON DELETE CASCADE,
+      linked_at TEXT NOT NULL DEFAULT (datetime('now')),
+      UNIQUE (document_id, category_id)
+    );
   `);
 }
 function registerCollectionHandlers() {
   ipcMain$1.handle("collections:list", () => {
     return db.prepare("SELECT * FROM collections ORDER BY created_at DESC").all();
   });
-  ipcMain$1.handle("collections:create", (_event, name) => {
+  ipcMain$1.handle("collections:create", (_event, name, color) => {
     const id2 = randomUUID();
-    db.prepare("INSERT INTO collections (id, name) VALUES (?, ?)").run(id2, name);
+    const createCollection = db.prepare(
+      "INSERT INTO collections (id, name, color) VALUES (?, ?, ?)"
+    );
+    const createDefaultSubgroup = db.prepare(
+      "INSERT INTO subgroups (id, collection_id, name, display_order) VALUES (?, ?, ?, 0)"
+    );
+    const tx = db.transaction(() => {
+      createCollection.run(id2, name, color ?? null);
+      createDefaultSubgroup.run(randomUUID(), id2, "General");
+    });
+    tx();
     return id2;
   });
+  ipcMain$1.handle("collections:rename", (_event, id2, name) => {
+    db.prepare(
+      `UPDATE collections SET name = ?, updated_at = datetime('now') WHERE id = ?`
+    ).run(name, id2);
+  });
+  ipcMain$1.handle("collections:delete", (_event, id2) => {
+    db.prepare("DELETE FROM collections WHERE id = ?").run(id2);
+  });
+}
+function registerSubgroupHandlers() {
+  ipcMain$1.handle("subgroups:listByCollection", (_event, collectionId) => {
+    return db.prepare("SELECT * FROM subgroups WHERE collection_id = ? ORDER BY display_order").all(collectionId);
+  });
+  ipcMain$1.handle(
+    "subgroups:create",
+    (_event, collectionId, name, displayOrder = 0) => {
+      const id2 = randomUUID();
+      db.prepare(
+        "INSERT INTO subgroups (id, collection_id, name, display_order) VALUES (?, ?, ?, ?)"
+      ).run(id2, collectionId, name, displayOrder);
+      return id2;
+    }
+  );
+  ipcMain$1.handle(
+    "subgroups:update",
+    (_event, id2, updates) => {
+      const current = db.prepare("SELECT * FROM subgroups WHERE id = ?").get(id2);
+      if (!current) throw new Error("Subgroup not found");
+      const name = updates.name ?? current.name;
+      const minPoints = updates.minPoints !== void 0 ? updates.minPoints : current.min_points;
+      const maxPoints = updates.maxPoints !== void 0 ? updates.maxPoints : current.max_points;
+      if (minPoints != null && maxPoints != null && maxPoints <= minPoints) {
+        throw new Error("max_points must be greater than min_points");
+      }
+      db.prepare(
+        "UPDATE subgroups SET name = ?, min_points = ?, max_points = ? WHERE id = ?"
+      ).run(name, minPoints, maxPoints, id2);
+    }
+  );
+  ipcMain$1.handle("subgroups:delete", (_event, id2) => {
+    db.prepare("DELETE FROM subgroups WHERE id = ?").run(id2);
+  });
+}
+function validateFlat(rule) {
+  const errors2 = [];
+  if (typeof rule.pointsPerUnit !== "number" || !Number.isFinite(rule.pointsPerUnit)) {
+    errors2.push("flat rule: pointsPerUnit must be a finite number.");
+  } else if (rule.pointsPerUnit <= 0) {
+    errors2.push("flat rule: pointsPerUnit must be greater than zero.");
+  }
+  return errors2;
+}
+function validateHours(rule) {
+  const errors2 = [];
+  if (typeof rule.pointsPerUnit !== "number" || !Number.isFinite(rule.pointsPerUnit)) {
+    errors2.push("hours rule: pointsPerUnit must be a finite number.");
+  } else if (rule.pointsPerUnit <= 0) {
+    errors2.push("hours rule: pointsPerUnit must be greater than zero.");
+  }
+  if (typeof rule.unitSize !== "number" || !Number.isFinite(rule.unitSize)) {
+    errors2.push("hours rule: unitSize must be a finite number.");
+  } else if (rule.unitSize <= 0) {
+    errors2.push("hours rule: unitSize must be greater than zero.");
+  }
+  return errors2;
+}
+function validateCapped(rule) {
+  const errors2 = [];
+  if (!rule.inner) {
+    errors2.push("capped rule: must reference a valid inner rule.");
+  } else if (rule.inner.type === "flat") {
+    errors2.push(...validateFlat(rule.inner));
+  } else if (rule.inner.type === "hours") {
+    errors2.push(...validateHours(rule.inner));
+  } else {
+    errors2.push('capped rule: inner rule must be of type "flat" or "hours".');
+  }
+  if (typeof rule.cap !== "number" || !Number.isFinite(rule.cap)) {
+    errors2.push("capped rule: cap must be a finite number.");
+  } else if (rule.cap <= 0) {
+    errors2.push("capped rule: cap must be greater than zero.");
+  }
+  return errors2;
+}
+function validateRule(rule) {
+  if (!rule || typeof rule !== "object") {
+    return { valid: false, errors: ["Rule is required."] };
+  }
+  let errors2 = [];
+  switch (rule.type) {
+    case "flat":
+      errors2 = validateFlat(rule);
+      break;
+    case "hours":
+      errors2 = validateHours(rule);
+      break;
+    case "capped":
+      errors2 = validateCapped(rule);
+      break;
+    default:
+      errors2 = [`Unknown rule type: "${rule.type}".`];
+  }
+  return { valid: errors2.length === 0, errors: errors2 };
+}
+function registerCategoryHandlers() {
+  ipcMain$1.handle("categories:listBySubgroup", (_event, subgroupId) => {
+    const rows = db.prepare("SELECT * FROM categories WHERE subgroup_id = ? ORDER BY display_order").all(subgroupId);
+    return rows.map((r) => ({ ...r, rule: JSON.parse(r.rule) }));
+  });
+  ipcMain$1.handle(
+    "categories:create",
+    (_event, subgroupId, name, rule, displayOrder = 0) => {
+      const { valid: valid2, errors: errors2 } = validateRule(rule);
+      if (!valid2) {
+        throw new Error(`Invalid rule: ${errors2.join(" ")}`);
+      }
+      const id2 = randomUUID();
+      db.prepare(
+        "INSERT INTO categories (id, subgroup_id, name, rule, display_order) VALUES (?, ?, ?, ?, ?)"
+      ).run(id2, subgroupId, name, JSON.stringify(rule), displayOrder);
+      return id2;
+    }
+  );
+  ipcMain$1.handle(
+    "categories:update",
+    (_event, id2, updates) => {
+      const current = db.prepare("SELECT * FROM categories WHERE id = ?").get(id2);
+      if (!current) throw new Error("Category not found");
+      const name = updates.name ?? current.name;
+      let ruleJson = current.rule;
+      if (updates.rule) {
+        const { valid: valid2, errors: errors2 } = validateRule(updates.rule);
+        if (!valid2) throw new Error(`Invalid rule: ${errors2.join(" ")}`);
+        ruleJson = JSON.stringify(updates.rule);
+      }
+      db.prepare("UPDATE categories SET name = ?, rule = ? WHERE id = ?").run(
+        name,
+        ruleJson,
+        id2
+      );
+    }
+  );
+  ipcMain$1.handle("categories:delete", (_event, id2) => {
+    db.prepare("DELETE FROM categories WHERE id = ?").run(id2);
+  });
+}
+function registerDocumentHandlers() {
+  ipcMain$1.handle("documents:list", () => {
+    return db.prepare("SELECT * FROM documents ORDER BY created_at DESC").all();
+  });
+  ipcMain$1.handle("documents:listUnlinked", () => {
+    return db.prepare(
+      `SELECT d.* FROM documents d
+         LEFT JOIN document_category_links l ON l.document_id = d.id
+         WHERE l.id IS NULL
+         ORDER BY d.created_at DESC`
+    ).all();
+  });
+  ipcMain$1.handle("documents:create", (_event, input) => {
+    const id2 = randomUUID();
+    db.prepare(
+      `INSERT INTO documents (id, title, issuer, issued_at, quantity, hours, notes, file_path, file_status)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`
+    ).run(
+      id2,
+      input.title,
+      input.issuer ?? null,
+      input.issuedAt ?? null,
+      input.quantity ?? 1,
+      input.hours ?? null,
+      input.notes ?? null,
+      input.filePath ?? null,
+      input.filePath ? "ready" : "pending"
+    );
+    return id2;
+  });
+  ipcMain$1.handle("documents:update", (_event, id2, updates) => {
+    const current = db.prepare("SELECT * FROM documents WHERE id = ?").get(id2);
+    if (!current) throw new Error("Document not found");
+    db.prepare(
+      `UPDATE documents SET title = ?, issuer = ?, issued_at = ?, quantity = ?, hours = ?, notes = ?
+       WHERE id = ?`
+    ).run(
+      updates.title ?? current.title,
+      updates.issuer ?? current.issuer,
+      updates.issuedAt ?? current.issued_at,
+      updates.quantity ?? current.quantity,
+      updates.hours ?? current.hours,
+      updates.notes ?? current.notes,
+      id2
+    );
+  });
+  ipcMain$1.handle("documents:delete", (_event, id2) => {
+    db.prepare("DELETE FROM documents WHERE id = ?").run(id2);
+  });
+}
+function registerTagHandlers() {
+  ipcMain$1.handle("tags:list", () => {
+    return db.prepare("SELECT * FROM tags ORDER BY name").all();
+  });
+  ipcMain$1.handle("tags:create", (_event, name, color) => {
+    const id2 = randomUUID();
+    db.prepare("INSERT INTO tags (id, name, color) VALUES (?, ?, ?)").run(
+      id2,
+      name,
+      color ?? null
+    );
+    return id2;
+  });
+  ipcMain$1.handle("tags:delete", (_event, id2) => {
+    db.prepare("DELETE FROM tags WHERE id = ?").run(id2);
+  });
+  ipcMain$1.handle("tags:listForDocument", (_event, documentId) => {
+    return db.prepare(
+      `SELECT t.* FROM tags t
+         JOIN document_tags dt ON dt.tag_id = t.id
+         WHERE dt.document_id = ?`
+    ).all(documentId);
+  });
+  ipcMain$1.handle("tags:attachToDocument", (_event, documentId, tagId) => {
+    db.prepare(
+      "INSERT OR IGNORE INTO document_tags (document_id, tag_id) VALUES (?, ?)"
+    ).run(documentId, tagId);
+  });
+  ipcMain$1.handle("tags:detachFromDocument", (_event, documentId, tagId) => {
+    db.prepare("DELETE FROM document_tags WHERE document_id = ? AND tag_id = ?").run(
+      documentId,
+      tagId
+    );
+  });
+}
+function registerDocumentCategoryLinkHandlers() {
+  ipcMain$1.handle("documentCategoryLinks:listByCategory", (_event, categoryId) => {
+    return db.prepare(
+      `SELECT d.id, d.title, d.issuer, d.issued_at, d.hours, d.quantity
+         FROM documents d
+         JOIN document_category_links l ON l.document_id = d.id
+         WHERE l.category_id = ?`
+    ).all(categoryId);
+  });
+  ipcMain$1.handle("documentCategoryLinks:listByDocument", (_event, documentId) => {
+    return db.prepare(
+      `SELECT c.*, s.collection_id
+         FROM categories c
+         JOIN document_category_links l ON l.category_id = c.id
+         JOIN subgroups s ON s.id = c.subgroup_id
+         WHERE l.document_id = ?`
+    ).all(documentId);
+  });
+  ipcMain$1.handle(
+    "documentCategoryLinks:link",
+    (_event, documentId, categoryId) => {
+      const id2 = randomUUID();
+      db.prepare(
+        "INSERT OR IGNORE INTO document_category_links (id, document_id, category_id) VALUES (?, ?, ?)"
+      ).run(id2, documentId, categoryId);
+    }
+  );
+  ipcMain$1.handle(
+    "documentCategoryLinks:unlink",
+    (_event, documentId, categoryId) => {
+      db.prepare(
+        "DELETE FROM document_category_links WHERE document_id = ? AND category_id = ?"
+      ).run(documentId, categoryId);
+    }
+  );
 }
 const isObject = (value) => {
   const type2 = typeof value;
@@ -529,7 +860,7 @@ if (!IS_WINDOWS) {
 if (IS_LINUX) {
   Signals.push("SIGIO", "SIGPOLL", "SIGPWR", "SIGSTKFLT");
 }
-class Interceptor {
+let Interceptor$1 = class Interceptor {
   /* CONSTRUCTOR */
   constructor() {
     this.callbacks = /* @__PURE__ */ new Set();
@@ -566,9 +897,9 @@ class Interceptor {
     };
     this.hook();
   }
-}
-const Interceptor$1 = new Interceptor();
-const whenExit = Interceptor$1.register;
+};
+const Interceptor2 = new Interceptor$1();
+const whenExit = Interceptor2.register;
 const Temp = {
   /* VARIABLES */
   store: {},
@@ -16371,16 +16702,17 @@ function createWindow() {
   } else {
     win.loadFile(path.join(__dirname$1, "../dist/index.html"));
   }
-  globalShortcut.register("F12", () => {
-    win.webContents.toggleDevTools();
-  });
-  globalShortcut.register("CommandOrControl+Shift+I", () => {
-    win.webContents.toggleDevTools();
-  });
+  globalShortcut.register("F12", () => win.webContents.toggleDevTools());
+  globalShortcut.register("CommandOrControl+Shift+I", () => win.webContents.toggleDevTools());
 }
 app$1.whenReady().then(() => {
   initSchema();
   registerCollectionHandlers();
+  registerSubgroupHandlers();
+  registerCategoryHandlers();
+  registerDocumentHandlers();
+  registerTagHandlers();
+  registerDocumentCategoryLinkHandlers();
   registerSessionHandlers();
   createWindow();
 });

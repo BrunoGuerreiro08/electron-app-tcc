@@ -3,7 +3,57 @@ import { contextBridge, ipcRenderer } from 'electron'
 contextBridge.exposeInMainWorld('api', {
     collections: {
         list: () => ipcRenderer.invoke('collections:list'),
-        create: (name: string) => ipcRenderer.invoke('collections:create', name),
+        create: (name: string, color?: string) =>
+            ipcRenderer.invoke('collections:create', name, color),
+        rename: (id: string, name: string) => ipcRenderer.invoke('collections:rename', id, name),
+        delete: (id: string) => ipcRenderer.invoke('collections:delete', id),
+    },
+    subgroups: {
+        listByCollection: (collectionId: string) =>
+            ipcRenderer.invoke('subgroups:listByCollection', collectionId),
+        create: (collectionId: string, name: string, displayOrder?: number) =>
+            ipcRenderer.invoke('subgroups:create', collectionId, name, displayOrder),
+        update: (id: string, updates: unknown) =>
+            ipcRenderer.invoke('subgroups:update', id, updates),
+        delete: (id: string) => ipcRenderer.invoke('subgroups:delete', id),
+    },
+    categories: {
+        listBySubgroup: (subgroupId: string) =>
+            ipcRenderer.invoke('categories:listBySubgroup', subgroupId),
+        create: (subgroupId: string, name: string, rule: unknown, displayOrder?: number) =>
+            ipcRenderer.invoke('categories:create', subgroupId, name, rule, displayOrder),
+        update: (id: string, updates: unknown) =>
+            ipcRenderer.invoke('categories:update', id, updates),
+        delete: (id: string) => ipcRenderer.invoke('categories:delete', id),
+    },
+    documents: {
+        list: () => ipcRenderer.invoke('documents:list'),
+        listUnlinked: () => ipcRenderer.invoke('documents:listUnlinked'),
+        create: (input: unknown) => ipcRenderer.invoke('documents:create', input),
+        update: (id: string, updates: unknown) =>
+            ipcRenderer.invoke('documents:update', id, updates),
+        delete: (id: string) => ipcRenderer.invoke('documents:delete', id),
+    },
+    tags: {
+        list: () => ipcRenderer.invoke('tags:list'),
+        create: (name: string, color?: string) => ipcRenderer.invoke('tags:create', name, color),
+        delete: (id: string) => ipcRenderer.invoke('tags:delete', id),
+        listForDocument: (documentId: string) =>
+            ipcRenderer.invoke('tags:listForDocument', documentId),
+        attachToDocument: (documentId: string, tagId: string) =>
+            ipcRenderer.invoke('tags:attachToDocument', documentId, tagId),
+        detachFromDocument: (documentId: string, tagId: string) =>
+            ipcRenderer.invoke('tags:detachFromDocument', documentId, tagId),
+    },
+    documentCategoryLinks: {
+        listByCategory: (categoryId: string) =>
+            ipcRenderer.invoke('documentCategoryLinks:listByCategory', categoryId),
+        listByDocument: (documentId: string) =>
+            ipcRenderer.invoke('documentCategoryLinks:listByDocument', documentId),
+        link: (documentId: string, categoryId: string) =>
+            ipcRenderer.invoke('documentCategoryLinks:link', documentId, categoryId),
+        unlink: (documentId: string, categoryId: string) =>
+            ipcRenderer.invoke('documentCategoryLinks:unlink', documentId, categoryId),
     },
     session: {
         get: () => ipcRenderer.invoke('session:get'),
