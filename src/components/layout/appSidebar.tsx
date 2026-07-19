@@ -1,5 +1,6 @@
 import { useTheme } from "next-themes"
 import { useAuthStore } from "@/store/authStore"
+import { NavLink, useLocation } from "react-router-dom"
 import {
     LogOut,
     Sun,
@@ -14,7 +15,8 @@ import {
     FileText,
     LifeBuoy,
     Shield,
-    User
+    User,
+    Library
 } from "lucide-react"
 import {
     Sidebar,
@@ -45,12 +47,14 @@ import {
     AlertDialogTrigger,
 } from "@/components/ui/alert-dialog"
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "../ui/collapsible"
+import { ServerStatusIndicator } from "./serverStatusIndicator"
 
 export function AppSidebar() {
     const { theme, setTheme } = useTheme()
     const { state, toggleSidebar } = useSidebar()
     const logout = useAuthStore((state) => state.logout)
     const isCollapsed = state === "collapsed"
+    const location = useLocation()
 
     const cycleTheme = () => {
         if (theme === 'light') setTheme('dark')
@@ -58,7 +62,6 @@ export function AppSidebar() {
         else setTheme('light')
     }
 
-    // Mock list for Coleções which will tie to DB later
     const mockColecoes = [
         { id: 1, title: "Coleção #1" },
         { id: 2, title: "Coleção #2" },
@@ -86,35 +89,56 @@ export function AppSidebar() {
             </SidebarHeader>
 
             <SidebarContent className="py-2">
-
                 <SidebarGroup>
+                    {/* The label is only visible when expanded, automatically hiding when collapsed */}
                     <SidebarGroupLabel className="text-xs font-medium px-3 text-muted-foreground">
                         Menu
                     </SidebarGroupLabel>
+
                     <SidebarGroupContent>
-                        <SidebarMenu className="px-2 space-y-0.5">
+                        {/* One unified menu container ensures perfect layout alignment for all items */}
+                        <SidebarMenu className="space-y-1">
+
+                            {/* 1. Dashboard */}
                             <SidebarMenuItem>
-                                <SidebarMenuButton asChild tooltip="Dashboard">
-                                    <a href="/dashboard" className="flex items-center gap-3">
+                                <SidebarMenuButton
+                                    asChild
+                                    tooltip="Dashboard"
+                                    isActive={location.pathname === "/dashboard"}
+                                >
+                                    <NavLink to="/dashboard" className="flex items-center gap-3">
                                         <Hash className="h-4 w-4 shrink-0" />
                                         <span>Dashboard</span>
-                                    </a>
+                                    </NavLink>
                                 </SidebarMenuButton>
                             </SidebarMenuItem>
 
+                            {/* 2. Exportar */}
                             <SidebarMenuItem>
-                                <SidebarMenuButton asChild tooltip="Exportar">
-                                    <a href="/export" className="flex items-center gap-3">
+                                <SidebarMenuButton
+                                    asChild
+                                    tooltip="Exportar"
+                                    isActive={location.pathname === "/export"}
+                                >
+                                    <NavLink to="/export" className="flex items-center gap-3">
                                         <Printer className="h-4 w-4 shrink-0" />
                                         <span>Exportar</span>
-                                    </a>
+                                    </NavLink>
                                 </SidebarMenuButton>
                             </SidebarMenuItem>
 
-                            <Collapsible asChild className="group/collapsible">
+                            {/* 3. Configurações */}
+                            <Collapsible
+                                asChild
+                                defaultOpen={location.pathname.startsWith("/settings")}
+                                className="group/collapsible"
+                            >
                                 <SidebarMenuItem>
                                     <CollapsibleTrigger asChild>
-                                        <SidebarMenuButton tooltip="Configurações">
+                                        <SidebarMenuButton
+                                            tooltip="Configurações"
+                                            isActive={location.pathname.startsWith("/settings")}
+                                        >
                                             <SlidersHorizontal className="h-4 w-4 shrink-0" />
                                             <span>Configurações</span>
                                             <ChevronRight className="ml-auto h-3 w-3 text-muted-foreground transition-transform duration-200 group-data-[state=open]/collapsible:rotate-90" />
@@ -124,17 +148,23 @@ export function AppSidebar() {
                                     <CollapsibleContent>
                                         <SidebarMenuSub>
                                             <SidebarMenuSubItem>
-                                                <SidebarMenuSubButton asChild>
-                                                    <a href="/settings/profile">
+                                                <SidebarMenuSubButton
+                                                    asChild
+                                                    isActive={location.pathname === "/settings/profile"}
+                                                >
+                                                    <NavLink to="/settings/profile">
                                                         <User className="h-3.5 w-3.5 mr-1" /> Perfil
-                                                    </a>
+                                                    </NavLink>
                                                 </SidebarMenuSubButton>
                                             </SidebarMenuSubItem>
                                             <SidebarMenuSubItem>
-                                                <SidebarMenuSubButton asChild>
-                                                    <a href="/settings/security">
+                                                <SidebarMenuSubButton
+                                                    asChild
+                                                    isActive={location.pathname === "/settings/security"}
+                                                >
+                                                    <NavLink to="/settings/security">
                                                         <Shield className="h-3.5 w-3.5 mr-1" /> Segurança
-                                                    </a>
+                                                    </NavLink>
                                                 </SidebarMenuSubButton>
                                             </SidebarMenuSubItem>
                                         </SidebarMenuSub>
@@ -142,47 +172,64 @@ export function AppSidebar() {
                                 </SidebarMenuItem>
                             </Collapsible>
 
-                        </SidebarMenu>
-                    </SidebarGroupContent>
-                </SidebarGroup>
+                            {/* CLEAN DIVIDER */}
+                            <SidebarSeparator className="my-2 mx-auto w-[calc(100%-1rem)] group-data-[collapsible=icon]:w-8" />
 
-                <SidebarSeparator />
-
-                <Collapsible defaultOpen className="group/collapsible w-full">
-                    <SidebarGroup>
-                        <CollapsibleTrigger className="flex w-full items-center justify-between pr-4 hover:text-foreground transition-colors group/trigger">
-                            <SidebarGroupLabel className="text-xs font-medium px-3 text-muted-foreground cursor-pointer group-hover/trigger:text-foreground">
-                                Coleções
-                            </SidebarGroupLabel>
-                            <ChevronRight className="h-3 w-3 text-muted-foreground/70 transition-transform duration-200 group-data-[state=open]/collapsible:rotate-90" />
-                        </CollapsibleTrigger>
-
-                        <CollapsibleContent>
-                            <SidebarGroupContent className="px-2 pt-2">
-                                <SidebarMenu className="pl-3 ml-2 border-l border-border space-y-0.5">
-                                    {mockColecoes.map((colecao) => (
-                                        <SidebarMenuItem key={colecao.id}>
-                                            <SidebarMenuButton asChild tooltip={colecao.title}>
-                                                <a href={`/collections/${colecao.id}`} className="text-sm py-1.5 px-2">
-                                                    {colecao.title}
-                                                </a>
-                                            </SidebarMenuButton>
-                                        </SidebarMenuItem>
-                                    ))}
-                                </SidebarMenu>
-                            </SidebarGroupContent>
-                        </CollapsibleContent>
-                    </SidebarGroup>
-                </Collapsible>
-
-                <SidebarGroup>
-                    <SidebarGroupContent>
-                        <SidebarMenu className="px-2">
-
-                            <Collapsible asChild className="group/collapsible">
+                            {/* 4. Coleções */}
+                            <Collapsible
+                                asChild
+                                defaultOpen={location.pathname.startsWith("/collections")}
+                                className="group/collapsible"
+                            >
                                 <SidebarMenuItem>
                                     <CollapsibleTrigger asChild>
-                                        <SidebarMenuButton tooltip="Ajuda">
+                                        <SidebarMenuButton
+                                            tooltip="Coleções"
+                                            isActive={location.pathname.startsWith("/collections")}
+                                        >
+                                            <Library className="h-4 w-4 shrink-0" />
+                                            <span>Coleções</span>
+                                            <ChevronRight className="ml-auto h-3 w-3 text-muted-foreground transition-transform duration-200 group-data-[state=open]/collapsible:rotate-90" />
+                                        </SidebarMenuButton>
+                                    </CollapsibleTrigger>
+
+                                    <CollapsibleContent>
+                                        <SidebarMenuSub>
+                                            {mockColecoes.map((colecao) => {
+                                                const path = `/collections/${colecao.id}`
+                                                return (
+                                                    <SidebarMenuSubItem key={colecao.id}>
+                                                        <SidebarMenuSubButton
+                                                            asChild
+                                                            isActive={location.pathname === path}
+                                                        >
+                                                            <NavLink to={path}>
+                                                                {colecao.title}
+                                                            </NavLink>
+                                                        </SidebarMenuSubButton>
+                                                    </SidebarMenuSubItem>
+                                                )
+                                            })}
+                                        </SidebarMenuSub>
+                                    </CollapsibleContent>
+                                </SidebarMenuItem>
+                            </Collapsible>
+
+                            {/* CLEAN DIVIDER */}
+                            <SidebarSeparator className="my-2 mx-auto w-[calc(100%-1rem)] group-data-[collapsible=icon]:w-8" />
+
+                            {/* 5. Ajuda */}
+                            <Collapsible
+                                asChild
+                                defaultOpen={location.pathname.startsWith("/help")}
+                                className="group/collapsible"
+                            >
+                                <SidebarMenuItem>
+                                    <CollapsibleTrigger asChild>
+                                        <SidebarMenuButton
+                                            tooltip="Ajuda"
+                                            isActive={location.pathname.startsWith("/help")}
+                                        >
                                             <BookOpen className="h-4 w-4 shrink-0" />
                                             <span>Ajuda</span>
                                             <ChevronRight className="ml-auto h-3 w-3 text-muted-foreground transition-transform duration-200 group-data-[state=open]/collapsible:rotate-90" />
@@ -192,17 +239,23 @@ export function AppSidebar() {
                                     <CollapsibleContent>
                                         <SidebarMenuSub>
                                             <SidebarMenuSubItem>
-                                                <SidebarMenuSubButton asChild>
-                                                    <a href="/help/docs">
+                                                <SidebarMenuSubButton
+                                                    asChild
+                                                    isActive={location.pathname === "/help/docs"}
+                                                >
+                                                    <NavLink to="/help/docs">
                                                         <FileText className="h-3.5 w-3.5 mr-1" /> Documentação
-                                                    </a>
+                                                    </NavLink>
                                                 </SidebarMenuSubButton>
                                             </SidebarMenuSubItem>
                                             <SidebarMenuSubItem>
-                                                <SidebarMenuSubButton asChild>
-                                                    <a href="/help/support">
+                                                <SidebarMenuSubButton
+                                                    asChild
+                                                    isActive={location.pathname === "/help/support"}
+                                                >
+                                                    <NavLink to="/help/support">
                                                         <LifeBuoy className="h-3.5 w-3.5 mr-1" /> Suporte
-                                                    </a>
+                                                    </NavLink>
                                                 </SidebarMenuSubButton>
                                             </SidebarMenuSubItem>
                                         </SidebarMenuSub>
@@ -213,10 +266,10 @@ export function AppSidebar() {
                         </SidebarMenu>
                     </SidebarGroupContent>
                 </SidebarGroup>
-
             </SidebarContent>
 
             <SidebarFooter className="p-2 border-t border-border/50">
+                <ServerStatusIndicator variant={state === "collapsed" ? "icon" : "full"} />
                 <SidebarMenu>
                     <SidebarMenuItem>
                         <SidebarMenuButton onClick={cycleTheme} tooltip="Change Theme">

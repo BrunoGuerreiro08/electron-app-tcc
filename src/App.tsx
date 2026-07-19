@@ -2,9 +2,10 @@ import './index.css'
 import { useEffect } from 'react'
 import { useAuthStore } from '@/store/authStore'
 import { LoginScreen } from '@/components/auth/loginScreen'
-import { HomeScreen } from './components/home/homeScreen'
 import { DashboardLayout } from './components/layout/layout'
 import { useServerStatusStore } from '@/store/serverStatusStore'
+import { HashRouter } from 'react-router-dom'
+import { AppRoutes } from './routes'
 
 function App() {
   const { session, initializing, init } = useAuthStore()
@@ -20,7 +21,8 @@ function App() {
   }, [startPolling])
 
   if (initializing) {
-    return <div className="flex min-h-screen items-center justify-center text-sm text-muted-foreground">Loading…</div>
+    /* text-muted-foreground */
+    return <div className="flex min-h-screen items-center justify-center text-sm ">Loading…</div>
   }
 
   if (!session) {
@@ -28,9 +30,11 @@ function App() {
   }
 
   return (
-    <DashboardLayout>
-      <HomeScreen />
-    </DashboardLayout>
+    <HashRouter>
+      <DashboardLayout>
+        <AppRoutes />
+      </DashboardLayout>
+    </HashRouter>
   )
 }
 
