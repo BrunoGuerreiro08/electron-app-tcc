@@ -3,7 +3,7 @@ import type {
     CategoryScoreResult,
     CollectionScoreResult,
     Rule,
-    ScorableCertificate,
+    ScorableDocument,
     SubgroupCompletionState,
     SubgroupScoreResult,
 } from './types'
@@ -11,7 +11,7 @@ import type {
 export interface CategoryInput {
     id: string
     rule: Rule
-    certificates: ScorableCertificate[]
+    documents: ScorableDocument[]
 }
 
 export interface SubgroupInput {
@@ -28,19 +28,29 @@ export interface CollectionInput {
 
 /**
  * Computes the score for a single category by delegating to the
- * registered handler for its rule type, then applying a cap if the
- * rule is "capped". Returns zero for a category with no certificates
- * (NFR-07-03) rather than throwing.
+ * registered handler for its rule type, applying each document's
+ * `quantity` as a multiplier on its base contribution (uniformly,
+ * regardless of rule type — a document representing 2 internship
+ * orientations counts twice under a flat OR hours rule), then applying
+ * a cap if the rule is "capped". Returns zero for a category with no
+ * documents (NFR-07-03) rather than throwing.
  */
 export function computeCategoryScore(input: CategoryInput): CategoryScoreResult {
-    const { id, rule, certificates } = input
+    const { id, rule, documents } = input
     const handler = ruleHandlerRegistry[rule.type]
 
     if (!handler) {
         throw new Error(`No rule handler registered for type "${rule.type}".`)
     }
 
-    const { rawTotal, breakdown } = handler(rule, certificates)
+    const { breakdown: baseBreakdown } = handler(rule, documents)
+
+    const quantityById = new Map(documents.map((doc) => [doc.id, doc.quantity ?? 1]))
+    const breakdown = baseBreakdown.map((entry) => ({
+        documentId: entry.documentId,
+        points: entry.points * (quantityById.get(entry.documentId) ?? 1),
+    }))
+    const rawTotal = breakdown.reduce((sum, b) => sum + b.points, 0)
 
     const cap = rule.type === 'capped' ? rule.cap : null
     const total = cap !== null ? Math.min(rawTotal, cap) : rawTotal

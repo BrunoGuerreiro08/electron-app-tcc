@@ -1,26 +1,26 @@
 import type {
     CappedRule,
-    CertificateContribution,
+    DocumentContribution,
     FlatRule,
     HoursRule,
     Rule,
-    ScorableCertificate,
+    ScorableDocument,
 } from './types'
 
 export interface RuleHandlerResult {
     rawTotal: number
-    breakdown: CertificateContribution[]
+    breakdown: DocumentContribution[]
 }
 
 export type RuleHandler<R extends Rule = Rule> = (
     rule: R,
-    certificates: ScorableCertificate[]
+    documents: ScorableDocument[]
 ) => RuleHandlerResult
 
-// ---- flat: N points per certificate ----
-const flatHandler: RuleHandler<FlatRule> = (rule, certificates) => {
-    const breakdown = certificates.map((cert) => ({
-        certificateId: cert.id,
+// ---- flat: N points per document ----
+const flatHandler: RuleHandler<FlatRule> = (rule, documents) => {
+    const breakdown = documents.map((doc) => ({
+        documentId: doc.id,
         points: rule.pointsPerUnit,
     }))
     const rawTotal = breakdown.reduce((sum, b) => sum + b.points, 0)
@@ -28,20 +28,20 @@ const flatHandler: RuleHandler<FlatRule> = (rule, certificates) => {
 }
 
 // ---- hours: pointsPerUnit awarded per unitSize hours declared, continuous ----
-const hoursHandler: RuleHandler<HoursRule> = (rule, certificates) => {
-    const breakdown = certificates.map((cert) => {
-        const hours = cert.hours ?? 0
+const hoursHandler: RuleHandler<HoursRule> = (rule, documents) => {
+    const breakdown = documents.map((doc) => {
+        const hours = doc.hours ?? 0
         const points = (hours / rule.unitSize) * rule.pointsPerUnit
-        return { certificateId: cert.id, points }
+        return { documentId: doc.id, points }
     })
     const rawTotal = breakdown.reduce((sum, b) => sum + b.points, 0)
     return { rawTotal, breakdown }
 }
 
 // ---- capped: delegates to inner rule's handler, caller applies the clamp ----
-const cappedHandler: RuleHandler<CappedRule> = (rule, certificates) => {
+const cappedHandler: RuleHandler<CappedRule> = (rule, documents) => {
     const innerHandler = ruleHandlerRegistry[rule.inner.type] as RuleHandler
-    return innerHandler(rule.inner, certificates)
+    return innerHandler(rule.inner, documents)
 }
 
 /**

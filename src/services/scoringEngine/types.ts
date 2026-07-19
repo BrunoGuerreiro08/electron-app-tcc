@@ -19,19 +19,23 @@ export interface CappedRule {
 
 export type Rule = FlatRule | HoursRule | CappedRule
 
-// ---- Minimal certificate shape the engine actually needs ----
+// ---- Minimal document shape the engine actually needs ----
 // Deliberately narrow — decouples the engine from the full storage entity.
-// Callers map their real Certificate rows to this shape.
+// Callers map their real Document rows (joined via DOCUMENT_CATEGORY_LINK)
+// to this shape. `quantity` represents how many contributions a single
+// document accounts for (e.g. one certificate covering 2 internship
+// orientations) and multiplies the rule's base result for that document.
 
-export interface ScorableCertificate {
+export interface ScorableDocument {
     id: string
     hours?: number | null
+    quantity?: number | null
 }
 
 // ---- Results ----
 
-export interface CertificateContribution {
-    certificateId: string
+export interface DocumentContribution {
+    documentId: string
     points: number
 }
 
@@ -43,7 +47,7 @@ export interface CategoryScoreResult {
     /** Score after cap is applied (equals rawTotal for flat/hours) */
     total: number
     capped: boolean
-    breakdown: CertificateContribution[]
+    breakdown: DocumentContribution[]
 }
 
 export type SubgroupCompletionState = 'incomplete' | 'complete' | 'exceeded' | null

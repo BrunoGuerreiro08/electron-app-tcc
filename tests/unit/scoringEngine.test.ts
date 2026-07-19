@@ -9,14 +9,13 @@ import { validateRule } from '@/services/scoringEngine/validateRule'
 import type { CappedRule, FlatRule, HoursRule } from '@/services/scoringEngine/types'
 
 describe('flat rule', () => {
-    // II.20 – patent/software registration deposited: 30 pts each
     const rule: FlatRule = { type: 'flat', pointsPerUnit: 30 }
 
-    it('multiplies pointsPerUnit by certificate count', () => {
+    it('multiplies pointsPerUnit by document count', () => {
         const result = computeCategoryScore({
             id: 'cat-1',
             rule,
-            certificates: [{ id: 'c1' }, { id: 'c2' }],
+            documents: [{ id: 'd1' }, { id: 'd2' }],
         })
         expect(result.total).toBe(60)
         expect(result.rawTotal).toBe(60)
@@ -24,34 +23,32 @@ describe('flat rule', () => {
     })
 
     it('returns zero for an empty category without throwing (NFR-07-03)', () => {
-        const result = computeCategoryScore({ id: 'cat-1', rule, certificates: [] })
+        const result = computeCategoryScore({ id: 'cat-1', rule, documents: [] })
         expect(result.total).toBe(0)
         expect(result.breakdown).toEqual([])
     })
 
-    it('produces a per-certificate breakdown (NFR-08-02)', () => {
+    it('produces a per-document breakdown (NFR-08-02)', () => {
         const result = computeCategoryScore({
             id: 'cat-1',
             rule,
-            certificates: [{ id: 'c1' }, { id: 'c2' }],
+            documents: [{ id: 'd1' }, { id: 'd2' }],
         })
         expect(result.breakdown).toEqual([
-            { certificateId: 'c1', points: 30 },
-            { certificateId: 'c2', points: 30 },
+            { documentId: 'd1', points: 30 },
+            { documentId: 'd2', points: 30 },
         ])
     })
 })
 
 describe('hours rule', () => {
-    // I.1.1 – teaching hours: 1 point per 15 hours of course load
     const rule: HoursRule = { type: 'hours', pointsPerUnit: 1, unitSize: 15 }
 
     it('computes continuous (non-floored) points from declared hours', () => {
-        // matches spreadsheet formula "Pontuação (CHC/15)"
         const result = computeCategoryScore({
             id: 'cat-1',
             rule,
-            certificates: [{ id: 'c1', hours: 45 }],
+            documents: [{ id: 'd1', hours: 45 }],
         })
         expect(result.total).toBe(3)
     })
@@ -60,7 +57,7 @@ describe('hours rule', () => {
         const result = computeCategoryScore({
             id: 'cat-1',
             rule,
-            certificates: [{ id: 'c1', hours: 20 }], // 20/15 = 1.333...
+            documents: [{ id: 'd1', hours: 20 }],
         })
         expect(result.total).toBeCloseTo(1.333, 3)
     })
@@ -69,27 +66,25 @@ describe('hours rule', () => {
         const result = computeCategoryScore({
             id: 'cat-1',
             rule,
-            certificates: [{ id: 'c1' }],
+            documents: [{ id: 'd1' }],
         })
         expect(result.total).toBe(0)
     })
 
-    it('sums hours across multiple certificates', () => {
+    it('sums hours across multiple documents', () => {
         const result = computeCategoryScore({
             id: 'cat-1',
             rule,
-            certificates: [
-                { id: 'c1', hours: 15 },
-                { id: 'c2', hours: 30 },
+            documents: [
+                { id: 'd1', hours: 15 },
+                { id: 'd2', hours: 30 },
             ],
         })
-        expect(result.total).toBe(3) // (15/15)*1 + (30/15)*1
+        expect(result.total).toBe(3)
     })
 })
 
 describe('capped rule', () => {
-    // II.12 – book with ISBN: 20 pts each, "Pontuação limitada a 20 pontos por livro"
-    // (using a coarser example: 3 items at 10pts each, capped at 20)
     const rule: CappedRule = {
         type: 'capped',
         inner: { type: 'flat', pointsPerUnit: 10 },
@@ -100,7 +95,7 @@ describe('capped rule', () => {
         const result = computeCategoryScore({
             id: 'cat-1',
             rule,
-            certificates: [{ id: 'c1' }, { id: 'c2' }, { id: 'c3' }], // raw 30
+            documents: [{ id: 'd1' }, { id: 'd2' }, { id: 'd3' }],
         })
         expect(result.rawTotal).toBe(30)
         expect(result.total).toBe(20)
@@ -111,7 +106,7 @@ describe('capped rule', () => {
         const result = computeCategoryScore({
             id: 'cat-1',
             rule,
-            certificates: [{ id: 'c1' }],
+            documents: [{ id: 'd1' }],
         })
         expect(result.total).toBe(10)
         expect(result.capped).toBe(false)
@@ -126,15 +121,67 @@ describe('capped rule', () => {
         const result = computeCategoryScore({
             id: 'cat-1',
             rule: hoursCapped,
-            certificates: [{ id: 'c1', hours: 60 }], // raw = 4
+            documents: [{ id: 'd1', hours: 60 }],
         })
         expect(result.rawTotal).toBe(4)
         expect(result.total).toBe(2)
     })
 })
 
+describe('quantity multiplier', () => {
+    it('multiplies a flat rule result by document quantity', () => {
+        const result = computeCategoryScore({
+            id: 'cat-1',
+            rule: { type: 'flat', pointsPerUnit: 5 },
+            documents: [{ id: 'd1', quantity: 2 }],
+        })
+        expect(result.total).toBe(10)
+    })
+
+    it('multiplies an hours rule result by document quantity', () => {
+        const result = computeCategoryScore({
+            id: 'cat-1',
+            rule: { type: 'hours', pointsPerUnit: 1, unitSize: 15 },
+            documents: [{ id: 'd1', hours: 15, quantity: 3 }],
+        })
+        expect(result.total).toBe(3)
+    })
+
+    it('defaults quantity to 1 when not provided', () => {
+        const result = computeCategoryScore({
+            id: 'cat-1',
+            rule: { type: 'flat', pointsPerUnit: 5 },
+            documents: [{ id: 'd1' }],
+        })
+        expect(result.total).toBe(5)
+    })
+
+    it('applies the cap after quantity is factored in', () => {
+        const result = computeCategoryScore({
+            id: 'cat-1',
+            rule: { type: 'capped', inner: { type: 'flat', pointsPerUnit: 5 }, cap: 8 },
+            documents: [{ id: 'd1', quantity: 3 }],
+        })
+        expect(result.rawTotal).toBe(15)
+        expect(result.total).toBe(8)
+        expect(result.capped).toBe(true)
+    })
+
+    it('sums quantity-adjusted contributions across multiple documents', () => {
+        const result = computeCategoryScore({
+            id: 'cat-1',
+            rule: { type: 'flat', pointsPerUnit: 2 },
+            documents: [
+                { id: 'd1', quantity: 2 },
+                { id: 'd2', quantity: 1 },
+                { id: 'd3' },
+            ],
+        })
+        expect(result.total).toBe(8)
+    })
+})
+
 describe('subgroup completion state', () => {
-    // Grupo I – "Mínimo exigido pela LDB - 32 pontos"
     it('is incomplete when below minPoints', () => {
         expect(computeSubgroupCompletion(20, 32, null)).toBe('incomplete')
     })
@@ -170,12 +217,12 @@ describe('subgroup and collection aggregation', () => {
                         {
                             id: 'cat-1',
                             rule: { type: 'flat', pointsPerUnit: 2 },
-                            certificates: [{ id: 'c1' }, { id: 'c2' }], // 4
+                            documents: [{ id: 'd1' }, { id: 'd2' }],
                         },
                         {
                             id: 'cat-2',
                             rule: { type: 'hours', pointsPerUnit: 1, unitSize: 15 },
-                            certificates: [{ id: 'c3', hours: 15 }], // 1
+                            documents: [{ id: 'd3', hours: 15 }],
                         },
                     ],
                 },
@@ -185,28 +232,28 @@ describe('subgroup and collection aggregation', () => {
                         {
                             id: 'cat-3',
                             rule: { type: 'flat', pointsPerUnit: 10 },
-                            certificates: [{ id: 'c4' }], // 10
+                            documents: [{ id: 'd4' }],
                         },
                     ],
                 },
             ],
         })
 
-        expect(collection.subgroups[0].total).toBe(5) // 4 + 1
+        expect(collection.subgroups[0].total).toBe(5)
         expect(collection.subgroups[0].completion).toBe('complete')
         expect(collection.subgroups[1].total).toBe(10)
-        expect(collection.total).toBe(15) // 5 + 10 — arithmetically consistent
+        expect(collection.total).toBe(15)
     })
 
     it('handles an empty category within a subgroup without breaking the total', () => {
         const subgroup = computeSubgroupScore({
             id: 'sub-1',
             categories: [
-                { id: 'cat-1', rule: { type: 'flat', pointsPerUnit: 5 }, certificates: [] },
+                { id: 'cat-1', rule: { type: 'flat', pointsPerUnit: 5 }, documents: [] },
                 {
                     id: 'cat-2',
                     rule: { type: 'flat', pointsPerUnit: 5 },
-                    certificates: [{ id: 'c1' }],
+                    documents: [{ id: 'd1' }],
                 },
             ],
         })
@@ -276,7 +323,7 @@ describe('referential transparency (NFR-04-01)', () => {
         const input = {
             id: 'cat-1',
             rule: { type: 'hours' as const, pointsPerUnit: 2, unitSize: 10 },
-            certificates: [{ id: 'c1', hours: 25 }],
+            documents: [{ id: 'd1', hours: 25 }],
         }
         const first = computeCategoryScore(input)
         const second = computeCategoryScore(input)
