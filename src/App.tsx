@@ -2,9 +2,12 @@ import './index.css'
 import { useEffect } from 'react'
 import { useAuthStore } from '@/store/authStore'
 import { LoginScreen } from '@/components/auth/loginScreen'
+import { HomeScreen } from './components/home/homeScreen'
+import { DashboardLayout } from './components/layout/layout'
+
 
 function App() {
-  const { session, initializing, init, logout } = useAuthStore()
+  const { session, initializing, init } = useAuthStore()
 
   useEffect(() => {
     init()
@@ -19,12 +22,9 @@ function App() {
   }
 
   return (
-    <div className="p-4">
-      <p className="text-sm text-muted-foreground">Signed in as {session.email}</p>
-      <button onClick={logout} className="text-sm underline">
-        Log out
-      </button>
-    </div>
+    <DashboardLayout>
+      <HomeScreen />
+    </DashboardLayout>
   )
 }
 
