@@ -1,4 +1,4 @@
-import type { AuthRepository, Session } from '@/types/sessions'
+import type { AuthRepository, Session } from '@/types/auth'
 
 const pendingCodes = new Map<string, { code: string; expiresAt: number }>()
 

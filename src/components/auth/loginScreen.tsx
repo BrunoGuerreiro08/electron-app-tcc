@@ -9,10 +9,12 @@ import { InputOTP, InputOTPGroup, InputOTPSlot } from '@/components/ui/input-otp
 import { Sun, Moon, Monitor } from 'lucide-react'
 
 export function LoginScreen() {
-  const { step, email, loading, error, requestCode, verifyCode, reset } = useAuthStore()
+  const { step, email, loading, error, requestCode, verifyCode, completeProfile, reset } =
+    useAuthStore()
   const { theme, setTheme } = useTheme()
   const [emailInput, setEmailInput] = useState('')
   const [codeInput, setCodeInput] = useState('')
+  const [nameInput, setNameInput] = useState('')
 
   const cycleTheme = () => {
     if (theme === 'light') setTheme('dark')
@@ -49,9 +51,9 @@ export function LoginScreen() {
           <CardHeader>
             <CardTitle>Certificate Portfolio</CardTitle>
             <CardDescription>
-              {step === 'email'
-                ? 'Sign in with your institutional email.'
-                : `Enter the code sent to ${email}.`}
+              {step === 'email' && 'Sign in with your institutional email.'}
+              {step === 'code' && `Enter the code sent to ${email}.`}
+              {step === 'onboarding' && "Welcome! What's your name?"}
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
@@ -74,6 +76,7 @@ export function LoginScreen() {
                     autoFocus
                   />
                 </div>
+                {error && <p className="text-sm text-destructive">{error}</p>}
                 <Button type="submit" className="w-full" disabled={loading || !emailInput}>
                   {loading ? 'Sending code…' : 'Send code'}
                 </Button>
@@ -110,6 +113,31 @@ export function LoginScreen() {
                 </Button>
                 <Button type="button" variant="ghost" className="w-full" onClick={reset}>
                   Use a different email
+                </Button>
+              </form>
+            )}
+
+            {step === 'onboarding' && (
+              <form
+                onSubmit={(e) => {
+                  e.preventDefault()
+                  completeProfile(nameInput)
+                }}
+                className="space-y-4"
+              >
+                <div className="space-y-2">
+                  <Label htmlFor="name">Your name</Label>
+                  <Input
+                    id="name"
+                    placeholder="Jane Silva"
+                    value={nameInput}
+                    onChange={(e) => setNameInput(e.target.value)}
+                    autoFocus
+                  />
+                </div>
+                {error && <p className="text-sm text-destructive">{error}</p>}
+                <Button type="submit" className="w-full" disabled={loading || !nameInput.trim()}>
+                  {loading ? 'Saving…' : 'Continue'}
                 </Button>
               </form>
             )}

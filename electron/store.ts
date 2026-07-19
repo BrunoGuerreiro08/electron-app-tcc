@@ -1,7 +1,7 @@
 import Store from 'electron-store'
 
 export interface SessionRecord {
-    email: string
+    user: { id: string; email: string; name: string | null }
     token: string
     issuedAt: number
     expiresAt: number
