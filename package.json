@@ -7,6 +7,8 @@
   "scripts": {
     "dev": "node scripts/build-preload.mjs && vite",
     "build": "node scripts/build-preload.mjs && tsc && vite build && electron-builder",
+    "test": "vitest run",
+    "test:watch": "vitest",
     "preview": "vite preview",
     "postinstall": "electron-rebuild -f -w better-sqlite3"
   },
