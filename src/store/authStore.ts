@@ -1,6 +1,6 @@
 import { create } from 'zustand'
 import type { AuthStep, Session } from '@/types/sessions'
-import { mockAuthRepository } from '@/repository/mockAuthRepository'
+import { httpAuthRepository as mockAuthRepository } from '@/repository/httpAuthRepository'
 
 interface AuthState {
     step: AuthStep

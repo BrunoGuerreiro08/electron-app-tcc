@@ -27,3 +27,8 @@ dist-ssr
 *.db-wal
 *.db-shm
 dist-electron/
+
+# Server directories and files
+server/node_modules/
+server/dist/
+server/.env
