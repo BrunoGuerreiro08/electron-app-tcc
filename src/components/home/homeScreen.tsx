@@ -1,9 +1,9 @@
 import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { collectionRepository } from '@/repository/collectionRepository'
 import { documentRepository } from '@/repository/documentRepository'
+import { useCollectionsStore } from '@/store/collectionsStore'
 import { useSettingsStore } from '@/store/settingsStore'
-import type { Collection, Document } from '@/types/entities'
+import type { Document } from '@/types/entities'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
@@ -19,36 +19,31 @@ import { FolderOpen, Plus, FileText, Loader2 } from 'lucide-react'
 
 export function HomeScreen() {
     const navigate = useNavigate()
-    const [collections, setCollections] = useState<Collection[]>([])
+    const { collections, loading, load, create } = useCollectionsStore()
     const [unfiled, setUnfiled] = useState<Document[]>([])
-    const [loading, setLoading] = useState(true)
     const [newName, setNewName] = useState('')
     const [dialogOpen, setDialogOpen] = useState(false)
 
-    const { storageFolder, isCustomFolder, migrating, error, load, changeFolder } =
+    const { storageFolder, isCustomFolder, migrating, error, load: loadSettings, changeFolder } =
         useSettingsStore()
 
-    const refresh = async () => {
-        const [cols, docs] = await Promise.all([
-            collectionRepository.list(),
-            documentRepository.listUnlinked(),
-        ])
-        setCollections(cols)
+    const refreshUnfiled = async () => {
+        const docs = await documentRepository.listUnlinked()
         setUnfiled(docs)
-        setLoading(false)
     }
 
     useEffect(() => {
-        refresh()
         load()
-    }, [load])
+        refreshUnfiled()
+        loadSettings()
+    }, [load, loadSettings])
 
     const handleCreate = async () => {
         if (!newName.trim()) return
-        await collectionRepository.create(newName.trim())
+        const id = await create(newName.trim())
         setNewName('')
         setDialogOpen(false)
-        refresh()
+        navigate(`/collections/${id}`)
     }
 
     return (

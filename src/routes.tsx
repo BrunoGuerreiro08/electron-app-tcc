@@ -1,5 +1,6 @@
 import { Routes, Route, Navigate } from 'react-router-dom'
 import { HomeScreen } from '@/components/home/homeScreen'
+import { CollectionDetailScreen } from '@/components/collections/collectionDetailScreen'
 
 function ComingSoon({ label }: { label: string }) {
     return (
@@ -14,7 +15,7 @@ export function AppRoutes() {
         <Routes>
             <Route path="/" element={<HomeScreen />} />
             <Route path="/documents" element={<ComingSoon label="Document library" />} />
-            <Route path="/collections/:collectionId" element={<ComingSoon label="Collection detail" />} />
+            <Route path="/collections/:collectionId" element={<CollectionDetailScreen />} />
             <Route path="/collections/:collectionId/report" element={<ComingSoon label="Report preview" />} />
 
             <Route path="/settings" element={<ComingSoon label="Settings Hub" />} />

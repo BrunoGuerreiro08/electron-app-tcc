@@ -1,6 +1,6 @@
 import { useTheme } from "next-themes"
 import { useAuthStore } from "@/store/authStore"
-import { NavLink, useLocation } from "react-router-dom"
+import { NavLink, useLocation, useNavigate } from "react-router-dom"
 import {
     LogOut,
     Sun,
@@ -17,7 +17,8 @@ import {
     Shield,
     User,
     Library,
-    Home
+    Home,
+    Plus
 } from "lucide-react"
 import {
     Sidebar,
@@ -47,8 +48,13 @@ import {
     AlertDialogTitle,
     AlertDialogTrigger,
 } from "@/components/ui/alert-dialog"
-import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "../ui/collapsible"
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible"
 import { ServerStatusIndicator } from "./serverStatusIndicator"
+import { useCollectionsStore } from "@/store/collectionsStore"
+import { useEffect, useState } from "react"
+import { DialogContent, DialogHeader, DialogTitle, DialogFooter, Dialog } from "@/components/ui/dialog"
+import { Button } from "@/components/ui/button"
+import { Input } from "@/components/ui/input"
 
 export function AppSidebar() {
     const { theme, setTheme } = useTheme()
@@ -63,12 +69,22 @@ export function AppSidebar() {
         else setTheme('light')
     }
 
-    const mockColecoes = [
-        { id: 1, title: "Coleção #1" },
-        { id: 2, title: "Coleção #2" },
-        { id: 3, title: "Coleção #3" },
-    ]
+    const navigate = useNavigate()
+    const { collections, load, create } = useCollectionsStore()
+    const [newDialogOpen, setNewDialogOpen] = useState(false)
+    const [newName, setNewName] = useState('')
 
+    useEffect(() => {
+        load()
+    }, [load])
+
+    const handleCreate = async () => {
+        if (!newName.trim()) return
+        const id = await create(newName.trim())
+        setNewName('')
+        setNewDialogOpen(false)
+        navigate(`/collections/${id}`)
+    }
     return (
         <Sidebar collapsible="icon" className="border-r border-border">
             <SidebarHeader className="h-14 flex flex-row items-center justify-between px-4 border-b border-border/50">
@@ -202,25 +218,54 @@ export function AppSidebar() {
 
                                     <CollapsibleContent>
                                         <SidebarMenuSub>
-                                            {mockColecoes.map((colecao) => {
-                                                const path = `/collections/${colecao.id}`
+                                            {collections.map((c) => {
+                                                const path = `/collections/${c.id}`
                                                 return (
-                                                    <SidebarMenuSubItem key={colecao.id}>
+                                                    <SidebarMenuSubItem key={c.id}>
                                                         <SidebarMenuSubButton
                                                             asChild
                                                             isActive={location.pathname === path}
                                                         >
                                                             <NavLink to={path}>
-                                                                {colecao.title}
+                                                                {c.name}
                                                             </NavLink>
                                                         </SidebarMenuSubButton>
                                                     </SidebarMenuSubItem>
                                                 )
                                             })}
+
+                                            <SidebarMenuSubItem>
+                                                <SidebarMenuSubButton asChild onClick={() => setNewDialogOpen(true)}>
+                                                    <button type="button" className="text-muted-foreground">
+                                                        <Plus className="h-3.5 w-3.5" />
+                                                        Nova coleção
+                                                    </button>
+                                                </SidebarMenuSubButton>
+                                            </SidebarMenuSubItem>
                                         </SidebarMenuSub>
                                     </CollapsibleContent>
                                 </SidebarMenuItem>
                             </Collapsible>
+
+                            <Dialog open={newDialogOpen} onOpenChange={setNewDialogOpen}>
+                                <DialogContent>
+                                    <DialogHeader>
+                                        <DialogTitle>Nova coleção</DialogTitle>
+                                    </DialogHeader>
+                                    <Input
+                                        placeholder="e.g. 2026 Progression Portfolio"
+                                        value={newName}
+                                        onChange={(e) => setNewName(e.target.value)}
+                                        autoFocus
+                                        onKeyDown={(e) => e.key === 'Enter' && handleCreate()}
+                                    />
+                                    <DialogFooter>
+                                        <Button onClick={handleCreate} disabled={!newName.trim()}>
+                                            Criar
+                                        </Button>
+                                    </DialogFooter>
+                                </DialogContent>
+                            </Dialog>
 
                             <SidebarSeparator className="my-2 mx-auto w-[calc(100%-1rem)] group-data-[collapsible=icon]:w-8" />
 
