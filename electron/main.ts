@@ -17,15 +17,20 @@ const __dirname = path.dirname(__filename)
 const isDev = process.env.NODE_ENV === 'development'
 
 function createWindow() {
+
     const win = new BrowserWindow({
         width: 1280,
         height: 800,
+        icon: path.join(__dirname, '../public/favicon.png'),
+        // frame: false,
         webPreferences: {
             preload: path.join(__dirname, 'preload.cjs'),
             contextIsolation: true,
             nodeIntegration: false,
         },
     })
+
+    win.removeMenu()
 
     if (isDev) {
         win.loadURL('http://localhost:5173')
