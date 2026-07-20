@@ -85,13 +85,27 @@ export function AppSidebar() {
         setNewDialogOpen(false)
         navigate(`/collections/${id}`)
     }
+
+    // inside the sidebar component:
+    const session = useAuthStore((s) => s.session)
+
+    const displayName = session?.user.name ?? session?.user.email ?? 'Guest'
+    const initials = displayName
+        .split(' ')
+        .filter(Boolean)
+        .slice(0, 2)
+        .map((part) => part[0]?.toUpperCase())
+        .join('')
+
     return (
         <Sidebar collapsible="icon" className="border-r border-border">
             <SidebarHeader className="h-14 flex flex-row items-center justify-between px-4 border-b border-border/50">
                 {!isCollapsed && (
-                    <div className="flex items-center gap-2 font-semibold">
-                        <div className="size-5 rounded bg-primary" />
-                        <span className="text-sm">Acme Inc.</span>
+                    <div className="flex items-center gap-2 font-semibold min-w-0">
+                        <div className="size-7 rounded bg-primary flex items-center justify-center text-[11px] font-medium text-primary-foreground leading-none">
+                            {initials}
+                        </div>
+                        <span className="text-sm truncate">{displayName}</span>
                     </div>
                 )}
 
