@@ -54,6 +54,14 @@ declare global {
                     newFolder: string
                 ) => Promise<{ moved: number; failed: number; errors: string[] }>
             }
+            files: {
+                pick: () => Promise<{ ok: true; path: string; size: number } | { ok: false; error: string } | null>
+                attach: (documentId: string, sourcePath: string) =>
+                    Promise<{ ok: true; filePath: string } | { ok: false; error: string }>
+                remove: (documentId: string) => Promise<void>
+                open: (documentId: string) => Promise<void>
+                detectOrphans: () => Promise<{ orphanedFiles: string[]; missingFiles: string[] }>
+            }
         }
     }
 }

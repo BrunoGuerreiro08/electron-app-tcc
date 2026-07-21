@@ -212,6 +212,18 @@ export function AppSidebar() {
                             </Collapsible>
 
                             <SidebarSeparator className="my-2 mx-auto w-[calc(100%-1rem)] group-data-[collapsible=icon]:w-8" />
+                            <SidebarMenuItem>
+                                <SidebarMenuButton
+                                    asChild
+                                    tooltip="Documentos"
+                                    isActive={location.pathname.startsWith("/documents")}
+                                >
+                                    <NavLink to="/documents">
+                                        <FileText className="h-4 w-4 shrink-0" />
+                                        <span>Documentos</span>
+                                    </NavLink>
+                                </SidebarMenuButton>
+                            </SidebarMenuItem>
 
                             <Collapsible
                                 asChild

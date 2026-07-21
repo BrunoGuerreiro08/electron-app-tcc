@@ -2,6 +2,7 @@ import { app, BrowserWindow, globalShortcut } from 'electron'
 import path from 'node:path'
 import { fileURLToPath } from 'node:url'
 import { initSchema } from './db'
+import { detectOrphans } from './fileHandler'
 import { registerCollectionHandlers } from './ipc/collections'
 import { registerSubgroupHandlers } from './ipc/subgroups'
 import { registerCategoryHandlers } from './ipc/categories'
@@ -10,6 +11,7 @@ import { registerTagHandlers } from './ipc/tags'
 import { registerDocumentCategoryLinkHandlers } from './ipc/documentCategoryLinks'
 import { registerSessionHandlers } from './ipc/session'
 import { registerSettingsHandlers } from './ipc/settings'
+import { registerFileHandlers } from './ipc/files'
 
 const __filename = fileURLToPath(import.meta.url)
 const __dirname = path.dirname(__filename)
@@ -63,6 +65,8 @@ app.whenReady().then(() => {
     registerDocumentCategoryLinkHandlers()
     registerSessionHandlers()
     registerSettingsHandlers()
+    registerFileHandlers()
+    detectOrphans()
     createWindow()
 })
 

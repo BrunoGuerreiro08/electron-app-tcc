@@ -66,4 +66,12 @@ contextBridge.exposeInMainWorld('api', {
         changeStorageFolder: (newFolder: string) =>
             ipcRenderer.invoke('settings:changeStorageFolder', newFolder),
     },
+    files: {
+        pick: () => ipcRenderer.invoke('files:pick'),
+        attach: (documentId: string, sourcePath: string) =>
+            ipcRenderer.invoke('files:attach', documentId, sourcePath),
+        remove: (documentId: string) => ipcRenderer.invoke('files:remove', documentId),
+        open: (documentId: string) => ipcRenderer.invoke('files:open', documentId),
+        detectOrphans: () => ipcRenderer.invoke('files:detectOrphans'),
+    },
 })
