@@ -3,18 +3,8 @@ import { documentRepository } from '@/repository/documentRepository'
 import { documentCategoryLinkRepository } from '@/repository/documentCategoryLinkRepository'
 import type { Document } from '@/types/entities'
 import { Button } from '@/components/ui/button'
-import { Input } from '@/components/ui/input'
-import { Label } from '@/components/ui/label'
 import { Card, CardContent } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
-import {
-    Dialog,
-    DialogContent,
-    DialogHeader,
-    DialogTitle,
-    DialogTrigger,
-    DialogFooter,
-} from '@/components/ui/dialog'
 import {
     AlertDialog,
     AlertDialogAction,
@@ -27,11 +17,12 @@ import {
     AlertDialogTrigger,
 } from '@/components/ui/alert-dialog'
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs'
-import { Plus, Trash2, Link2 } from 'lucide-react'
+import { Plus, Trash2, Link2, Pencil } from 'lucide-react'
 import { TagsEditor } from './tagsEditor'
 import { LinkCategoriesDialog } from './linkCategoriesDialog'
 import { fileRepository } from '@/repository/fileRepository'
 import { Paperclip, ExternalLink, XCircle } from 'lucide-react'
+import { DocumentFormDialog } from './documentFormDialog'
 
 export function DocumentLibraryScreen() {
     const [documents, setDocuments] = useState<Document[]>([])
@@ -39,13 +30,16 @@ export function DocumentLibraryScreen() {
     const [linkedCounts, setLinkedCounts] = useState<Record<string, number>>({})
     const [loading, setLoading] = useState(true)
 
-    const [createOpen, setCreateOpen] = useState(false)
-    const [title, setTitle] = useState('')
-    const [issuer, setIssuer] = useState('')
-    const [issuedAt, setIssuedAt] = useState('')
-    const [quantity, setQuantity] = useState('1')
-    const [hours, setHours] = useState('')
-    const [notes, setNotes] = useState('')
+    // const [createOpen, setCreateOpen] = useState(false)
+    // const [title, setTitle] = useState('')
+    // const [issuer, setIssuer] = useState('')
+    // const [issuedAt, setIssuedAt] = useState('')
+    // const [quantity, setQuantity] = useState('1')
+    // const [hours, setHours] = useState('')
+    // const [notes, setNotes] = useState('')
+    const [documentDialog, setDocumentDialog] = useState<
+        { mode: 'create' } | { mode: 'edit'; document: Document } | null
+    >(null)
 
     const [linkDialogDoc, setLinkDialogDoc] = useState<string | null>(null)
 
@@ -71,15 +65,6 @@ export function DocumentLibraryScreen() {
     useEffect(() => {
         refresh()
     }, [filter])
-
-    const resetForm = () => {
-        setTitle('')
-        setIssuer('')
-        setIssuedAt('')
-        setQuantity('1')
-        setHours('')
-        setNotes('')
-    }
 
     const [fileError, setFileError] = useState<string | null>(null)
 
@@ -115,21 +100,6 @@ export function DocumentLibraryScreen() {
         }
     }
 
-    const handleCreate = async () => {
-        if (!title.trim()) return
-        await documentRepository.create({
-            title: title.trim(),
-            issuer: issuer.trim() || undefined,
-            issuedAt: issuedAt || undefined,
-            quantity: quantity ? Number(quantity) : 1,
-            hours: hours ? Number(hours) : undefined,
-            notes: notes.trim() || undefined,
-        })
-        resetForm()
-        setCreateOpen(false)
-        refresh()
-    }
-
     const handleDelete = async (id: string) => {
         await documentRepository.delete(id)
         refresh()
@@ -145,69 +115,10 @@ export function DocumentLibraryScreen() {
                     </p>
                 </div>
 
-                <Dialog open={createOpen} onOpenChange={setCreateOpen}>
-                    <DialogTrigger asChild>
-                        <Button size="sm">
-                            <Plus className="h-4 w-4" />
-                            New document
-                        </Button>
-                    </DialogTrigger>
-                    <DialogContent>
-                        <DialogHeader>
-                            <DialogTitle>New document</DialogTitle>
-                        </DialogHeader>
-                        <div className="space-y-3">
-                            <div className="space-y-2">
-                                <Label>Title</Label>
-                                <Input value={title} onChange={(e) => setTitle(e.target.value)} autoFocus />
-                            </div>
-                            <div className="grid grid-cols-2 gap-3">
-                                <div className="space-y-2">
-                                    <Label>Issuer</Label>
-                                    <Input value={issuer} onChange={(e) => setIssuer(e.target.value)} />
-                                </div>
-                                <div className="space-y-2">
-                                    <Label>Date issued</Label>
-                                    <Input type="date" value={issuedAt} onChange={(e) => setIssuedAt(e.target.value)} />
-                                </div>
-                            </div>
-                            <div className="grid grid-cols-2 gap-3">
-                                <div className="space-y-2">
-                                    <Label>Quantity</Label>
-                                    <Input
-                                        type="number"
-                                        min={1}
-                                        step="any"
-                                        value={quantity}
-                                        onChange={(e) => setQuantity(e.target.value)}
-                                    />
-                                    <p className="text-xs text-muted-foreground">
-                                        e.g. 2 if this one document covers 2 contributions.
-                                    </p>
-                                </div>
-                                <div className="space-y-2">
-                                    <Label>Hours (if applicable)</Label>
-                                    <Input
-                                        type="number"
-                                        min={0}
-                                        step="any"
-                                        value={hours}
-                                        onChange={(e) => setHours(e.target.value)}
-                                    />
-                                </div>
-                            </div>
-                            <div className="space-y-2">
-                                <Label>Notes</Label>
-                                <Input value={notes} onChange={(e) => setNotes(e.target.value)} />
-                            </div>
-                        </div>
-                        <DialogFooter>
-                            <Button onClick={handleCreate} disabled={!title.trim()}>
-                                Create
-                            </Button>
-                        </DialogFooter>
-                    </DialogContent>
-                </Dialog>
+                <Button size="sm" onClick={() => setDocumentDialog({ mode: 'create' })}>
+                    <Plus className="h-4 w-4" />
+                    New document
+                </Button>
             </div>
             {fileError && (
                 <>
@@ -260,6 +171,14 @@ export function DocumentLibraryScreen() {
                                 </div>
 
                                 <div className="flex shrink-0 items-center gap-1">
+                                    <Button
+                                        variant="ghost"
+                                        size="icon"
+                                        className="h-7 w-7"
+                                        onClick={() => setDocumentDialog({ mode: 'edit', document: doc })}
+                                    >
+                                        <Pencil className="h-3.5 w-3.5" />
+                                    </Button>
                                     <TagsEditor documentId={doc.id} onChanged={refresh} />
                                     {doc.file_status === 'ready' ? (
                                         <>
@@ -340,6 +259,12 @@ export function DocumentLibraryScreen() {
                     onChanged={refresh}
                 />
             )}
+            <DocumentFormDialog
+                open={documentDialog !== null}
+                onOpenChange={(open) => !open && setDocumentDialog(null)}
+                onSaved={refresh}
+                document={documentDialog?.mode === 'edit' ? documentDialog.document : null}
+            />
         </div>
     )
 }

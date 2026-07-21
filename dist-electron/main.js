@@ -16531,6 +16531,9 @@ function detectOrphans() {
   return { orphanedFiles, missingFiles };
 }
 function registerCollectionHandlers() {
+  ipcMain$1.handle("collections:get", (_event, id2) => {
+    return db.prepare("SELECT * FROM collections WHERE id = ?").get(id2) ?? null;
+  });
   ipcMain$1.handle("collections:list", () => {
     return db.prepare("SELECT * FROM collections ORDER BY created_at DESC").all();
   });

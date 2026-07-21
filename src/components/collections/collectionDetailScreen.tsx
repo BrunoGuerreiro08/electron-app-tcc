@@ -1,13 +1,14 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { useParams } from 'react-router-dom'
 import { useCollectionDetail } from '@/hooks/useCollectionDetail'
+import { collectionRepository } from '@/repository/collectionRepository'
 import { subgroupRepository } from '@/repository/subgroupRepository'
 import { categoryRepository } from '@/repository/categoryRepository'
 import type { Rule } from '@/services/scoringEngine/types'
-import { RuleEditor } from './ruleEditor'
+import type { Category, Collection, Subgroup } from '@/types/entities'
+import { EditSubgroupDialog } from './editSubgroupDialog'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
-import { Label } from '@/components/ui/label'
 import { Badge } from '@/components/ui/badge'
 import {
     Accordion,
@@ -34,7 +35,8 @@ import {
     AlertDialogTitle,
     AlertDialogTrigger,
 } from '@/components/ui/alert-dialog'
-import { Plus, Trash2 } from 'lucide-react'
+import { Plus, Trash2, Pencil, Check, X } from 'lucide-react'
+import { CategoryFormDialog } from './categoryFormDialog'
 
 const COMPLETION_STYLES: Record<string, string> = {
     incomplete: 'bg-amber-100 text-amber-800 dark:bg-amber-950 dark:text-amber-300',
@@ -52,24 +54,47 @@ export function CollectionDetailScreen() {
     const { collectionId } = useParams<{ collectionId: string }>()
     const { subgroups, score, loading, refresh } = useCollectionDetail(collectionId!)
 
-    const [newSubgroupName, setNewSubgroupName] = useState('')
-    const [subgroupDialogOpen, setSubgroupDialogOpen] = useState(false)
+    const [collection, setCollection] = useState<Collection | null>(null)
     const [openSubgroups, setOpenSubgroups] = useState<string[]>([])
 
-    const [categoryDialogSubgroup, setCategoryDialogSubgroup] = useState<string | null>(null)
-    const [newCategoryName, setNewCategoryName] = useState('')
-    const [newCategoryRule, setNewCategoryRule] = useState<Rule>({
-        type: 'flat',
-        pointsPerUnit: 1,
-    })
+    const [editingName, setEditingName] = useState(false)
+    const [nameInput, setNameInput] = useState('')
 
-    if (loading) {
+    const [newSubgroupName, setNewSubgroupName] = useState('')
+    const [subgroupDialogOpen, setSubgroupDialogOpen] = useState(false)
+
+    const [categoryDialog, setCategoryDialog] = useState<
+        | { mode: 'create'; subgroupId: string }
+        | { mode: 'edit'; category: Category }
+        | null
+    >(null)
+
+    const [editingSubgroup, setEditingSubgroup] = useState<Subgroup | null>(null)
+
+    const loadCollection = async () => {
+        const c = await collectionRepository.get(collectionId!)
+        setCollection(c)
+        if (c) setNameInput(c.name)
+    }
+
+    useEffect(() => {
+        loadCollection()
+    }, [collectionId])
+
+    if (loading || !collection) {
         return <div className="p-6 text-sm text-muted-foreground">Loading…</div>
     }
 
     const scoreFor = (subgroupId: string) => score?.subgroups.find((s) => s.subgroupId === subgroupId)
     const categoryScoreFor = (categoryId: string) =>
         score?.subgroups.flatMap((s) => s.categories).find((c) => c.categoryId === categoryId)
+
+    const handleSaveName = async () => {
+        if (!nameInput.trim()) return
+        await collectionRepository.rename(collectionId!, nameInput.trim())
+        setEditingName(false)
+        loadCollection()
+    }
 
     const handleCreateSubgroup = async () => {
         if (!newSubgroupName.trim()) return
@@ -84,15 +109,6 @@ export function CollectionDetailScreen() {
         refresh()
     }
 
-    const handleCreateCategory = async () => {
-        if (!categoryDialogSubgroup || !newCategoryName.trim()) return
-        await categoryRepository.create(categoryDialogSubgroup, newCategoryName.trim(), newCategoryRule)
-        setNewCategoryName('')
-        setNewCategoryRule({ type: 'flat', pointsPerUnit: 1 })
-        setCategoryDialogSubgroup(null)
-        refresh()
-    }
-
     const handleDeleteCategory = async (id: string) => {
         await categoryRepository.delete(id)
         refresh()
@@ -102,7 +118,49 @@ export function CollectionDetailScreen() {
         <div className="space-y-6 p-6">
             <div className="flex items-center justify-between">
                 <div>
-                    <h1 className="text-2xl font-semibold">Collection</h1>
+                    {editingName ? (
+                        <div className="flex items-center gap-2">
+                            <Input
+                                value={nameInput}
+                                onChange={(e) => setNameInput(e.target.value)}
+                                className="h-9 text-2xl font-semibold"
+                                autoFocus
+                                onKeyDown={(e) => {
+                                    if (e.key === 'Enter') handleSaveName()
+                                    if (e.key === 'Escape') {
+                                        setNameInput(collection.name)
+                                        setEditingName(false)
+                                    }
+                                }}
+                            />
+                            <Button size="icon" variant="ghost" className="h-8 w-8" onClick={handleSaveName}>
+                                <Check className="h-4 w-4" />
+                            </Button>
+                            <Button
+                                size="icon"
+                                variant="ghost"
+                                className="h-8 w-8"
+                                onClick={() => {
+                                    setNameInput(collection.name)
+                                    setEditingName(false)
+                                }}
+                            >
+                                <X className="h-4 w-4" />
+                            </Button>
+                        </div>
+                    ) : (
+                        <div className="group flex items-center gap-2">
+                            <h1 className="text-2xl font-semibold">{collection.name}</h1>
+                            <Button
+                                size="icon"
+                                variant="ghost"
+                                className="h-7 w-7 opacity-0 transition-opacity group-hover:opacity-100"
+                                onClick={() => setEditingName(true)}
+                            >
+                                <Pencil className="h-3.5 w-3.5" />
+                            </Button>
+                        </div>
+                    )}
                     <p className="text-sm text-muted-foreground">
                         Grand total: <span className="font-medium text-foreground">{score?.total ?? 0}</span> points
                     </p>
@@ -140,7 +198,7 @@ export function CollectionDetailScreen() {
                     No sub-groups yet — create one to start adding categories.
                 </p>
             ) : (
-                < Accordion
+                <Accordion
                     type="multiple"
                     className="space-y-2"
                     value={openSubgroups}
@@ -168,14 +226,24 @@ export function CollectionDetailScreen() {
                                 </AccordionTrigger>
                                 <AccordionContent key={sg.categories.length} className="space-y-3">
                                     <div className="flex items-center justify-between">
-                                        <Button
-                                            variant="outline"
-                                            size="sm"
-                                            onClick={() => setCategoryDialogSubgroup(sg.id)}
-                                        >
-                                            <Plus className="h-3.5 w-3.5" />
-                                            New category
-                                        </Button>
+                                        <div className="flex gap-2">
+                                            <Button
+                                                variant="outline"
+                                                size="sm"
+                                                onClick={() => setCategoryDialog({ mode: 'create', subgroupId: sg.id })}
+                                            >
+                                                <Plus className="h-3.5 w-3.5" />
+                                                New category
+                                            </Button>
+                                            <Button
+                                                variant="ghost"
+                                                size="sm"
+                                                onClick={() => setEditingSubgroup(sg)}
+                                            >
+                                                <Pencil className="h-3.5 w-3.5" />
+                                                Edit
+                                            </Button>
+                                        </div>
                                         <AlertDialog>
                                             <AlertDialogTrigger asChild>
                                                 <Button variant="ghost" size="icon" className="h-7 w-7 text-destructive">
@@ -215,7 +283,7 @@ export function CollectionDetailScreen() {
                                                                     {ruleSummary(cat.rule)}
                                                                 </p>
                                                             </div>
-                                                            <div className="flex items-center gap-2">
+                                                            <div className="flex items-center gap-1">
                                                                 <span className="text-sm">
                                                                     {catScore?.total ?? 0}
                                                                     {catScore?.capped && (
@@ -225,6 +293,14 @@ export function CollectionDetailScreen() {
                                                                     )}{' '}
                                                                     pts
                                                                 </span>
+                                                                <Button
+                                                                    variant="ghost"
+                                                                    size="icon"
+                                                                    className="h-6 w-6"
+                                                                    onClick={() => setCategoryDialog({ mode: 'edit', category: cat })}
+                                                                >
+                                                                    <Pencil className="h-3 w-3" />
+                                                                </Button>
                                                                 <AlertDialog>
                                                                     <AlertDialogTrigger asChild>
                                                                         <Button
@@ -284,36 +360,20 @@ export function CollectionDetailScreen() {
                         )
                     })}
                 </Accordion>
-            )
-            }
+            )}
 
-            <Dialog
-                open={categoryDialogSubgroup !== null}
-                onOpenChange={(open) => !open && setCategoryDialogSubgroup(null)}
-            >
-                <DialogContent>
-                    <DialogHeader>
-                        <DialogTitle>New category</DialogTitle>
-                    </DialogHeader>
-                    <div className="space-y-4">
-                        <div className="space-y-2">
-                            <Label>Name</Label>
-                            <Input
-                                placeholder="e.g. Publications"
-                                value={newCategoryName}
-                                onChange={(e) => setNewCategoryName(e.target.value)}
-                                autoFocus
-                            />
-                        </div>
-                        <RuleEditor value={newCategoryRule} onChange={setNewCategoryRule} />
-                    </div>
-                    <DialogFooter>
-                        <Button onClick={handleCreateCategory} disabled={!newCategoryName.trim()}>
-                            Create
-                        </Button>
-                    </DialogFooter>
-                </DialogContent>
-            </Dialog>
-        </div >
+            <CategoryFormDialog
+                open={categoryDialog !== null}
+                onOpenChange={(open) => !open && setCategoryDialog(null)}
+                onSaved={refresh}
+                subgroupId={categoryDialog?.mode === 'create' ? categoryDialog.subgroupId : undefined}
+                category={categoryDialog?.mode === 'edit' ? categoryDialog.category : undefined}
+            />
+            <EditSubgroupDialog
+                subgroup={editingSubgroup}
+                onOpenChange={(open) => !open && setEditingSubgroup(null)}
+                onSaved={refresh}
+            />
+        </div>
     )
 }

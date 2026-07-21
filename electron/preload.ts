@@ -2,6 +2,7 @@ import { contextBridge, ipcRenderer } from 'electron'
 
 contextBridge.exposeInMainWorld('api', {
     collections: {
+        get: (id: string) => ipcRenderer.invoke('collections:get', id),
         list: () => ipcRenderer.invoke('collections:list'),
         create: (name: string, color?: string) =>
             ipcRenderer.invoke('collections:create', name, color),

@@ -3,6 +3,10 @@ import { db } from '../db'
 import { randomUUID } from 'node:crypto'
 
 export function registerCollectionHandlers() {
+    ipcMain.handle('collections:get', (_event, id: string) => {
+        return db.prepare('SELECT * FROM collections WHERE id = ?').get(id) ?? null
+    })
+
     ipcMain.handle('collections:list', () => {
         return db.prepare('SELECT * FROM collections ORDER BY created_at DESC').all()
     })

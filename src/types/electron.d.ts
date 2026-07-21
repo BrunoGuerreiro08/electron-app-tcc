@@ -4,6 +4,7 @@ declare global {
     interface Window {
         api: {
             collections: {
+                get: (id: string) => Promise<any | null>
                 list: () => Promise<any[]>
                 create: (name: string, color?: string) => Promise<string>
                 rename: (id: string, name: string) => Promise<void>
