@@ -8,10 +8,10 @@ export function registerDocumentCategoryLinkHandlers() {
     ipcMain.handle('documentCategoryLinks:listByCategory', (_event, categoryId: string) => {
         return db
             .prepare(
-                `SELECT d.id, d.title, d.issuer, d.issued_at, d.hours, d.quantity
-         FROM documents d
-         JOIN document_category_links l ON l.document_id = d.id
-         WHERE l.category_id = ?`
+                `SELECT d.id, d.title, d.issuer, d.issued_at, d.hours, d.quantity,d.file_path,d.file_status
+        FROM documents d
+        JOIN document_category_links l ON l.document_id = d.id
+        WHERE l.category_id = ?`
             )
             .all(categoryId)
     })

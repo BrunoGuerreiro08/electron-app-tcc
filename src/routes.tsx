@@ -2,6 +2,7 @@ import { Routes, Route, Navigate } from 'react-router-dom'
 import { HomeScreen } from '@/components/home/homeScreen'
 import { CollectionDetailScreen } from '@/components/collections/collectionDetailScreen'
 import { DocumentLibraryScreen } from '@/components/documents/documentLibraryScreen'
+import { ExportScreen } from './components/reports/exportScreen'
 
 function ComingSoon({ label }: { label: string }) {
     return (
@@ -17,7 +18,8 @@ export function AppRoutes() {
             <Route path="/" element={<HomeScreen />} />
             <Route path="/documents" element={<DocumentLibraryScreen />} />
             <Route path="/collections/:collectionId" element={<CollectionDetailScreen />} />
-            <Route path="/collections/:collectionId/report" element={<ComingSoon label="Report preview" />} />
+            <Route path="/collections/:collectionId/report" element={<ExportScreen />} />
+            <Route path="/export" element={<ExportScreen />} />
 
             <Route path="/settings" element={<ComingSoon label="Settings Hub" />} />
             <Route path="/settings/:section" element={<ComingSoon label="Settings Detail View" />} />

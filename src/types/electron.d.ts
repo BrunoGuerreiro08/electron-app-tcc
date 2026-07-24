@@ -63,6 +63,10 @@ declare global {
                 open: (documentId: string) => Promise<void>
                 detectOrphans: () => Promise<{ orphanedFiles: string[]; missingFiles: string[] }>
             }
+            reports: {
+                printToPdf: (htmlContent: string) => Promise<Uint8Array>
+                exportDossier: (params: ReportExportParams) => Promise<ReportExportResult>
+            }
         }
     }
 }

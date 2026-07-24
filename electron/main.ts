@@ -12,6 +12,7 @@ import { registerDocumentCategoryLinkHandlers } from './ipc/documentCategoryLink
 import { registerSessionHandlers } from './ipc/session'
 import { registerSettingsHandlers } from './ipc/settings'
 import { registerFileHandlers } from './ipc/files'
+import { registerReportHandlers } from './ipc/reports'
 
 const __filename = fileURLToPath(import.meta.url)
 const __dirname = path.dirname(__filename)
@@ -66,6 +67,7 @@ app.whenReady().then(() => {
     registerSessionHandlers()
     registerSettingsHandlers()
     registerFileHandlers()
+    registerReportHandlers()
     detectOrphans()
     createWindow()
 })

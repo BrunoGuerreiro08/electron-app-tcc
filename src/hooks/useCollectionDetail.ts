@@ -13,6 +13,8 @@ export interface LinkedDocument {
     issued_at: string | null
     hours: number | null
     quantity: number
+    file_path?: string | null
+    file_status?: 'ok' | 'missing' | 'orphaned' | null
 }
 
 export interface CategoryWithDocuments extends Category {

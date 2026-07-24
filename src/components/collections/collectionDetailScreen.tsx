@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { useParams } from 'react-router-dom'
+import { useNavigate, useParams } from 'react-router-dom'
 import { useCollectionDetail } from '@/hooks/useCollectionDetail'
 import { collectionRepository } from '@/repository/collectionRepository'
 import { subgroupRepository } from '@/repository/subgroupRepository'
@@ -35,7 +35,7 @@ import {
     AlertDialogTitle,
     AlertDialogTrigger,
 } from '@/components/ui/alert-dialog'
-import { Plus, Trash2, Pencil, Check, X } from 'lucide-react'
+import { Plus, Trash2, Pencil, Check, X, Printer } from 'lucide-react'
 import { CategoryFormDialog } from './categoryFormDialog'
 
 const COMPLETION_STYLES: Record<string, string> = {
@@ -70,6 +70,8 @@ export function CollectionDetailScreen() {
     >(null)
 
     const [editingSubgroup, setEditingSubgroup] = useState<Subgroup | null>(null)
+
+    const navigate = useNavigate()
 
     const loadCollection = async () => {
         const c = await collectionRepository.get(collectionId!)
@@ -166,31 +168,42 @@ export function CollectionDetailScreen() {
                     </p>
                 </div>
 
-                <Dialog open={subgroupDialogOpen} onOpenChange={setSubgroupDialogOpen}>
-                    <DialogTrigger asChild>
-                        <Button size="sm">
-                            <Plus className="h-4 w-4" />
-                            New sub-group
-                        </Button>
-                    </DialogTrigger>
-                    <DialogContent>
-                        <DialogHeader>
-                            <DialogTitle>New sub-group</DialogTitle>
-                        </DialogHeader>
-                        <Input
-                            placeholder="e.g. Ensino"
-                            value={newSubgroupName}
-                            onChange={(e) => setNewSubgroupName(e.target.value)}
-                            autoFocus
-                            onKeyDown={(e) => e.key === 'Enter' && handleCreateSubgroup()}
-                        />
-                        <DialogFooter>
-                            <Button onClick={handleCreateSubgroup} disabled={!newSubgroupName.trim()}>
-                                Create
+                <div className="flex items-center gap-2">
+                    <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => navigate(`/collections/${collectionId}/report`)}
+                    >
+                        <Printer className="h-4 w-4 mr-1.5" />
+                        Exportar Dossiê
+                    </Button>
+
+                    <Dialog open={subgroupDialogOpen} onOpenChange={setSubgroupDialogOpen}>
+                        <DialogTrigger asChild>
+                            <Button size="sm">
+                                <Plus className="h-4 w-4" />
+                                New sub-group
                             </Button>
-                        </DialogFooter>
-                    </DialogContent>
-                </Dialog>
+                        </DialogTrigger>
+                        <DialogContent>
+                            <DialogHeader>
+                                <DialogTitle>New sub-group</DialogTitle>
+                            </DialogHeader>
+                            <Input
+                                placeholder="e.g. Ensino"
+                                value={newSubgroupName}
+                                onChange={(e) => setNewSubgroupName(e.target.value)}
+                                autoFocus
+                                onKeyDown={(e) => e.key === 'Enter' && handleCreateSubgroup()}
+                            />
+                            <DialogFooter>
+                                <Button onClick={handleCreateSubgroup} disabled={!newSubgroupName.trim()}>
+                                    Create
+                                </Button>
+                            </DialogFooter>
+                        </DialogContent>
+                    </Dialog>
+                </div>
             </div>
 
             {subgroups.length === 0 ? (

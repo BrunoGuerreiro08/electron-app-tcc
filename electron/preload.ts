@@ -75,4 +75,13 @@ contextBridge.exposeInMainWorld('api', {
         open: (documentId: string) => ipcRenderer.invoke('files:open', documentId),
         detectOrphans: () => ipcRenderer.invoke('files:detectOrphans'),
     },
+    reports: {
+        printToPdf: (htmlContent: string) =>
+            ipcRenderer.invoke('reports:printToPdf', htmlContent),
+        exportDossier: (params: {
+            reportHtml: string
+            attachmentPaths: string[]
+            suggestedFilename: string
+        }) => ipcRenderer.invoke('reports:exportDossier', params),
+    },
 })
