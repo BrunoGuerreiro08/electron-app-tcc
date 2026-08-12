@@ -1,0 +1,47 @@
+{
+  "actions": {
+    "save": "Salvar",
+    "cancel": "Cancelar",
+    "delete": "Excluir",
+    "edit": "Editar",
+    "create": "Criar",
+    "add": "Adicionar",
+    "close": "Fechar",
+    "confirm": "Confirmar",
+    "back": "Voltar",
+    "continue": "Continuar",
+    "retry": "Tentar novamente",
+    "download": "Baixar",
+    "export": "Exportar"
+  },
+  "fields": {
+    "name": "Nome"
+  },
+  "states": {
+    "loading": "Carregando…",
+    "saving": "Salvando…",
+    "deleting": "Excluindo…",
+    "empty": "Nada por aqui ainda",
+    "error": "Algo deu errado"
+  },
+  "confirmDelete": {
+    "title": "Tem certeza?",
+    "description": "Esta ação não pode ser desfeita.",
+    "confirmButton": "Sim, excluir",
+    "cancelButton": "Cancelar"
+  },
+  "validation": {
+    "required": "Este campo é obrigatório",
+    "invalid": "Este valor é inválido"
+  },
+  "serverStatus": {
+    "online": "Online",
+    "offline": "Offline",
+    "connecting": "Conectando…"
+  },
+  "language": {
+    "tooltip": "Alterar idioma",
+    "en": "EN",
+    "ptBR": "PT"
+  }
+}

@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
+import { useTranslation, Trans } from 'react-i18next'
 import { useCollectionDetail } from '@/hooks/useCollectionDetail'
 import { collectionRepository } from '@/repository/collectionRepository'
 import { subgroupRepository } from '@/repository/subgroupRepository'
@@ -44,13 +45,22 @@ const COMPLETION_STYLES: Record<string, string> = {
     exceeded: 'bg-blue-100 text-blue-800 dark:bg-blue-950 dark:text-blue-300',
 }
 
-function ruleSummary(rule: Rule): string {
-    if (rule.type === 'flat') return `${rule.pointsPerUnit} pt(s) per document`
-    if (rule.type === 'hours') return `${rule.pointsPerUnit} pt(s) per ${rule.unitSize}h`
-    return `${ruleSummary(rule.inner)}, capped at ${rule.cap}`
+// NOTE: takes `t` explicitly rather than calling useTranslation() itself — this is a
+// plain helper, not a component/hook, so it can't use hooks. Same shape as the
+// validateRule() caveat flagged earlier: logic that produces user-facing text but
+// lives outside the component tree needs the translator passed in.
+function ruleSummary(rule: Rule, t: (key: string, opts?: Record<string, unknown>) => string): string {
+    if (rule.type === 'flat') {
+        return t('categories:summary.flatPoints', { count: rule.pointsPerUnit })
+    }
+    if (rule.type === 'hours') {
+        return t('categories:summary.hoursPoints', { count: rule.pointsPerUnit, unitSize: rule.unitSize })
+    }
+    return t('categories:summary.cappedAt', { inner: ruleSummary(rule.inner, t), cap: rule.cap })
 }
 
 export function CollectionDetailScreen() {
+    const { t } = useTranslation(['collections', 'categories', 'common'])
     const { collectionId } = useParams<{ collectionId: string }>()
     const { subgroups, score, loading, refresh } = useCollectionDetail(collectionId!)
 
@@ -84,7 +94,7 @@ export function CollectionDetailScreen() {
     }, [collectionId])
 
     if (loading || !collection) {
-        return <div className="p-6 text-sm text-muted-foreground">Loading…</div>
+        return <div className="p-6 text-sm text-muted-foreground">{t('common:states.loading')}</div>
     }
 
     const scoreFor = (subgroupId: string) => score?.subgroups.find((s) => s.subgroupId === subgroupId)
@@ -164,7 +174,12 @@ export function CollectionDetailScreen() {
                         </div>
                     )}
                     <p className="text-sm text-muted-foreground">
-                        Grand total: <span className="font-medium text-foreground">{score?.total ?? 0}</span> points
+                        <Trans
+                            i18nKey="header.grandTotal"
+                            ns="collections"
+                            values={{ total: score?.total ?? 0 }}
+                            components={{ strong: <span className="font-medium text-foreground" /> }}
+                        />
                     </p>
                 </div>
 
@@ -175,22 +190,22 @@ export function CollectionDetailScreen() {
                         onClick={() => navigate(`/collections/${collectionId}/report`)}
                     >
                         <Printer className="h-4 w-4 mr-1.5" />
-                        Exportar Dossiê
+                        {t('collections:header.exportButton')}
                     </Button>
 
                     <Dialog open={subgroupDialogOpen} onOpenChange={setSubgroupDialogOpen}>
                         <DialogTrigger asChild>
                             <Button size="sm">
                                 <Plus className="h-4 w-4" />
-                                New sub-group
+                                {t('collections:subgroupCreateDialog.title')}
                             </Button>
                         </DialogTrigger>
                         <DialogContent>
                             <DialogHeader>
-                                <DialogTitle>New sub-group</DialogTitle>
+                                <DialogTitle>{t('collections:subgroupCreateDialog.title')}</DialogTitle>
                             </DialogHeader>
                             <Input
-                                placeholder="e.g. Ensino"
+                                placeholder={t('collections:subgroupCreateDialog.namePlaceholder')}
                                 value={newSubgroupName}
                                 onChange={(e) => setNewSubgroupName(e.target.value)}
                                 autoFocus
@@ -198,7 +213,7 @@ export function CollectionDetailScreen() {
                             />
                             <DialogFooter>
                                 <Button onClick={handleCreateSubgroup} disabled={!newSubgroupName.trim()}>
-                                    Create
+                                    {t('common:actions.create')}
                                 </Button>
                             </DialogFooter>
                         </DialogContent>
@@ -208,7 +223,7 @@ export function CollectionDetailScreen() {
 
             {subgroups.length === 0 ? (
                 <p className="text-sm text-muted-foreground">
-                    No sub-groups yet — create one to start adding categories.
+                    {t('collections:emptyStates.noSubgroups')}
                 </p>
             ) : (
                 <Accordion
@@ -226,12 +241,18 @@ export function CollectionDetailScreen() {
                                         <span className="font-medium">{sg.name}</span>
                                         <div className="flex items-center gap-2">
                                             <span className="text-sm text-muted-foreground">
-                                                {sgScore?.total ?? 0}
-                                                {sg.min_points != null && ` / ${sg.min_points}`} pts
+                                                {sg.min_points != null
+                                                    ? t('collections:subgroupCard.scoreWithMin', {
+                                                        total: sgScore?.total ?? 0,
+                                                        min: sg.min_points,
+                                                    })
+                                                    : t('collections:subgroupCard.scoreNoMin', {
+                                                        total: sgScore?.total ?? 0,
+                                                    })}
                                             </span>
                                             {sgScore?.completion && (
                                                 <Badge className={COMPLETION_STYLES[sgScore.completion]} variant="secondary">
-                                                    {sgScore.completion}
+                                                    {t(`collections:completion.${sgScore.completion}`)}
                                                 </Badge>
                                             )}
                                         </div>
@@ -246,7 +267,7 @@ export function CollectionDetailScreen() {
                                                 onClick={() => setCategoryDialog({ mode: 'create', subgroupId: sg.id })}
                                             >
                                                 <Plus className="h-3.5 w-3.5" />
-                                                New category
+                                                {t('categories:dialog.createTitle')}
                                             </Button>
                                             <Button
                                                 variant="ghost"
@@ -254,7 +275,7 @@ export function CollectionDetailScreen() {
                                                 onClick={() => setEditingSubgroup(sg)}
                                             >
                                                 <Pencil className="h-3.5 w-3.5" />
-                                                Edit
+                                                {t('common:actions.edit')}
                                             </Button>
                                         </div>
                                         <AlertDialog>
@@ -265,16 +286,17 @@ export function CollectionDetailScreen() {
                                             </AlertDialogTrigger>
                                             <AlertDialogContent>
                                                 <AlertDialogHeader>
-                                                    <AlertDialogTitle>Delete "{sg.name}"?</AlertDialogTitle>
+                                                    <AlertDialogTitle>
+                                                        {t('collections:subgroupCard.deleteConfirm.title', { name: sg.name })}
+                                                    </AlertDialogTitle>
                                                     <AlertDialogDescription>
-                                                        This deletes all its categories and unlinks their documents. Documents
-                                                        themselves are not deleted.
+                                                        {t('collections:subgroupCard.deleteConfirm.description')}
                                                     </AlertDialogDescription>
                                                 </AlertDialogHeader>
                                                 <AlertDialogFooter>
-                                                    <AlertDialogCancel>Cancel</AlertDialogCancel>
+                                                    <AlertDialogCancel>{t('common:actions.cancel')}</AlertDialogCancel>
                                                     <AlertDialogAction onClick={() => handleDeleteSubgroup(sg.id)}>
-                                                        Delete
+                                                        {t('common:actions.delete')}
                                                     </AlertDialogAction>
                                                 </AlertDialogFooter>
                                             </AlertDialogContent>
@@ -282,7 +304,9 @@ export function CollectionDetailScreen() {
                                     </div>
 
                                     {sg.categories.length === 0 ? (
-                                        <p className="text-xs text-muted-foreground">No categories yet.</p>
+                                        <p className="text-xs text-muted-foreground">
+                                            {t('collections:emptyStates.noCategories')}
+                                        </p>
                                     ) : (
                                         <div className="space-y-3">
                                             {sg.categories.map((cat) => {
@@ -293,18 +317,21 @@ export function CollectionDetailScreen() {
                                                             <div>
                                                                 <p className="text-sm font-medium">{cat.name}</p>
                                                                 <p className="text-xs text-muted-foreground">
-                                                                    {ruleSummary(cat.rule)}
+                                                                    {ruleSummary(cat.rule, t)}
                                                                 </p>
                                                             </div>
                                                             <div className="flex items-center gap-1">
                                                                 <span className="text-sm">
-                                                                    {catScore?.total ?? 0}
+                                                                    {t('collections:categoryCard.scoreSimple', {
+                                                                        total: catScore?.total ?? 0,
+                                                                    })}
                                                                     {catScore?.capped && (
                                                                         <span className="ml-1 text-xs text-muted-foreground">
-                                                                            (raw {catScore.rawTotal})
+                                                                            {t('collections:categoryCard.rawSuffix', {
+                                                                                raw: catScore.rawTotal,
+                                                                            })}
                                                                         </span>
-                                                                    )}{' '}
-                                                                    pts
+                                                                    )}
                                                                 </span>
                                                                 <Button
                                                                     variant="ghost"
@@ -326,18 +353,25 @@ export function CollectionDetailScreen() {
                                                                     </AlertDialogTrigger>
                                                                     <AlertDialogContent>
                                                                         <AlertDialogHeader>
-                                                                            <AlertDialogTitle>Delete "{cat.name}"?</AlertDialogTitle>
+                                                                            <AlertDialogTitle>
+                                                                                {t('collections:categoryCard.deleteConfirm.title', {
+                                                                                    name: cat.name,
+                                                                                })}
+                                                                            </AlertDialogTitle>
                                                                             <AlertDialogDescription>
-                                                                                This unlinks {cat.documents.length} document(s). They stay
-                                                                                in your document library.
+                                                                                {t('collections:categoryCard.deleteConfirm.description', {
+                                                                                    count: cat.documents.length,
+                                                                                })}
                                                                             </AlertDialogDescription>
                                                                         </AlertDialogHeader>
                                                                         <AlertDialogFooter>
-                                                                            <AlertDialogCancel>Cancel</AlertDialogCancel>
+                                                                            <AlertDialogCancel>
+                                                                                {t('common:actions.cancel')}
+                                                                            </AlertDialogCancel>
                                                                             <AlertDialogAction
                                                                                 onClick={() => handleDeleteCategory(cat.id)}
                                                                             >
-                                                                                Delete
+                                                                                {t('common:actions.delete')}
                                                                             </AlertDialogAction>
                                                                         </AlertDialogFooter>
                                                                     </AlertDialogContent>
@@ -357,7 +391,11 @@ export function CollectionDetailScreen() {
                                                                             className="flex items-center justify-between text-xs text-muted-foreground"
                                                                         >
                                                                             <span>{doc.title}</span>
-                                                                            <span>{contribution?.points.toFixed(2) ?? 0} pts</span>
+                                                                            <span>
+                                                                                {t('collections:categoryCard.documentPoints', {
+                                                                                    points: contribution?.points.toFixed(2) ?? 0,
+                                                                                })}
+                                                                            </span>
                                                                         </li>
                                                                     )
                                                                 })}

@@ -69,7 +69,12 @@ export interface CollectionScoreResult {
 
 // ---- Validation ----
 
+export interface ValidationError {
+    key: string
+    params?: Record<string, unknown>
+}
+
 export interface ValidationResult {
     valid: boolean
-    errors: string[]
+    errors: ValidationError[]
 }

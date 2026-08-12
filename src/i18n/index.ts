@@ -4,18 +4,18 @@ import { initReactI18next } from 'react-i18next'
 
 // English
 import enAuth from './locales/en/auth.json'
-// import enCommon from './locales/en/common.json'
-// import enCollections from './locales/en/collections.json'
-// import enCategories from './locales/en/categories.json'
+import enCommon from './locales/en/common.json'
+import enCollections from './locales/en/collections.json'
+import enCategories from './locales/en/categories.json'
 // import enCertificates from './locales/en/certificates.json'
 // import enReports from './locales/en/reports.json'
 // import enSettings from './locales/en/settings.json'
 
 // Portuguese (Brazil)
 import ptAuth from './locales/pt-BR/auth.json'
-// import ptCommon from './locales/pt-BR/common.json'
-// import ptCollections from './locales/pt-BR/collections.json'
-// import ptCategories from './locales/pt-BR/categories.json'
+import ptCommon from './locales/pt-BR/common.json'
+import ptCollections from './locales/pt-BR/collections.json'
+import ptCategories from './locales/pt-BR/categories.json'
 // import ptCertificates from './locales/pt-BR/certificates.json'
 // import ptReports from './locales/pt-BR/reports.json'
 // import ptSettings from './locales/pt-BR/settings.json'
@@ -26,18 +26,18 @@ export type SupportedLanguage = (typeof SUPPORTED_LANGUAGES)[number]
 export const resources = {
     en: {
         auth: enAuth,
-        // common: enCommon,
-        // collections: enCollections,
-        // categories: enCategories,
+        common: enCommon,
+        collections: enCollections,
+        categories: enCategories,
         // certificates: enCertificates,
         // reports: enReports,
         // settings: enSettings,
     },
     'pt-BR': {
         auth: ptAuth,
-        // common: ptCommon,
-        // collections: ptCollections,
-        // categories: ptCategories,
+        common: ptCommon,
+        collections: ptCollections,
+        categories: ptCategories,
         // certificates: ptCertificates,
         // reports: ptReports,
         // settings: ptSettings,

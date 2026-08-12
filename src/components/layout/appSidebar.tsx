@@ -55,6 +55,8 @@ import { useEffect, useState } from "react"
 import { DialogContent, DialogHeader, DialogTitle, DialogFooter, Dialog } from "@/components/ui/dialog"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
+import { usePreferencesStore } from '@/store/preferenceStore'
+import { useTranslation } from 'react-i18next'
 
 export function AppSidebar() {
     const { theme, setTheme } = useTheme()
@@ -62,6 +64,12 @@ export function AppSidebar() {
     const logout = useAuthStore((state) => state.logout)
     const isCollapsed = state === "collapsed"
     const location = useLocation()
+
+    const { t } = useTranslation('common')
+    const language = usePreferencesStore((s) => s.language)
+    const setLanguage = usePreferencesStore((s) => s.setLanguage)
+
+    const cycleLanguage = () => setLanguage(language === 'en' ? 'pt-BR' : 'en')
 
     const cycleTheme = () => {
         if (theme === 'light') setTheme('dark')
@@ -357,6 +365,12 @@ export function AppSidebar() {
                                 {theme === 'dark' && 'Dark Mode'}
                                 {theme === 'system' && 'System Theme'}
                             </span>
+                        </SidebarMenuButton>
+                    </SidebarMenuItem>
+
+                    <SidebarMenuItem>
+                        <SidebarMenuButton onClick={cycleLanguage} tooltip={t('language.tooltip')}>
+                            <span>{t(`language.${language === 'en' ? 'en' : 'ptBR'}`)}</span>
                         </SidebarMenuButton>
                     </SidebarMenuItem>
 

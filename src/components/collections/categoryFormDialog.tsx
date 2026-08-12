@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react'
+import { useTranslation } from 'react-i18next'
 import { categoryRepository } from '@/repository/categoryRepository'
 import type { Category } from '@/types/entities'
 import type { Rule } from '@/services/scoringEngine/types'
@@ -8,6 +9,7 @@ import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Button } from '@/components/ui/button'
 import { RuleEditor } from './ruleEditor'
+import { translateRuleErrors } from '@/lib/translateRuleErrors'
 
 const DEFAULT_RULE: Rule = { type: 'flat', pointsPerUnit: 1 }
 
@@ -28,6 +30,7 @@ export function CategoryFormDialog({
     subgroupId,
     category,
 }: CategoryFormDialogProps) {
+    const { t } = useTranslation(['categories', 'common'])
     const isEdit = !!category
     const [name, setName] = useState('')
     const [rule, setRule] = useState<Rule>(DEFAULT_RULE)
@@ -45,7 +48,7 @@ export function CategoryFormDialog({
 
         const { valid, errors } = validateRule(rule)
         if (!valid) {
-            setError(errors.join(' '))
+            setError(translateRuleErrors(errors, t).join(' '))
             return
         }
 
@@ -66,13 +69,13 @@ export function CategoryFormDialog({
         <Dialog open={open} onOpenChange={onOpenChange}>
             <DialogContent>
                 <DialogHeader>
-                    <DialogTitle>{isEdit ? 'Edit category' : 'New category'}</DialogTitle>
+                    <DialogTitle>{isEdit ? t('dialog.editTitle') : t('dialog.createTitle')}</DialogTitle>
                 </DialogHeader>
                 <div className="space-y-4">
                     <div className="space-y-2">
-                        <Label>Name</Label>
+                        <Label>{t('common:fields.name')}</Label>
                         <Input
-                            placeholder="e.g. Publications"
+                            placeholder={t('dialog.namePlaceholder')}
                             value={name}
                             onChange={(e) => setName(e.target.value)}
                             autoFocus
@@ -83,7 +86,7 @@ export function CategoryFormDialog({
                 </div>
                 <DialogFooter>
                     <Button onClick={handleSave} disabled={!name.trim()}>
-                        {isEdit ? 'Save' : 'Create'}
+                        {isEdit ? t('common:actions.save') : t('common:actions.create')}
                     </Button>
                 </DialogFooter>
             </DialogContent>

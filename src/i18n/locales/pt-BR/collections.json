@@ -1,0 +1,47 @@
+{
+    "header": {
+        "grandTotal": "Total geral: <strong>{{total}}</strong> pontos",
+        "exportButton": "Exportar dossiê"
+    },
+    "subgroupCreateDialog": {
+        "title": "Novo subgrupo",
+        "namePlaceholder": "ex. Ensino"
+    },
+    "emptyStates": {
+        "noSubgroups": "Nenhum subgrupo ainda — crie um para começar a adicionar categorias.",
+        "noCategories": "Nenhuma categoria ainda."
+    },
+    "completion": {
+        "incomplete": "Incompleto",
+        "complete": "Completo",
+        "exceeded": "Excedido"
+    },
+    "subgroupCard": {
+        "scoreWithMin": "{{total}} / {{min}} pts",
+        "scoreNoMin": "{{total}} pts",
+        "deleteConfirm": {
+            "title": "Excluir \"{{name}}\"?",
+            "description": "Isso exclui todas as suas categorias e desvincula seus documentos. Os documentos em si não são excluídos."
+        }
+    },
+    "categoryCard": {
+        "scoreSimple": "{{total}} pts",
+        "rawSuffix": "(bruto {{raw}})",
+        "documentPoints": "{{points}} pts",
+        "deleteConfirm": {
+            "title": "Excluir \"{{name}}\"?",
+            "description_one": "Isso desvincula {{count}} documento. Ele permanece na sua biblioteca de documentos.",
+            "description_other": "Isso desvincula {{count}} documentos. Eles permanecem na sua biblioteca de documentos."
+        }
+    },
+    "subgroupDialog": {
+        "editTitle": "Editar subgrupo",
+        "minPointsLabel": "Pontuação mínima",
+        "maxPointsLabel": "Pontuação máxima",
+        "pointsPlaceholder": "Nenhuma",
+        "helperText": "Deixe ambos em branco para não acompanhar a conclusão deste subgrupo.",
+        "errors": {
+            "maxLessThanMin": "O máximo deve ser maior que o mínimo."
+        }
+    }
+}

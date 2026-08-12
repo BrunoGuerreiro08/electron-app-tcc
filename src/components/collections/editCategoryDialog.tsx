@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react'
+import { useTranslation } from 'react-i18next'
 import { categoryRepository } from '@/repository/categoryRepository'
 import type { Category } from '@/types/entities'
 import type { Rule } from '@/services/scoringEngine/types'
@@ -8,6 +9,7 @@ import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Button } from '@/components/ui/button'
 import { RuleEditor } from './ruleEditor'
+import { translateRuleErrors } from '@/lib/translateRuleErrors'
 
 interface EditCategoryDialogProps {
     category: Category | null
@@ -16,6 +18,7 @@ interface EditCategoryDialogProps {
 }
 
 export function EditCategoryDialog({ category, onOpenChange, onSaved }: EditCategoryDialogProps) {
+    const { t } = useTranslation(['categories', 'common'])
     const [name, setName] = useState('')
     const [rule, setRule] = useState<Rule>({ type: 'flat', pointsPerUnit: 1 })
     const [error, setError] = useState<string | null>(null)
@@ -32,7 +35,7 @@ export function EditCategoryDialog({ category, onOpenChange, onSaved }: EditCate
 
         const { valid, errors } = validateRule(rule)
         if (!valid) {
-            setError(errors.join(' '))
+            setError(translateRuleErrors(errors, t).join(' '))
             return
         }
 
@@ -49,11 +52,11 @@ export function EditCategoryDialog({ category, onOpenChange, onSaved }: EditCate
         <Dialog open={category !== null} onOpenChange={onOpenChange}>
             <DialogContent>
                 <DialogHeader>
-                    <DialogTitle>Edit category</DialogTitle>
+                    <DialogTitle>{t('dialog.editTitle')}</DialogTitle>
                 </DialogHeader>
                 <div className="space-y-4">
                     <div className="space-y-2">
-                        <Label>Name</Label>
+                        <Label>{t('common:fields.name')}</Label>
                         <Input value={name} onChange={(e) => setName(e.target.value)} autoFocus />
                     </div>
                     <RuleEditor value={rule} onChange={setRule} />
@@ -61,7 +64,7 @@ export function EditCategoryDialog({ category, onOpenChange, onSaved }: EditCate
                 </div>
                 <DialogFooter>
                     <Button onClick={handleSave} disabled={!name.trim()}>
-                        Save
+                        {t('common:actions.save')}
                     </Button>
                 </DialogFooter>
             </DialogContent>

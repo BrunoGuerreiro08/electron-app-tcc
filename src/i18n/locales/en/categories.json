@@ -1,0 +1,51 @@
+{
+    "dialog": {
+        "createTitle": "New category",
+        "editTitle": "Edit category",
+        "namePlaceholder": "e.g. Publications"
+    },
+    "rule": {
+        "typeLabel": "Rule type",
+        "types": {
+            "flat": "Flat — N points per document",
+            "hours": "Hours — points per N hours declared",
+            "capped": "Capped — either type, with a maximum"
+        },
+        "pointsPerDocument": "Points per document",
+        "pointsAwarded": "Points awarded",
+        "perNHours": "Per N hours",
+        "innerRuleTypeLabel": "Inner rule type",
+        "innerType": {
+            "flat": "Flat",
+            "hours": "Hours"
+        },
+        "maxTotalPoints": "Maximum total points",
+        "errors": {
+            "ruleRequired": "A rule is required.",
+            "unknownType": "Unknown rule type: \"{{type}}\".",
+            "flat": {
+                "pointsPerUnitNotFinite": "Points per document must be a finite number.",
+                "pointsPerUnitNotPositive": "Points per document must be greater than zero."
+            },
+            "hours": {
+                "pointsPerUnitNotFinite": "Points awarded must be a finite number.",
+                "pointsPerUnitNotPositive": "Points awarded must be greater than zero.",
+                "unitSizeNotFinite": "Hours per unit must be a finite number.",
+                "unitSizeNotPositive": "Hours per unit must be greater than zero."
+            },
+            "capped": {
+                "missingInner": "A capped rule must reference a valid inner rule.",
+                "invalidInnerType": "The inner rule must be of type \"flat\" or \"hours\".",
+                "capNotFinite": "The maximum must be a finite number.",
+                "capNotPositive": "The maximum must be greater than zero."
+            }
+        }
+    },
+    "summary": {
+        "flatPoints_one": "{{count}} pt per document",
+        "flatPoints_other": "{{count}} pts per document",
+        "hoursPoints_one": "{{count}} pt per {{unitSize}}h",
+        "hoursPoints_other": "{{count}} pts per {{unitSize}}h",
+        "cappedAt": "{{inner}}, capped at {{cap}}"
+    }
+}

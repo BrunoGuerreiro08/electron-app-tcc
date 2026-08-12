@@ -1,0 +1,47 @@
+{
+    "header": {
+        "grandTotal": "Grand total: <strong>{{total}}</strong> points",
+        "exportButton": "Export dossier"
+    },
+    "subgroupCreateDialog": {
+        "title": "New sub-group",
+        "namePlaceholder": "e.g. Teaching"
+    },
+    "emptyStates": {
+        "noSubgroups": "No sub-groups yet — create one to start adding categories.",
+        "noCategories": "No categories yet."
+    },
+    "completion": {
+        "incomplete": "Incomplete",
+        "complete": "Complete",
+        "exceeded": "Exceeded"
+    },
+    "subgroupCard": {
+        "scoreWithMin": "{{total}} / {{min}} pts",
+        "scoreNoMin": "{{total}} pts",
+        "deleteConfirm": {
+            "title": "Delete \"{{name}}\"?",
+            "description": "This deletes all its categories and unlinks their documents. Documents themselves are not deleted."
+        }
+    },
+    "categoryCard": {
+        "scoreSimple": "{{total}} pts",
+        "rawSuffix": "(raw {{raw}})",
+        "documentPoints": "{{points}} pts",
+        "deleteConfirm": {
+            "title": "Delete \"{{name}}\"?",
+            "description_one": "This unlinks {{count}} document. It stays in your document library.",
+            "description_other": "This unlinks {{count}} documents. They stay in your document library."
+        }
+    },
+    "subgroupDialog": {
+        "editTitle": "Edit sub-group",
+        "minPointsLabel": "Minimum points",
+        "maxPointsLabel": "Maximum points",
+        "pointsPlaceholder": "None",
+        "helperText": "Leave both blank for no completion tracking on this sub-group.",
+        "errors": {
+            "maxLessThanMin": "Maximum must be greater than minimum."
+        }
+    }
+}

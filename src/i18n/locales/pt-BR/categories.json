@@ -1,0 +1,51 @@
+{
+    "dialog": {
+        "createTitle": "Nova categoria",
+        "editTitle": "Editar categoria",
+        "namePlaceholder": "ex. Publicações"
+    },
+    "rule": {
+        "typeLabel": "Tipo de regra",
+        "types": {
+            "flat": "Fixa — N pontos por documento",
+            "hours": "Horas — pontos a cada N horas declaradas",
+            "capped": "Limitada — qualquer tipo, com um teto"
+        },
+        "pointsPerDocument": "Pontos por documento",
+        "pointsAwarded": "Pontos concedidos",
+        "perNHours": "A cada N horas",
+        "innerRuleTypeLabel": "Tipo de regra interna",
+        "innerType": {
+            "flat": "Fixa",
+            "hours": "Horas"
+        },
+        "maxTotalPoints": "Pontuação máxima total",
+        "errors": {
+            "ruleRequired": "Uma regra é obrigatória.",
+            "unknownType": "Tipo de regra desconhecido: \"{{type}}\".",
+            "flat": {
+                "pointsPerUnitNotFinite": "Pontos por documento deve ser um número finito.",
+                "pointsPerUnitNotPositive": "Pontos por documento deve ser maior que zero."
+            },
+            "hours": {
+                "pointsPerUnitNotFinite": "Pontos concedidos deve ser um número finito.",
+                "pointsPerUnitNotPositive": "Pontos concedidos deve ser maior que zero.",
+                "unitSizeNotFinite": "Horas por unidade deve ser um número finito.",
+                "unitSizeNotPositive": "Horas por unidade deve ser maior que zero."
+            },
+            "capped": {
+                "missingInner": "Uma regra limitada deve referenciar uma regra interna válida.",
+                "invalidInnerType": "A regra interna deve ser do tipo \"fixa\" ou \"horas\".",
+                "capNotFinite": "O teto deve ser um número finito.",
+                "capNotPositive": "O teto deve ser maior que zero."
+            }
+        }
+    },
+    "summary": {
+        "flatPoints_one": "{{count}} pt por documento",
+        "flatPoints_other": "{{count}} pts por documento",
+        "hoursPoints_one": "{{count}} pt a cada {{unitSize}}h",
+        "hoursPoints_other": "{{count}} pts a cada {{unitSize}}h",
+        "cappedAt": "{{inner}}, limitado a {{cap}}"
+    }
+}

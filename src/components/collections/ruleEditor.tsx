@@ -1,6 +1,8 @@
 import { useEffect, useState } from 'react'
+import { useTranslation } from 'react-i18next'
 import type { Rule } from '@/services/scoringEngine/types'
 import { validateRule } from '@/services/scoringEngine/validateRule'
+import { translateRuleErrors } from '@/lib/translateRuleErrors'
 import { Label } from '@/components/ui/label'
 import { Input } from '@/components/ui/input'
 import {
@@ -16,12 +18,6 @@ interface RuleEditorProps {
     onChange: (rule: Rule) => void
 }
 
-const RULE_TYPE_LABELS: Record<Rule['type'], string> = {
-    flat: 'Flat — N points per document',
-    hours: 'Hours — points per N hours declared',
-    capped: 'Capped — either type, with a maximum',
-}
-
 function defaultRuleFor(type: Rule['type']): Rule {
     if (type === 'flat') return { type: 'flat', pointsPerUnit: 1 }
     if (type === 'hours') return { type: 'hours', pointsPerUnit: 1, unitSize: 1 }
@@ -29,29 +25,32 @@ function defaultRuleFor(type: Rule['type']): Rule {
 }
 
 export function RuleEditor({ value, onChange }: RuleEditorProps) {
+    const { t } = useTranslation('categories')
     const [errors, setErrors] = useState<string[]>([])
 
     useEffect(() => {
-        setErrors(validateRule(value).errors)
-    }, [value])
+        setErrors(translateRuleErrors(validateRule(value).errors, t))
+    }, [value, t])
 
     const handleTypeChange = (type: Rule['type']) => {
         // NFR-04-05: switching rule type clears params that no longer apply
         onChange(defaultRuleFor(type))
     }
 
+    const RULE_TYPES: Rule['type'][] = ['flat', 'hours', 'capped']
+
     return (
         <div className="space-y-4">
             <div className="space-y-2">
-                <Label>Rule type</Label>
+                <Label>{t('rule.typeLabel')}</Label>
                 <Select value={value.type} onValueChange={(v) => handleTypeChange(v as Rule['type'])}>
                     <SelectTrigger>
                         <SelectValue />
                     </SelectTrigger>
                     <SelectContent>
-                        {(Object.keys(RULE_TYPE_LABELS) as Rule['type'][]).map((t) => (
-                            <SelectItem key={t} value={t}>
-                                {RULE_TYPE_LABELS[t]}
+                        {RULE_TYPES.map((rt) => (
+                            <SelectItem key={rt} value={rt}>
+                                {t(`rule.types.${rt}`)}
                             </SelectItem>
                         ))}
                     </SelectContent>
@@ -60,7 +59,7 @@ export function RuleEditor({ value, onChange }: RuleEditorProps) {
 
             {value.type === 'flat' && (
                 <div className="space-y-2">
-                    <Label>Points per document</Label>
+                    <Label>{t('rule.pointsPerDocument')}</Label>
                     <Input
                         type="number"
                         min={0}
@@ -76,7 +75,7 @@ export function RuleEditor({ value, onChange }: RuleEditorProps) {
             {value.type === 'hours' && (
                 <div className="grid grid-cols-2 gap-3">
                     <div className="space-y-2">
-                        <Label>Points awarded</Label>
+                        <Label>{t('rule.pointsAwarded')}</Label>
                         <Input
                             type="number"
                             min={0}
@@ -88,7 +87,7 @@ export function RuleEditor({ value, onChange }: RuleEditorProps) {
                         />
                     </div>
                     <div className="space-y-2">
-                        <Label>Per N hours</Label>
+                        <Label>{t('rule.perNHours')}</Label>
                         <Input
                             type="number"
                             min={0}
@@ -103,7 +102,7 @@ export function RuleEditor({ value, onChange }: RuleEditorProps) {
             {value.type === 'capped' && (
                 <div className="space-y-4 rounded-md border p-3">
                     <div className="space-y-2">
-                        <Label>Inner rule type</Label>
+                        <Label>{t('rule.innerRuleTypeLabel')}</Label>
                         <Select
                             value={value.inner.type}
                             onValueChange={(v) =>
@@ -120,15 +119,15 @@ export function RuleEditor({ value, onChange }: RuleEditorProps) {
                                 <SelectValue />
                             </SelectTrigger>
                             <SelectContent>
-                                <SelectItem value="flat">Flat</SelectItem>
-                                <SelectItem value="hours">Hours</SelectItem>
+                                <SelectItem value="flat">{t('rule.innerType.flat')}</SelectItem>
+                                <SelectItem value="hours">{t('rule.innerType.hours')}</SelectItem>
                             </SelectContent>
                         </Select>
                     </div>
 
                     {value.inner.type === 'flat' && (
                         <div className="space-y-2">
-                            <Label>Points per document</Label>
+                            <Label>{t('rule.pointsPerDocument')}</Label>
                             <Input
                                 type="number"
                                 min={0}
@@ -147,7 +146,7 @@ export function RuleEditor({ value, onChange }: RuleEditorProps) {
                     {value.inner.type === 'hours' && (
                         <div className="grid grid-cols-2 gap-3">
                             <div className="space-y-2">
-                                <Label>Points awarded</Label>
+                                <Label>{t('rule.pointsAwarded')}</Label>
                                 <Input
                                     type="number"
                                     min={0}
@@ -162,7 +161,7 @@ export function RuleEditor({ value, onChange }: RuleEditorProps) {
                                 />
                             </div>
                             <div className="space-y-2">
-                                <Label>Per N hours</Label>
+                                <Label>{t('rule.perNHours')}</Label>
                                 <Input
                                     type="number"
                                     min={0}
@@ -180,7 +179,7 @@ export function RuleEditor({ value, onChange }: RuleEditorProps) {
                     )}
 
                     <div className="space-y-2">
-                        <Label>Maximum total points</Label>
+                        <Label>{t('rule.maxTotalPoints')}</Label>
                         <Input
                             type="number"
                             min={0}
