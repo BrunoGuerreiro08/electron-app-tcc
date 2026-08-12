@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { useTranslation } from 'react-i18next'
 import { useAuthStore } from '@/store/authStore'
 import { useTheme } from 'next-themes'
 import { Button } from '@/components/ui/button'
@@ -9,8 +10,10 @@ import { InputOTP, InputOTPGroup, InputOTPSlot } from '@/components/ui/input-otp
 import { Sun, Moon, Monitor } from 'lucide-react'
 import { useServerStatusStore } from '@/store/serverStatusStore'
 import { ServerStatusIndicator } from '@/components/layout/serverStatusIndicator'
+import i18n from '@/i18n'
 
 export function LoginScreen() {
+  const { t } = useTranslation('auth')
   const serverStatus = useServerStatusStore((s) => s.status)
   const { step, email, loading, error, requestCode, verifyCode, completeProfile, reset } =
     useAuthStore()
@@ -25,6 +28,10 @@ export function LoginScreen() {
     else setTheme('light')
   }
 
+  // theme is 'light' | 'dark' | 'system' — look up its translated label for the tooltip
+  const themeLabelKey =
+    theme === 'light' ? 'login.brand.themeLight' : theme === 'dark' ? 'login.brand.themeDark' : 'login.brand.themeSystem'
+
   return (
     <div className="relative flex min-h-svh flex-col items-center justify-center gap-6 bg-muted p-6 md:p-10">
 
@@ -35,14 +42,19 @@ export function LoginScreen() {
         onClick={cycleTheme}
         className="group absolute top-4 right-4 h-9 w-9 rounded-md md:top-6 md:right-6 hover:bg-muted"
 
-        title={`Current theme: ${theme}. Click to change.`}
+        title={t('login.brand.themeTooltip', { theme: t(themeLabelKey) })}
       >
         {theme === 'light' && <Sun className="h-4 w-4 transition-transform duration-300 group-hover:rotate-45" />}
         {theme === 'dark' && <Moon className="h-4 w-4 transition-transform duration-300 group-hover:-rotate-12" />}
         {theme === 'system' && <Monitor className="h-4 w-4 transition-transform duration-300 group-hover:scale-105" />}
-        <span className="sr-only">Toggle theme</span>
+        <span className="sr-only">{t('login.brand.toggleTheme')}</span>
       </Button>
-
+      <button
+        className="fixed bottom-4 left-4 text-xs underline"
+        onClick={() => i18n.changeLanguage(i18n.language === 'en' ? 'pt-BR' : 'en')}
+      >
+        {i18n.language}
+      </button>
       <div className="flex w-full max-w-sm flex-col gap-6">
         <a href="#" className="flex items-center gap-2 self-center font-medium">
           <div className="flex size-6 items-center justify-center rounded-md bg-primary text-primary-foreground">
@@ -52,11 +64,11 @@ export function LoginScreen() {
 
         <Card className="w-full">
           <CardHeader>
-            <CardTitle>Certificate Portfolio</CardTitle>
+            <CardTitle>{t('login.cardTitle')}</CardTitle>
             <CardDescription>
-              {step === 'email' && 'Sign in with your institutional email.'}
-              {step === 'code' && `Enter the code sent to ${email}.`}
-              {step === 'onboarding' && "Welcome! What's your name?"}
+              {step === 'email' && t('login.description.email')}
+              {step === 'code' && t('login.description.code', { email })}
+              {step === 'onboarding' && t('login.description.onboarding')}
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
@@ -69,23 +81,25 @@ export function LoginScreen() {
                 className="space-y-4"
               >
                 <div className="space-y-2">
-                  <Label htmlFor="email">Email</Label>
+                  <Label htmlFor="email">{t('login.emailStep.label')}</Label>
                   <Input
                     id="email"
                     type="email"
-                    placeholder="you@university.edu"
+                    placeholder={t('login.emailStep.placeholder')}
                     value={emailInput}
                     onChange={(e) => setEmailInput(e.target.value)}
                     autoFocus
                   />
                 </div>
+                {/* NOTE: `error` currently comes straight from useAuthStore as a raw string,
+                    not a translation key — see caveat below the code block. */}
                 {error && <p className="text-sm text-destructive">{error}</p>}
                 <Button
                   type="submit"
                   className="w-full"
                   disabled={loading || !emailInput || serverStatus === 'offline'}
                 >
-                  {loading ? 'Sending code…' : 'Send code'}
+                  {loading ? t('login.emailStep.submitLoading') : t('login.emailStep.submitIdle')}
                 </Button>
               </form>
             )}
@@ -100,7 +114,7 @@ export function LoginScreen() {
               >
                 <div className="space-y-2">
                   <Label htmlFor="code" className="text-center block w-full">
-                    6-digit code
+                    {t('login.codeStep.label')}
                   </Label>
 
                   <div className="flex justify-center">
@@ -116,10 +130,10 @@ export function LoginScreen() {
                 {error && <p className="text-sm text-destructive">{error}</p>}
 
                 <Button type="submit" className="w-full" disabled={loading || codeInput.length < 6}>
-                  {loading ? 'Verifying…' : 'Verify'}
+                  {loading ? t('login.codeStep.submitLoading') : t('login.codeStep.submitIdle')}
                 </Button>
                 <Button type="button" variant="ghost" className="w-full" onClick={reset}>
-                  Use a different email
+                  {t('login.codeStep.useDifferentEmail')}
                 </Button>
               </form>
             )}
@@ -133,10 +147,10 @@ export function LoginScreen() {
                 className="space-y-4"
               >
                 <div className="space-y-2">
-                  <Label htmlFor="name">Your name</Label>
+                  <Label htmlFor="name">{t('login.onboardingStep.label')}</Label>
                   <Input
                     id="name"
-                    placeholder="Jane Silva"
+                    placeholder={t('login.onboardingStep.placeholder')}
                     value={nameInput}
                     onChange={(e) => setNameInput(e.target.value)}
                     autoFocus
@@ -144,7 +158,7 @@ export function LoginScreen() {
                 </div>
                 {error && <p className="text-sm text-destructive">{error}</p>}
                 <Button type="submit" className="w-full" disabled={loading || !nameInput.trim()}>
-                  {loading ? 'Saving…' : 'Continue'}
+                  {loading ? t('login.onboardingStep.submitLoading') : t('login.onboardingStep.submitIdle')}
                 </Button>
               </form>
             )}
