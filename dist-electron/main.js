@@ -16384,10 +16384,24 @@ class ElectronStore extends Conf {
     }
   }
 }
+const DEFAULT_PREFERENCES = {
+  language: "pt-BR",
+  theme: "light"
+};
+function getPreferences() {
+  return store.get("preferences", DEFAULT_PREFERENCES);
+}
+function setLanguage(language) {
+  store.set("preferences.language", language);
+}
+function setTheme(theme) {
+  store.set("preferences.theme", theme);
+}
 const store = new ElectronStore({
   defaults: {
     session: null,
-    storageFolder: null
+    storageFolder: null,
+    preferences: DEFAULT_PREFERENCES
   }
 });
 const DEFAULT_SUBDIR = "document-files";
@@ -36335,6 +36349,17 @@ function registerReportHandlers() {
     }
   );
 }
+function registerPreferencesHandlers() {
+  ipcMain$1.handle("preferences:get", () => {
+    return getPreferences();
+  });
+  ipcMain$1.handle("preferences:setLanguage", (_event, language) => {
+    setLanguage(language);
+  });
+  ipcMain$1.handle("preferences:setTheme", (_event, theme) => {
+    setTheme(theme);
+  });
+}
 const __filename$1 = fileURLToPath(import.meta.url);
 const __dirname$1 = path.dirname(__filename$1);
 const isDev = process.env.NODE_ENV === "development";
@@ -36371,6 +36396,7 @@ function createWindow() {
 }
 app$1.whenReady().then(() => {
   initSchema();
+  registerPreferencesHandlers();
   registerCollectionHandlers();
   registerSubgroupHandlers();
   registerCategoryHandlers();

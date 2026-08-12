@@ -13,6 +13,7 @@ import { registerSessionHandlers } from './ipc/session'
 import { registerSettingsHandlers } from './ipc/settings'
 import { registerFileHandlers } from './ipc/files'
 import { registerReportHandlers } from './ipc/reports'
+import { registerPreferencesHandlers } from './ipc/preferences'
 
 const __filename = fileURLToPath(import.meta.url)
 const __dirname = path.dirname(__filename)
@@ -58,6 +59,7 @@ function createWindow() {
 
 app.whenReady().then(() => {
     initSchema()
+    registerPreferencesHandlers()
     registerCollectionHandlers()
     registerSubgroupHandlers()
     registerCategoryHandlers()

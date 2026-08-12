@@ -67,6 +67,11 @@ declare global {
                 printToPdf: (htmlContent: string) => Promise<Uint8Array>
                 exportDossier: (params: ReportExportParams) => Promise<ReportExportResult>
             }
+            preferences: {
+                get: () => Promise<{ language: 'en' | 'pt-BR'; theme: 'light' | 'dark' }>
+                setLanguage: (language: 'en' | 'pt-BR') => Promise<void>
+                setTheme: (theme: 'light' | 'dark') => Promise<void>
+            }
         }
     }
 }
