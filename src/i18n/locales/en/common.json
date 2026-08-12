@@ -12,7 +12,8 @@
         "continue": "Continue",
         "retry": "Retry",
         "download": "Download",
-        "export": "Export"
+        "export": "Export",
+        "changeFolder": "Change folder"
     },
     "fields": {
         "name": "Name"

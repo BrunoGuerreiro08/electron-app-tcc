@@ -7,6 +7,7 @@ import enAuth from './locales/en/auth.json'
 import enCommon from './locales/en/common.json'
 import enCollections from './locales/en/collections.json'
 import enCategories from './locales/en/categories.json'
+import enHome from './locales/en/home.json'
 // import enCertificates from './locales/en/certificates.json'
 // import enReports from './locales/en/reports.json'
 // import enSettings from './locales/en/settings.json'
@@ -16,6 +17,7 @@ import ptAuth from './locales/pt-BR/auth.json'
 import ptCommon from './locales/pt-BR/common.json'
 import ptCollections from './locales/pt-BR/collections.json'
 import ptCategories from './locales/pt-BR/categories.json'
+import ptHome from './locales/pt-BR/home.json'
 // import ptCertificates from './locales/pt-BR/certificates.json'
 // import ptReports from './locales/pt-BR/reports.json'
 // import ptSettings from './locales/pt-BR/settings.json'
@@ -29,6 +31,7 @@ export const resources = {
         common: enCommon,
         collections: enCollections,
         categories: enCategories,
+        home: enHome,
         // certificates: enCertificates,
         // reports: enReports,
         // settings: enSettings,
@@ -38,6 +41,7 @@ export const resources = {
         common: ptCommon,
         collections: ptCollections,
         categories: ptCategories,
+        home: ptHome,
         // certificates: ptCertificates,
         // reports: ptReports,
         // settings: ptSettings,
@@ -48,7 +52,7 @@ i18n.use(initReactI18next).init({
     resources,
     lng: 'pt-BR', // placeholder — overwritten by initI18n() below before first render
     fallbackLng: 'pt-BR',
-    ns: ['auth', 'common', 'collections', 'categories', 'certificates', 'reports', 'settings'],
+    ns: ['auth', 'common', 'collections', 'categories', 'home', 'certificates', 'reports', 'settings'],
     defaultNS: 'common',
     interpolation: { escapeValue: false }, // React already escapes
     returnNull: false,

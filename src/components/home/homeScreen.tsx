@@ -16,8 +16,10 @@ import {
     DialogFooter,
 } from '@/components/ui/dialog'
 import { FolderOpen, Plus, FileText, Loader2 } from 'lucide-react'
+import { useTranslation } from 'react-i18next'
 
 export function HomeScreen() {
+    const { t } = useTranslation(['common', 'home'])
     const navigate = useNavigate()
     const { collections, loading, load, create } = useCollectionsStore()
     const [unfiled, setUnfiled] = useState<Document[]>([])
@@ -49,9 +51,9 @@ export function HomeScreen() {
     return (
         <div className="space-y-8 p-6">
             <div>
-                <h1 className="text-2xl font-semibold">Your portfolio</h1>
+                <h1 className="text-2xl font-semibold">{t('home:title')}</h1>
                 <p className="text-sm text-muted-foreground">
-                    Collections, documents, and where everything is stored.
+                    {t('home:description')}
                 </p>
             </div>
 
@@ -59,11 +61,11 @@ export function HomeScreen() {
             <Card>
                 <CardHeader className="flex-row items-center justify-between space-y-0">
                     <div>
-                        <CardTitle className="text-base">Document storage folder</CardTitle>
+                        <CardTitle className="text-base">{t('home:storage.title')}</CardTitle>
                         <CardDescription>
-                            {isCustomFolder
-                                ? 'Using a custom folder — e.g. one synced by Google Drive or similar.'
-                                : 'Using the default app data folder.'}
+                            {t(isCustomFolder
+                                ? 'home:storage.custom'
+                                : 'home:storage.default')}
                         </CardDescription>
                     </div>
                     <Button variant="outline" size="sm" onClick={changeFolder} disabled={migrating}>
@@ -72,7 +74,7 @@ export function HomeScreen() {
                         ) : (
                             <FolderOpen className="h-4 w-4" />
                         )}
-                        {migrating ? 'Moving files…' : 'Change folder'}
+                        {t(migrating ? 'home:storage.moving' : 'common:actions.changeFolder')}
                     </Button>
                 </CardHeader>
                 <CardContent>
@@ -93,10 +95,9 @@ export function HomeScreen() {
                         <FileText className="h-5 w-5 text-muted-foreground" />
                         <div>
                             <p className="text-sm font-medium">
-                                {unfiled.length} document{unfiled.length === 1 ? '' : 's'} not yet linked to a
-                                category
+                                {t('home:unfiled.title', { count: unfiled.length })}
                             </p>
-                            <p className="text-xs text-muted-foreground">Click to organize them.</p>
+                            <p className="text-xs text-muted-foreground">{t('home:unfiled.subtitle')}</p>
                         </div>
                     </CardContent>
                 </Card>
@@ -104,20 +105,20 @@ export function HomeScreen() {
 
             {/* Collections */}
             <div className="flex items-center justify-between">
-                <h2 className="text-lg font-medium">Collections</h2>
+                <h2 className="text-lg font-medium">{t('home:collections.title')}</h2>
                 <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
                     <DialogTrigger asChild>
                         <Button size="sm">
                             <Plus className="h-4 w-4" />
-                            New collection
+                            {t('home:collections.newCollection')}
                         </Button>
                     </DialogTrigger>
                     <DialogContent>
                         <DialogHeader>
-                            <DialogTitle>New collection</DialogTitle>
+                            <DialogTitle>{t('home:collections.newCollection')}</DialogTitle>
                         </DialogHeader>
                         <Input
-                            placeholder="e.g. 2026 Progression Portfolio"
+                            placeholder={t('home:collections.placeholder')}
                             value={newName}
                             onChange={(e) => setNewName(e.target.value)}
                             autoFocus
@@ -125,7 +126,7 @@ export function HomeScreen() {
                         />
                         <DialogFooter>
                             <Button onClick={handleCreate} disabled={!newName.trim()}>
-                                Create
+                                {t('common:actions.create')}
                             </Button>
                         </DialogFooter>
                     </DialogContent>
@@ -133,10 +134,10 @@ export function HomeScreen() {
             </div>
 
             {loading ? (
-                <p className="text-sm text-muted-foreground">Loading…</p>
+                <p className="text-sm text-muted-foreground">{t('common:states.loading')}</p>
             ) : collections.length === 0 ? (
                 <p className="text-sm text-muted-foreground">
-                    No collections yet — create one to get started.
+                    {t('home:collections.empty')}
                 </p>
             ) : (
                 <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">

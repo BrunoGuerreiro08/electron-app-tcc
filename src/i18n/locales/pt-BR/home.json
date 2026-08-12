@@ -1,0 +1,22 @@
+{
+    "title": "Seu portfólio",
+    "description": "Coleções, documentos e onde tudo fica armazenado.",
+    "storage": {
+        "title": "Pasta de armazenamento de documentos",
+        "custom": "Usando uma pasta personalizada — ex.: sincronizada pelo Google Drive ou similar.",
+        "default": "Usando a pasta padrão do aplicativo.",
+        "moving": "Movendo arquivos…"
+    },
+    "unfiled": {
+        "title_zero": "{{count}} documentos ainda não vinculados a uma categoria",
+        "title_one": "{{count}} documento ainda não vinculado a uma categoria",
+        "title_other": "{{count}} documentos ainda não vinculados a uma categoria",
+        "subtitle": "Clique para organizá-los."
+    },
+    "collections": {
+        "title": "Coleções",
+        "newCollection": "Nova coleção",
+        "placeholder": "ex.: Portfólio de Progressão 2026",
+        "empty": "Nenhuma coleção ainda — crie uma para começar."
+    }
+}
