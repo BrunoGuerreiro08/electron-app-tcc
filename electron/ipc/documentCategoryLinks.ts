@@ -1,12 +1,12 @@
 import { ipcMain } from 'electron'
-import { db } from '../db'
+import { getDb } from '../db'
 import { randomUUID } from 'node:crypto'
 
 export function registerDocumentCategoryLinkHandlers() {
     // Feeds the scoring engine directly — returns rows shaped close to
     // ScorableDocument (id, hours, quantity).
     ipcMain.handle('documentCategoryLinks:listByCategory', (_event, categoryId: string) => {
-        return db
+        return getDb()
             .prepare(
                 `SELECT d.id, d.title, d.issuer, d.issued_at, d.hours, d.quantity,d.file_path,d.file_status
         FROM documents d
@@ -17,7 +17,7 @@ export function registerDocumentCategoryLinkHandlers() {
     })
 
     ipcMain.handle('documentCategoryLinks:listByDocument', (_event, documentId: string) => {
-        return db
+        return getDb()
             .prepare(
                 `SELECT c.*, s.collection_id
          FROM categories c
@@ -32,7 +32,7 @@ export function registerDocumentCategoryLinkHandlers() {
         'documentCategoryLinks:link',
         (_event, documentId: string, categoryId: string) => {
             const id = randomUUID()
-            db.prepare(
+            getDb().prepare(
                 'INSERT OR IGNORE INTO document_category_links (id, document_id, category_id) VALUES (?, ?, ?)'
             ).run(id, documentId, categoryId)
         }
@@ -41,7 +41,7 @@ export function registerDocumentCategoryLinkHandlers() {
     ipcMain.handle(
         'documentCategoryLinks:unlink',
         (_event, documentId: string, categoryId: string) => {
-            db.prepare(
+            getDb().prepare(
                 'DELETE FROM document_category_links WHERE document_id = ? AND category_id = ?'
             ).run(documentId, categoryId)
         }

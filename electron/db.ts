@@ -1,14 +1,63 @@
 import Database from 'better-sqlite3'
 import path from 'node:path'
+import fs from 'node:fs'
 import { app } from 'electron'
 
-const dbPath = path.join(app.getPath('userData'), 'portfolio.db')
+// There is no single global `db` anymore — the active connection depends on
+// which user is logged in. Everything below is scoped to `users/<userId>/`.
+let db: Database.Database | null = null
+let activeUserId: string | null = null
 
-export const db = new Database(dbPath)
-db.pragma('journal_mode = WAL')
-db.pragma('foreign_keys = ON')
+function getUserDbPath(userId: string): string {
+  const dir = path.join(app.getPath('userData'), 'users', userId)
+  fs.mkdirSync(dir, { recursive: true })
+  return path.join(dir, 'portfolio.db')
+}
 
-export function initSchema() {
+/**
+ * Opens (or reuses) the SQLite connection for the given user.
+ * Closes any previously open connection first — only one user's db is ever
+ * open at a time, which is the isolation invariant IPC handlers rely on.
+ */
+export function openUserDb(userId: string): Database.Database {
+  if (db && activeUserId === userId) return db
+  if (db) closeUserDb()
+
+  const dbPath = getUserDbPath(userId)
+  db = new Database(dbPath)
+  db.pragma('journal_mode = WAL')
+  db.pragma('foreign_keys = ON')
+  initSchema(db)
+  activeUserId = userId
+  return db
+}
+
+export function closeUserDb(): void {
+  if (db) {
+    db.close()
+    db = null
+    activeUserId = null
+  }
+}
+
+/**
+ * Returns the currently open db. Throws if no user is logged in — this is
+ * intentional: it's a loud signal that an IPC handler ran before/after a
+ * valid session, rather than silently touching the wrong user's data (or
+ * worse, a stale handle to a previous user's closed connection).
+ */
+export function getDb(): Database.Database {
+  if (!db) {
+    throw new Error('No active user database — call openUserDb() after login first.')
+  }
+  return db
+}
+
+export function getActiveUserId(): string | null {
+  return activeUserId
+}
+
+function initSchema(db: Database.Database): void {
   db.exec(`
     CREATE TABLE IF NOT EXISTS collections (
       id TEXT PRIMARY KEY,

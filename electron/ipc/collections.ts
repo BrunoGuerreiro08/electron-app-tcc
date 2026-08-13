@@ -1,26 +1,26 @@
 import { ipcMain } from 'electron'
-import { db } from '../db'
+import { getDb } from '../db'
 import { randomUUID } from 'node:crypto'
 
 export function registerCollectionHandlers() {
     ipcMain.handle('collections:get', (_event, id: string) => {
-        return db.prepare('SELECT * FROM collections WHERE id = ?').get(id) ?? null
+        return getDb().prepare('SELECT * FROM collections WHERE id = ?').get(id) ?? null
     })
 
     ipcMain.handle('collections:list', () => {
-        return db.prepare('SELECT * FROM collections ORDER BY created_at DESC').all()
+        return getDb().prepare('SELECT * FROM collections ORDER BY created_at DESC').all()
     })
 
     ipcMain.handle('collections:create', (_event, name: string, color?: string) => {
         const id = randomUUID()
-        const createCollection = db.prepare(
+        const createCollection = getDb().prepare(
             'INSERT INTO collections (id, name, color) VALUES (?, ?, ?)'
         )
-        const createDefaultSubgroup = db.prepare(
+        const createDefaultSubgroup = getDb().prepare(
             'INSERT INTO subgroups (id, collection_id, name, display_order) VALUES (?, ?, ?, 0)'
         )
 
-        const tx = db.transaction(() => {
+        const tx = getDb().transaction(() => {
             createCollection.run(id, name, color ?? null)
             createDefaultSubgroup.run(randomUUID(), id, 'General')
         })
@@ -30,7 +30,7 @@ export function registerCollectionHandlers() {
     })
 
     ipcMain.handle('collections:rename', (_event, id: string, name: string) => {
-        db.prepare(
+        getDb().prepare(
             `UPDATE collections SET name = ?, updated_at = datetime('now') WHERE id = ?`
         ).run(name, id)
     })
@@ -38,6 +38,6 @@ export function registerCollectionHandlers() {
     ipcMain.handle('collections:delete', (_event, id: string) => {
         // ON DELETE CASCADE handles subgroups -> categories -> document_category_links.
         // Documents themselves are never touched.
-        db.prepare('DELETE FROM collections WHERE id = ?').run(id)
+        getDb().prepare('DELETE FROM collections WHERE id = ?').run(id)
     })
 }

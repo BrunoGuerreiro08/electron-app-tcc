@@ -1,7 +1,6 @@
 import { app, BrowserWindow, globalShortcut } from 'electron'
 import path from 'node:path'
 import { fileURLToPath } from 'node:url'
-import { initSchema } from './db'
 import { detectOrphans } from './fileHandler'
 import { registerCollectionHandlers } from './ipc/collections'
 import { registerSubgroupHandlers } from './ipc/subgroups'
@@ -9,7 +8,7 @@ import { registerCategoryHandlers } from './ipc/categories'
 import { registerDocumentHandlers } from './ipc/documents'
 import { registerTagHandlers } from './ipc/tags'
 import { registerDocumentCategoryLinkHandlers } from './ipc/documentCategoryLinks'
-import { registerSessionHandlers } from './ipc/session'
+import { registerSessionHandlers, restoreActiveSession } from './ipc/session'
 import { registerSettingsHandlers } from './ipc/settings'
 import { registerFileHandlers } from './ipc/files'
 import { registerReportHandlers } from './ipc/reports'
@@ -58,7 +57,9 @@ function createWindow() {
 }
 
 app.whenReady().then(() => {
-    initSchema()
+    // Note: no initSchema() here anymore — schema creation now happens
+    // lazily inside openUserDb(), the first time a user is known (either
+    // via restoreActiveSession() below, or on session:set at login time).
     registerPreferencesHandlers()
     registerCollectionHandlers()
     registerSubgroupHandlers()
@@ -70,7 +71,13 @@ app.whenReady().then(() => {
     registerSettingsHandlers()
     registerFileHandlers()
     registerReportHandlers()
-    detectOrphans()
+
+    // If a user was already logged in on this device, reopen their db/store
+    // before the renderer loads so collections:list etc. work immediately
+    // instead of racing the login screen.
+    const session = restoreActiveSession()
+    if (session) detectOrphans()
+
     createWindow()
 })
 

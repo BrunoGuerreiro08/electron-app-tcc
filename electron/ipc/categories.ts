@@ -1,12 +1,12 @@
 import { ipcMain } from 'electron'
-import { db } from '../db'
+import { getDb } from '../db'
 import { randomUUID } from 'node:crypto'
 import { validateRule } from '../../src/services/scoringEngine/validateRule'
 import type { Rule } from '../../src/services/scoringEngine/types'
 
 export function registerCategoryHandlers() {
     ipcMain.handle('categories:listBySubgroup', (_event, subgroupId: string) => {
-        const rows = db
+        const rows = getDb()
             .prepare('SELECT * FROM categories WHERE subgroup_id = ? ORDER BY display_order')
             .all(subgroupId) as any[]
         return rows.map((r) => ({ ...r, rule: JSON.parse(r.rule) }))
@@ -21,7 +21,7 @@ export function registerCategoryHandlers() {
             }
 
             const id = randomUUID()
-            db.prepare(
+            getDb().prepare(
                 'INSERT INTO categories (id, subgroup_id, name, rule, display_order) VALUES (?, ?, ?, ?, ?)'
             ).run(id, subgroupId, name, JSON.stringify(rule), displayOrder)
             return id
@@ -31,7 +31,7 @@ export function registerCategoryHandlers() {
     ipcMain.handle(
         'categories:update',
         (_event, id: string, updates: { name?: string; rule?: Rule }) => {
-            const current = db.prepare('SELECT * FROM categories WHERE id = ?').get(id) as any
+            const current = getDb().prepare('SELECT * FROM categories WHERE id = ?').get(id) as any
             if (!current) throw new Error('Category not found')
 
             const name = updates.name ?? current.name
@@ -43,7 +43,7 @@ export function registerCategoryHandlers() {
                 ruleJson = JSON.stringify(updates.rule)
             }
 
-            db.prepare('UPDATE categories SET name = ?, rule = ? WHERE id = ?').run(
+            getDb().prepare('UPDATE categories SET name = ?, rule = ? WHERE id = ?').run(
                 name,
                 ruleJson,
                 id
@@ -53,6 +53,6 @@ export function registerCategoryHandlers() {
 
     ipcMain.handle('categories:delete', (_event, id: string) => {
         // Cascades document_category_links only — documents are untouched.
-        db.prepare('DELETE FROM categories WHERE id = ?').run(id)
+        getDb().prepare('DELETE FROM categories WHERE id = ?').run(id)
     })
 }

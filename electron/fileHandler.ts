@@ -3,7 +3,7 @@ import path from 'node:path'
 import { randomUUID } from 'node:crypto'
 import { dialog, shell, type BrowserWindow } from 'electron'
 import { getStorageRoot } from './fileStorage'
-import { db } from './db'
+import { getDb } from './db'
 
 const ALLOWED_EXTENSIONS = ['.pdf', '.jpg', '.jpeg', '.png']
 const MAX_SIZE_BYTES = 20 * 1024 * 1024 // 20 MB
@@ -72,7 +72,7 @@ export function attachFileToDocument(documentId: string, sourcePath: string): At
     fs.copyFileSync(sourcePath, destination)
 
     try {
-        db.prepare(`UPDATE documents SET file_path = ?, file_status = 'ready' WHERE id = ?`).run(
+        getDb().prepare(`UPDATE documents SET file_path = ?, file_status = 'ready' WHERE id = ?`).run(
             destination,
             documentId
         )
@@ -87,7 +87,7 @@ export function attachFileToDocument(documentId: string, sourcePath: string): At
 }
 
 export function removeFileFromDocument(documentId: string) {
-    const row = db.prepare('SELECT file_path FROM documents WHERE id = ?').get(documentId) as
+    const row = getDb().prepare('SELECT file_path FROM documents WHERE id = ?').get(documentId) as
         | { file_path: string | null }
         | undefined
 
@@ -95,13 +95,13 @@ export function removeFileFromDocument(documentId: string) {
         fs.unlinkSync(row.file_path)
     }
 
-    db.prepare(
+    getDb().prepare(
         `UPDATE documents SET file_path = NULL, file_status = 'pending' WHERE id = ?`
     ).run(documentId)
 }
 
 export function openDocumentFile(documentId: string) {
-    const row = db.prepare('SELECT file_path FROM documents WHERE id = ?').get(documentId) as
+    const row = getDb().prepare('SELECT file_path FROM documents WHERE id = ?').get(documentId) as
         | { file_path: string | null }
         | undefined
 
@@ -124,7 +124,7 @@ export function detectOrphans(): { orphanedFiles: string[]; missingFiles: string
 
     const referencedPaths = new Set(
         (
-            db.prepare(`SELECT file_path FROM documents WHERE file_path IS NOT NULL`).all() as {
+            getDb().prepare(`SELECT file_path FROM documents WHERE file_path IS NOT NULL`).all() as {
                 file_path: string
             }[]
         ).map((r) => path.resolve(r.file_path))
@@ -146,7 +146,7 @@ export function detectOrphans(): { orphanedFiles: string[]; missingFiles: string
     }
 
     if (missingFiles.length > 0) {
-        const markOrphaned = db.prepare(
+        const markOrphaned = getDb().prepare(
             `UPDATE documents SET file_status = 'orphaned' WHERE file_path = ?`
         )
         for (const missing of missingFiles) {

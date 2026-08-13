@@ -1,10 +1,10 @@
 import { ipcMain } from 'electron'
-import { db } from '../db'
+import { getDb } from '../db'
 import { randomUUID } from 'node:crypto'
 
 export function registerSubgroupHandlers() {
     ipcMain.handle('subgroups:listByCollection', (_event, collectionId: string) => {
-        return db
+        return getDb()
             .prepare('SELECT * FROM subgroups WHERE collection_id = ? ORDER BY display_order')
             .all(collectionId)
     })
@@ -13,7 +13,7 @@ export function registerSubgroupHandlers() {
         'subgroups:create',
         (_event, collectionId: string, name: string, displayOrder = 0) => {
             const id = randomUUID()
-            db.prepare(
+            getDb().prepare(
                 'INSERT INTO subgroups (id, collection_id, name, display_order) VALUES (?, ?, ?, ?)'
             ).run(id, collectionId, name, displayOrder)
             return id
@@ -27,7 +27,7 @@ export function registerSubgroupHandlers() {
             id: string,
             updates: { name?: string; minPoints?: number | null; maxPoints?: number | null }
         ) => {
-            const current = db.prepare('SELECT * FROM subgroups WHERE id = ?').get(id) as any
+            const current = getDb().prepare('SELECT * FROM subgroups WHERE id = ?').get(id) as any
             if (!current) throw new Error('Subgroup not found')
 
             const name = updates.name ?? current.name
@@ -38,13 +38,13 @@ export function registerSubgroupHandlers() {
                 throw new Error('max_points must be greater than min_points')
             }
 
-            db.prepare(
+            getDb().prepare(
                 'UPDATE subgroups SET name = ?, min_points = ?, max_points = ? WHERE id = ?'
             ).run(name, minPoints, maxPoints, id)
         }
     )
 
     ipcMain.handle('subgroups:delete', (_event, id: string) => {
-        db.prepare('DELETE FROM subgroups WHERE id = ?').run(id)
+        getDb().prepare('DELETE FROM subgroups WHERE id = ?').run(id)
     })
 }

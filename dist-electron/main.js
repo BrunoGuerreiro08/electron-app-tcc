@@ -13,7 +13,6 @@ var _validator, _encryptionKey, _encryptionAlgorithm, _options, _defaultValues, 
 import electron, { app as app$1, dialog, shell as shell$1, ipcMain as ipcMain$1, BrowserWindow, globalShortcut } from "electron";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
-import Database from "better-sqlite3";
 import fs from "node:fs";
 import crypto, { randomUUID } from "node:crypto";
 import process$1 from "node:process";
@@ -22,78 +21,9 @@ import assert from "node:assert";
 import os from "node:os";
 import "node:events";
 import "node:stream";
+import Database from "better-sqlite3";
 import fs$1 from "fs/promises";
 import path$1 from "path";
-const dbPath = path.join(app$1.getPath("userData"), "portfolio.db");
-const db = new Database(dbPath);
-db.pragma("journal_mode = WAL");
-db.pragma("foreign_keys = ON");
-function initSchema() {
-  db.exec(`
-    CREATE TABLE IF NOT EXISTS collections (
-      id TEXT PRIMARY KEY,
-      name TEXT NOT NULL,
-      color TEXT,
-      created_at TEXT NOT NULL DEFAULT (datetime('now')),
-      updated_at TEXT NOT NULL DEFAULT (datetime('now'))
-    );
-
-    CREATE TABLE IF NOT EXISTS subgroups (
-      id TEXT PRIMARY KEY,
-      collection_id TEXT NOT NULL REFERENCES collections(id) ON DELETE CASCADE,
-      name TEXT NOT NULL,
-      display_order INTEGER NOT NULL DEFAULT 0,
-      min_points REAL,
-      max_points REAL
-    );
-
-    CREATE TABLE IF NOT EXISTS categories (
-      id TEXT PRIMARY KEY,
-      subgroup_id TEXT NOT NULL REFERENCES subgroups(id) ON DELETE CASCADE,
-      name TEXT NOT NULL,
-      rule TEXT NOT NULL,
-      display_order INTEGER NOT NULL DEFAULT 0
-    );
-
-    -- Global document pool. Not owned by any collection/category directly.
-    -- created_at = when logged into the app; issued_at = date on the document.
-    CREATE TABLE IF NOT EXISTS documents (
-      id TEXT PRIMARY KEY,
-      title TEXT NOT NULL,
-      issuer TEXT,
-      issued_at TEXT,
-      created_at TEXT NOT NULL DEFAULT (datetime('now')),
-      quantity REAL NOT NULL DEFAULT 1,
-      hours REAL,
-      notes TEXT,
-      file_path TEXT,
-      file_status TEXT NOT NULL DEFAULT 'pending'
-    );
-
-    CREATE TABLE IF NOT EXISTS tags (
-      id TEXT PRIMARY KEY,
-      name TEXT NOT NULL UNIQUE,
-      color TEXT
-    );
-
-    CREATE TABLE IF NOT EXISTS document_tags (
-      document_id TEXT NOT NULL REFERENCES documents(id) ON DELETE CASCADE,
-      tag_id TEXT NOT NULL REFERENCES tags(id) ON DELETE CASCADE,
-      PRIMARY KEY (document_id, tag_id)
-    );
-
-    -- The core decoupling: M:N between documents and categories.
-    -- Deleting a category/collection cascades here (unlinks) but never
-    -- touches the document row or its file.
-    CREATE TABLE IF NOT EXISTS document_category_links (
-      id TEXT PRIMARY KEY,
-      document_id TEXT NOT NULL REFERENCES documents(id) ON DELETE CASCADE,
-      category_id TEXT NOT NULL REFERENCES categories(id) ON DELETE CASCADE,
-      linked_at TEXT NOT NULL DEFAULT (datetime('now')),
-      UNIQUE (document_id, category_id)
-    );
-  `);
-}
 const isObject = (value) => {
   const type2 = typeof value;
   return value !== null && (type2 === "object" || type2 === "function");
@@ -576,7 +506,7 @@ if (!IS_WINDOWS) {
 if (IS_LINUX) {
   Signals.push("SIGIO", "SIGPOLL", "SIGPWR", "SIGSTKFLT");
 }
-let Interceptor$1 = class Interceptor {
+class Interceptor {
   /* CONSTRUCTOR */
   constructor() {
     this.callbacks = /* @__PURE__ */ new Set();
@@ -613,9 +543,9 @@ let Interceptor$1 = class Interceptor {
     };
     this.hook();
   }
-};
-const Interceptor2 = new Interceptor$1();
-const whenExit = Interceptor2.register;
+}
+const Interceptor$1 = new Interceptor();
+const whenExit = Interceptor$1.register;
 const Temp = {
   /* VARIABLES */
   store: {},
@@ -15754,8 +15684,8 @@ class Conf {
     if (__privateGet(this, _options).accessPropertiesByDotNotation) {
       return this._get(key, defaultValue);
     }
-    const { store: store2 } = this;
-    return key in store2 ? store2[key] : defaultValue;
+    const { store } = this;
+    return key in store ? store[key] : defaultValue;
   }
   set(key, value) {
     if (typeof key !== "string" && typeof key !== "object") {
@@ -15767,16 +15697,16 @@ class Conf {
     if (this._containsReservedKey(key)) {
       throw new TypeError(`Please don't use the ${INTERNAL_KEY} key, as it's used to manage this module internal operations.`);
     }
-    const { store: store2 } = this;
+    const { store } = this;
     const set = (key2, value2) => {
       checkValueType(key2, value2);
       if (__privateGet(this, _options).accessPropertiesByDotNotation) {
-        setProperty(store2, key2, value2);
+        setProperty(store, key2, value2);
       } else {
         if (key2 === "__proto__" || key2 === "constructor" || key2 === "prototype") {
           return;
         }
-        store2[key2] = value2;
+        store[key2] = value2;
       }
     };
     if (typeof key === "object") {
@@ -15787,7 +15717,7 @@ class Conf {
     } else {
       set(key, value);
     }
-    this.store = store2;
+    this.store = store;
   }
   has(key) {
     if (__privateGet(this, _options).accessPropertiesByDotNotation) {
@@ -15818,13 +15748,13 @@ class Conf {
     }
   }
   delete(key) {
-    const { store: store2 } = this;
+    const { store } = this;
     if (__privateGet(this, _options).accessPropertiesByDotNotation) {
-      deleteProperty(store2, key);
+      deleteProperty(store, key);
     } else {
-      delete store2[key];
+      delete store[key];
     }
-    this.store = store2;
+    this.store = store;
   }
   /**
       Delete all items.
@@ -16195,9 +16125,9 @@ class Conf {
     return getProperty(this.store, key, defaultValue);
   }
   _set(key, value) {
-    const { store: store2 } = this;
-    setProperty(store2, key, value);
-    this.store = store2;
+    const { store } = this;
+    setProperty(store, key, value);
+    this.store = store;
   }
 }
 _validator = new WeakMap();
@@ -16388,34 +16318,165 @@ const DEFAULT_PREFERENCES = {
   language: "pt-BR",
   theme: "light"
 };
-function getPreferences() {
-  return store.get("preferences", DEFAULT_PREFERENCES);
-}
-function setLanguage(language) {
-  store.set("preferences.language", language);
-}
-function setTheme(theme) {
-  store.set("preferences.theme", theme);
-}
-const store = new ElectronStore({
+const globalStore = new ElectronStore({
+  name: "global-config",
   defaults: {
-    session: null,
-    storageFolder: null,
-    preferences: DEFAULT_PREFERENCES
+    session: null
   }
 });
+let userStore = null;
+let activeUserId$1 = null;
+function openUserStore(userId) {
+  if (userStore && activeUserId$1 === userId) return userStore;
+  userStore = new ElectronStore({
+    name: "settings",
+    cwd: path.join(app$1.getPath("userData"), "users", userId),
+    defaults: { preferences: DEFAULT_PREFERENCES, storageFolder: null }
+  });
+  activeUserId$1 = userId;
+  return userStore;
+}
+function closeUserStore() {
+  userStore = null;
+  activeUserId$1 = null;
+}
+function requireUserStore() {
+  if (!userStore) {
+    throw new Error("No active user store — call openUserStore() after login first.");
+  }
+  return userStore;
+}
+function getPreferences() {
+  return requireUserStore().get("preferences", DEFAULT_PREFERENCES);
+}
+function setLanguage(language) {
+  requireUserStore().set("preferences.language", language);
+}
+function setTheme(theme) {
+  requireUserStore().set("preferences.theme", theme);
+}
+function getConfiguredStorageFolder() {
+  return requireUserStore().get("storageFolder", null);
+}
+function setConfiguredStorageFolder(folder) {
+  requireUserStore().set("storageFolder", folder);
+}
+let db = null;
+let activeUserId = null;
+function getUserDbPath(userId) {
+  const dir = path.join(app$1.getPath("userData"), "users", userId);
+  fs.mkdirSync(dir, { recursive: true });
+  return path.join(dir, "portfolio.db");
+}
+function openUserDb(userId) {
+  if (db && activeUserId === userId) return db;
+  if (db) closeUserDb();
+  const dbPath = getUserDbPath(userId);
+  db = new Database(dbPath);
+  db.pragma("journal_mode = WAL");
+  db.pragma("foreign_keys = ON");
+  initSchema(db);
+  activeUserId = userId;
+  return db;
+}
+function closeUserDb() {
+  if (db) {
+    db.close();
+    db = null;
+    activeUserId = null;
+  }
+}
+function getDb() {
+  if (!db) {
+    throw new Error("No active user database — call openUserDb() after login first.");
+  }
+  return db;
+}
+function getActiveUserId() {
+  return activeUserId;
+}
+function initSchema(db2) {
+  db2.exec(`
+    CREATE TABLE IF NOT EXISTS collections (
+      id TEXT PRIMARY KEY,
+      name TEXT NOT NULL,
+      color TEXT,
+      created_at TEXT NOT NULL DEFAULT (datetime('now')),
+      updated_at TEXT NOT NULL DEFAULT (datetime('now'))
+    );
+
+    CREATE TABLE IF NOT EXISTS subgroups (
+      id TEXT PRIMARY KEY,
+      collection_id TEXT NOT NULL REFERENCES collections(id) ON DELETE CASCADE,
+      name TEXT NOT NULL,
+      display_order INTEGER NOT NULL DEFAULT 0,
+      min_points REAL,
+      max_points REAL
+    );
+
+    CREATE TABLE IF NOT EXISTS categories (
+      id TEXT PRIMARY KEY,
+      subgroup_id TEXT NOT NULL REFERENCES subgroups(id) ON DELETE CASCADE,
+      name TEXT NOT NULL,
+      rule TEXT NOT NULL,
+      display_order INTEGER NOT NULL DEFAULT 0
+    );
+
+    -- Global document pool. Not owned by any collection/category directly.
+    -- created_at = when logged into the app; issued_at = date on the document.
+    CREATE TABLE IF NOT EXISTS documents (
+      id TEXT PRIMARY KEY,
+      title TEXT NOT NULL,
+      issuer TEXT,
+      issued_at TEXT,
+      created_at TEXT NOT NULL DEFAULT (datetime('now')),
+      quantity REAL NOT NULL DEFAULT 1,
+      hours REAL,
+      notes TEXT,
+      file_path TEXT,
+      file_status TEXT NOT NULL DEFAULT 'pending'
+    );
+
+    CREATE TABLE IF NOT EXISTS tags (
+      id TEXT PRIMARY KEY,
+      name TEXT NOT NULL UNIQUE,
+      color TEXT
+    );
+
+    CREATE TABLE IF NOT EXISTS document_tags (
+      document_id TEXT NOT NULL REFERENCES documents(id) ON DELETE CASCADE,
+      tag_id TEXT NOT NULL REFERENCES tags(id) ON DELETE CASCADE,
+      PRIMARY KEY (document_id, tag_id)
+    );
+
+    -- The core decoupling: M:N between documents and categories.
+    -- Deleting a category/collection cascades here (unlinks) but never
+    -- touches the document row or its file.
+    CREATE TABLE IF NOT EXISTS document_category_links (
+      id TEXT PRIMARY KEY,
+      document_id TEXT NOT NULL REFERENCES documents(id) ON DELETE CASCADE,
+      category_id TEXT NOT NULL REFERENCES categories(id) ON DELETE CASCADE,
+      linked_at TEXT NOT NULL DEFAULT (datetime('now')),
+      UNIQUE (document_id, category_id)
+    );
+  `);
+}
 const DEFAULT_SUBDIR = "document-files";
+function requireActiveUserId() {
+  const userId = getActiveUserId();
+  if (!userId) {
+    throw new Error("No active user — cannot resolve storage root before login.");
+  }
+  return userId;
+}
 function defaultStorageRoot() {
-  return path.join(app$1.getPath("userData"), DEFAULT_SUBDIR);
+  return path.join(app$1.getPath("userData"), "users", requireActiveUserId(), DEFAULT_SUBDIR);
 }
 function getStorageRoot() {
-  const configured = store.get("storageFolder");
+  const configured = getConfiguredStorageFolder();
   const root = configured ?? defaultStorageRoot();
   fs.mkdirSync(root, { recursive: true });
   return root;
-}
-function getConfiguredStorageFolder() {
-  return store.get("storageFolder");
 }
 async function pickStorageFolder(win) {
   const result = await dialog.showOpenDialog(win, {
@@ -16430,11 +16491,11 @@ function migrateStorageFolder(newRoot) {
   fs.mkdirSync(newRoot, { recursive: true });
   const result = { moved: 0, failed: 0, errors: [] };
   if (path.resolve(oldRoot) === path.resolve(newRoot)) {
-    store.set("storageFolder", newRoot);
+    setConfiguredStorageFolder(newRoot);
     return result;
   }
-  const rows = db.prepare(`SELECT id, file_path FROM documents WHERE file_path IS NOT NULL`).all();
-  const updateStmt = db.prepare("UPDATE documents SET file_path = ? WHERE id = ?");
+  const rows = getDb().prepare(`SELECT id, file_path FROM documents WHERE file_path IS NOT NULL`).all();
+  const updateStmt = getDb().prepare("UPDATE documents SET file_path = ? WHERE id = ?");
   for (const row of rows) {
     const relative = path.relative(oldRoot, row.file_path);
     const isInsideOldRoot = !relative.startsWith("..") && !path.isAbsolute(relative);
@@ -16454,7 +16515,7 @@ function migrateStorageFolder(newRoot) {
       result.errors.push(`Failed to move ${row.file_path}: ${err.message}`);
     }
   }
-  store.set("storageFolder", newRoot);
+  setConfiguredStorageFolder(newRoot);
   return result;
 }
 const ALLOWED_EXTENSIONS = [".pdf", ".jpg", ".jpeg", ".png"];
@@ -16491,7 +16552,7 @@ function attachFileToDocument(documentId, sourcePath) {
   const destination = path.join(destDir, `${documentId}-${randomUUID()}${ext}`);
   fs.copyFileSync(sourcePath, destination);
   try {
-    db.prepare(`UPDATE documents SET file_path = ?, file_status = 'ready' WHERE id = ?`).run(
+    getDb().prepare(`UPDATE documents SET file_path = ?, file_status = 'ready' WHERE id = ?`).run(
       destination,
       documentId
     );
@@ -16502,16 +16563,16 @@ function attachFileToDocument(documentId, sourcePath) {
   return { ok: true, filePath: destination };
 }
 function removeFileFromDocument(documentId) {
-  const row = db.prepare("SELECT file_path FROM documents WHERE id = ?").get(documentId);
+  const row = getDb().prepare("SELECT file_path FROM documents WHERE id = ?").get(documentId);
   if ((row == null ? void 0 : row.file_path) && fs.existsSync(row.file_path)) {
     fs.unlinkSync(row.file_path);
   }
-  db.prepare(
+  getDb().prepare(
     `UPDATE documents SET file_path = NULL, file_status = 'pending' WHERE id = ?`
   ).run(documentId);
 }
 function openDocumentFile(documentId) {
-  const row = db.prepare("SELECT file_path FROM documents WHERE id = ?").get(documentId);
+  const row = getDb().prepare("SELECT file_path FROM documents WHERE id = ?").get(documentId);
   if (!(row == null ? void 0 : row.file_path) || !fs.existsSync(row.file_path)) {
     throw new Error("File not found.");
   }
@@ -16522,7 +16583,7 @@ function detectOrphans() {
   const orphanedFiles = [];
   const missingFiles = [];
   const referencedPaths = new Set(
-    db.prepare(`SELECT file_path FROM documents WHERE file_path IS NOT NULL`).all().map((r) => path.resolve(r.file_path))
+    getDb().prepare(`SELECT file_path FROM documents WHERE file_path IS NOT NULL`).all().map((r) => path.resolve(r.file_path))
   );
   if (fs.existsSync(root)) {
     for (const entry of fs.readdirSync(root)) {
@@ -16538,7 +16599,7 @@ function detectOrphans() {
     }
   }
   if (missingFiles.length > 0) {
-    const markOrphaned = db.prepare(
+    const markOrphaned = getDb().prepare(
       `UPDATE documents SET file_status = 'orphaned' WHERE file_path = ?`
     );
     for (const missing of missingFiles) {
@@ -16549,20 +16610,20 @@ function detectOrphans() {
 }
 function registerCollectionHandlers() {
   ipcMain$1.handle("collections:get", (_event, id2) => {
-    return db.prepare("SELECT * FROM collections WHERE id = ?").get(id2) ?? null;
+    return getDb().prepare("SELECT * FROM collections WHERE id = ?").get(id2) ?? null;
   });
   ipcMain$1.handle("collections:list", () => {
-    return db.prepare("SELECT * FROM collections ORDER BY created_at DESC").all();
+    return getDb().prepare("SELECT * FROM collections ORDER BY created_at DESC").all();
   });
   ipcMain$1.handle("collections:create", (_event, name, color) => {
     const id2 = randomUUID();
-    const createCollection = db.prepare(
+    const createCollection = getDb().prepare(
       "INSERT INTO collections (id, name, color) VALUES (?, ?, ?)"
     );
-    const createDefaultSubgroup = db.prepare(
+    const createDefaultSubgroup = getDb().prepare(
       "INSERT INTO subgroups (id, collection_id, name, display_order) VALUES (?, ?, ?, 0)"
     );
-    const tx = db.transaction(() => {
+    const tx = getDb().transaction(() => {
       createCollection.run(id2, name, color ?? null);
       createDefaultSubgroup.run(randomUUID(), id2, "General");
     });
@@ -16570,23 +16631,23 @@ function registerCollectionHandlers() {
     return id2;
   });
   ipcMain$1.handle("collections:rename", (_event, id2, name) => {
-    db.prepare(
+    getDb().prepare(
       `UPDATE collections SET name = ?, updated_at = datetime('now') WHERE id = ?`
     ).run(name, id2);
   });
   ipcMain$1.handle("collections:delete", (_event, id2) => {
-    db.prepare("DELETE FROM collections WHERE id = ?").run(id2);
+    getDb().prepare("DELETE FROM collections WHERE id = ?").run(id2);
   });
 }
 function registerSubgroupHandlers() {
   ipcMain$1.handle("subgroups:listByCollection", (_event, collectionId) => {
-    return db.prepare("SELECT * FROM subgroups WHERE collection_id = ? ORDER BY display_order").all(collectionId);
+    return getDb().prepare("SELECT * FROM subgroups WHERE collection_id = ? ORDER BY display_order").all(collectionId);
   });
   ipcMain$1.handle(
     "subgroups:create",
     (_event, collectionId, name, displayOrder = 0) => {
       const id2 = randomUUID();
-      db.prepare(
+      getDb().prepare(
         "INSERT INTO subgroups (id, collection_id, name, display_order) VALUES (?, ?, ?, ?)"
       ).run(id2, collectionId, name, displayOrder);
       return id2;
@@ -16595,7 +16656,7 @@ function registerSubgroupHandlers() {
   ipcMain$1.handle(
     "subgroups:update",
     (_event, id2, updates) => {
-      const current = db.prepare("SELECT * FROM subgroups WHERE id = ?").get(id2);
+      const current = getDb().prepare("SELECT * FROM subgroups WHERE id = ?").get(id2);
       if (!current) throw new Error("Subgroup not found");
       const name = updates.name ?? current.name;
       const minPoints = updates.minPoints !== void 0 ? updates.minPoints : current.min_points;
@@ -16603,13 +16664,13 @@ function registerSubgroupHandlers() {
       if (minPoints != null && maxPoints != null && maxPoints <= minPoints) {
         throw new Error("max_points must be greater than min_points");
       }
-      db.prepare(
+      getDb().prepare(
         "UPDATE subgroups SET name = ?, min_points = ?, max_points = ? WHERE id = ?"
       ).run(name, minPoints, maxPoints, id2);
     }
   );
   ipcMain$1.handle("subgroups:delete", (_event, id2) => {
-    db.prepare("DELETE FROM subgroups WHERE id = ?").run(id2);
+    getDb().prepare("DELETE FROM subgroups WHERE id = ?").run(id2);
   });
 }
 function validateFlat(rule) {
@@ -16675,7 +16736,7 @@ function validateRule(rule) {
 }
 function registerCategoryHandlers() {
   ipcMain$1.handle("categories:listBySubgroup", (_event, subgroupId) => {
-    const rows = db.prepare("SELECT * FROM categories WHERE subgroup_id = ? ORDER BY display_order").all(subgroupId);
+    const rows = getDb().prepare("SELECT * FROM categories WHERE subgroup_id = ? ORDER BY display_order").all(subgroupId);
     return rows.map((r) => ({ ...r, rule: JSON.parse(r.rule) }));
   });
   ipcMain$1.handle(
@@ -16686,7 +16747,7 @@ function registerCategoryHandlers() {
         throw new Error(`Invalid rule: ${errors2.join(" ")}`);
       }
       const id2 = randomUUID();
-      db.prepare(
+      getDb().prepare(
         "INSERT INTO categories (id, subgroup_id, name, rule, display_order) VALUES (?, ?, ?, ?, ?)"
       ).run(id2, subgroupId, name, JSON.stringify(rule), displayOrder);
       return id2;
@@ -16695,7 +16756,7 @@ function registerCategoryHandlers() {
   ipcMain$1.handle(
     "categories:update",
     (_event, id2, updates) => {
-      const current = db.prepare("SELECT * FROM categories WHERE id = ?").get(id2);
+      const current = getDb().prepare("SELECT * FROM categories WHERE id = ?").get(id2);
       if (!current) throw new Error("Category not found");
       const name = updates.name ?? current.name;
       let ruleJson = current.rule;
@@ -16704,7 +16765,7 @@ function registerCategoryHandlers() {
         if (!valid2) throw new Error(`Invalid rule: ${errors2.join(" ")}`);
         ruleJson = JSON.stringify(updates.rule);
       }
-      db.prepare("UPDATE categories SET name = ?, rule = ? WHERE id = ?").run(
+      getDb().prepare("UPDATE categories SET name = ?, rule = ? WHERE id = ?").run(
         name,
         ruleJson,
         id2
@@ -16712,15 +16773,15 @@ function registerCategoryHandlers() {
     }
   );
   ipcMain$1.handle("categories:delete", (_event, id2) => {
-    db.prepare("DELETE FROM categories WHERE id = ?").run(id2);
+    getDb().prepare("DELETE FROM categories WHERE id = ?").run(id2);
   });
 }
 function registerDocumentHandlers() {
   ipcMain$1.handle("documents:list", () => {
-    return db.prepare("SELECT * FROM documents ORDER BY created_at DESC").all();
+    return getDb().prepare("SELECT * FROM documents ORDER BY created_at DESC").all();
   });
   ipcMain$1.handle("documents:listUnlinked", () => {
-    return db.prepare(
+    return getDb().prepare(
       `SELECT d.* FROM documents d
          LEFT JOIN document_category_links l ON l.document_id = d.id
          WHERE l.id IS NULL
@@ -16729,7 +16790,7 @@ function registerDocumentHandlers() {
   });
   ipcMain$1.handle("documents:create", (_event, input) => {
     const id2 = randomUUID();
-    db.prepare(
+    getDb().prepare(
       `INSERT INTO documents (id, title, issuer, issued_at, quantity, hours, notes, file_path, file_status)
        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`
     ).run(
@@ -16746,9 +16807,9 @@ function registerDocumentHandlers() {
     return id2;
   });
   ipcMain$1.handle("documents:update", (_event, id2, updates) => {
-    const current = db.prepare("SELECT * FROM documents WHERE id = ?").get(id2);
+    const current = getDb().prepare("SELECT * FROM documents WHERE id = ?").get(id2);
     if (!current) throw new Error("Document not found");
-    db.prepare(
+    getDb().prepare(
       `UPDATE documents SET title = ?, issuer = ?, issued_at = ?, quantity = ?, hours = ?, notes = ?
        WHERE id = ?`
     ).run(
@@ -16762,16 +16823,16 @@ function registerDocumentHandlers() {
     );
   });
   ipcMain$1.handle("documents:delete", (_event, id2) => {
-    db.prepare("DELETE FROM documents WHERE id = ?").run(id2);
+    getDb().prepare("DELETE FROM documents WHERE id = ?").run(id2);
   });
 }
 function registerTagHandlers() {
   ipcMain$1.handle("tags:list", () => {
-    return db.prepare("SELECT * FROM tags ORDER BY name").all();
+    return getDb().prepare("SELECT * FROM tags ORDER BY name").all();
   });
   ipcMain$1.handle("tags:create", (_event, name, color) => {
     const id2 = randomUUID();
-    db.prepare("INSERT INTO tags (id, name, color) VALUES (?, ?, ?)").run(
+    getDb().prepare("INSERT INTO tags (id, name, color) VALUES (?, ?, ?)").run(
       id2,
       name,
       color ?? null
@@ -16779,22 +16840,22 @@ function registerTagHandlers() {
     return id2;
   });
   ipcMain$1.handle("tags:delete", (_event, id2) => {
-    db.prepare("DELETE FROM tags WHERE id = ?").run(id2);
+    getDb().prepare("DELETE FROM tags WHERE id = ?").run(id2);
   });
   ipcMain$1.handle("tags:listForDocument", (_event, documentId) => {
-    return db.prepare(
+    return getDb().prepare(
       `SELECT t.* FROM tags t
          JOIN document_tags dt ON dt.tag_id = t.id
          WHERE dt.document_id = ?`
     ).all(documentId);
   });
   ipcMain$1.handle("tags:attachToDocument", (_event, documentId, tagId) => {
-    db.prepare(
+    getDb().prepare(
       "INSERT OR IGNORE INTO document_tags (document_id, tag_id) VALUES (?, ?)"
     ).run(documentId, tagId);
   });
   ipcMain$1.handle("tags:detachFromDocument", (_event, documentId, tagId) => {
-    db.prepare("DELETE FROM document_tags WHERE document_id = ? AND tag_id = ?").run(
+    getDb().prepare("DELETE FROM document_tags WHERE document_id = ? AND tag_id = ?").run(
       documentId,
       tagId
     );
@@ -16802,7 +16863,7 @@ function registerTagHandlers() {
 }
 function registerDocumentCategoryLinkHandlers() {
   ipcMain$1.handle("documentCategoryLinks:listByCategory", (_event, categoryId) => {
-    return db.prepare(
+    return getDb().prepare(
       `SELECT d.id, d.title, d.issuer, d.issued_at, d.hours, d.quantity,d.file_path,d.file_status
         FROM documents d
         JOIN document_category_links l ON l.document_id = d.id
@@ -16810,7 +16871,7 @@ function registerDocumentCategoryLinkHandlers() {
     ).all(categoryId);
   });
   ipcMain$1.handle("documentCategoryLinks:listByDocument", (_event, documentId) => {
-    return db.prepare(
+    return getDb().prepare(
       `SELECT c.*, s.collection_id
          FROM categories c
          JOIN document_category_links l ON l.category_id = c.id
@@ -16822,7 +16883,7 @@ function registerDocumentCategoryLinkHandlers() {
     "documentCategoryLinks:link",
     (_event, documentId, categoryId) => {
       const id2 = randomUUID();
-      db.prepare(
+      getDb().prepare(
         "INSERT OR IGNORE INTO document_category_links (id, document_id, category_id) VALUES (?, ?, ?)"
       ).run(id2, documentId, categoryId);
     }
@@ -16830,7 +16891,7 @@ function registerDocumentCategoryLinkHandlers() {
   ipcMain$1.handle(
     "documentCategoryLinks:unlink",
     (_event, documentId, categoryId) => {
-      db.prepare(
+      getDb().prepare(
         "DELETE FROM document_category_links WHERE document_id = ? AND category_id = ?"
       ).run(documentId, categoryId);
     }
@@ -16838,14 +16899,27 @@ function registerDocumentCategoryLinkHandlers() {
 }
 function registerSessionHandlers() {
   ipcMain$1.handle("session:get", () => {
-    return store.get("session");
+    return globalStore.get("session");
   });
   ipcMain$1.handle("session:set", (_event, session) => {
-    store.set("session", session);
+    globalStore.set("session", session);
+    openUserDb(session.user.id);
+    openUserStore(session.user.id);
+    detectOrphans();
   });
   ipcMain$1.handle("session:clear", () => {
-    store.set("session", null);
+    globalStore.set("session", null);
+    closeUserDb();
+    closeUserStore();
   });
+}
+function restoreActiveSession() {
+  const session = globalStore.get("session");
+  if (session) {
+    openUserDb(session.user.id);
+    openUserStore(session.user.id);
+  }
+  return session;
 }
 function registerSettingsHandlers() {
   ipcMain$1.handle("settings:getStorageFolder", () => {
@@ -22761,7 +22835,7 @@ var MissingKeywordError = (
     return MissingKeywordError2;
   })(PDFParsingError)
 );
-var CharCodes$1;
+var CharCodes;
 (function(CharCodes2) {
   CharCodes2[CharCodes2["Null"] = 0] = "Null";
   CharCodes2[CharCodes2["Backspace"] = 8] = "Backspace";
@@ -22821,8 +22895,8 @@ var CharCodes$1;
   CharCodes2[CharCodes2["LeftCurly"] = 123] = "LeftCurly";
   CharCodes2[CharCodes2["RightCurly"] = 125] = "RightCurly";
   CharCodes2[CharCodes2["Tilde"] = 126] = "Tilde";
-})(CharCodes$1 || (CharCodes$1 = {}));
-const CharCodes = CharCodes$1;
+})(CharCodes || (CharCodes = {}));
+const CharCodes$1 = CharCodes;
 var PDFHeader = (
   /** @class */
   (function() {
@@ -22839,16 +22913,16 @@ var PDFHeader = (
     };
     PDFHeader2.prototype.copyBytesInto = function(buffer, offset) {
       var initialOffset = offset;
-      buffer[offset++] = CharCodes.Percent;
-      buffer[offset++] = CharCodes.P;
-      buffer[offset++] = CharCodes.D;
-      buffer[offset++] = CharCodes.F;
-      buffer[offset++] = CharCodes.Dash;
+      buffer[offset++] = CharCodes$1.Percent;
+      buffer[offset++] = CharCodes$1.P;
+      buffer[offset++] = CharCodes$1.D;
+      buffer[offset++] = CharCodes$1.F;
+      buffer[offset++] = CharCodes$1.Dash;
       offset += copyStringIntoBuffer(this.major, buffer, offset);
-      buffer[offset++] = CharCodes.Period;
+      buffer[offset++] = CharCodes$1.Period;
       offset += copyStringIntoBuffer(this.minor, buffer, offset);
-      buffer[offset++] = CharCodes.Newline;
-      buffer[offset++] = CharCodes.Percent;
+      buffer[offset++] = CharCodes$1.Newline;
+      buffer[offset++] = CharCodes$1.Percent;
       buffer[offset++] = 129;
       buffer[offset++] = 129;
       buffer[offset++] = 129;
@@ -23005,13 +23079,13 @@ var PDFArray = (
     };
     PDFArray2.prototype.copyBytesInto = function(buffer, offset) {
       var initialOffset = offset;
-      buffer[offset++] = CharCodes.LeftSquareBracket;
-      buffer[offset++] = CharCodes.Space;
+      buffer[offset++] = CharCodes$1.LeftSquareBracket;
+      buffer[offset++] = CharCodes$1.Space;
       for (var idx = 0, len = this.size(); idx < len; idx++) {
         offset += this.get(idx).copyBytesInto(buffer, offset);
-        buffer[offset++] = CharCodes.Space;
+        buffer[offset++] = CharCodes$1.Space;
       }
-      buffer[offset++] = CharCodes.RightSquareBracket;
+      buffer[offset++] = CharCodes$1.RightSquareBracket;
       return offset - initialOffset;
     };
     PDFArray2.prototype.scalePDFNumbers = function(x, y) {
@@ -23056,17 +23130,17 @@ var PDFBool = (
     };
     PDFBool2.prototype.copyBytesInto = function(buffer, offset) {
       if (this.value) {
-        buffer[offset++] = CharCodes.t;
-        buffer[offset++] = CharCodes.r;
-        buffer[offset++] = CharCodes.u;
-        buffer[offset++] = CharCodes.e;
+        buffer[offset++] = CharCodes$1.t;
+        buffer[offset++] = CharCodes$1.r;
+        buffer[offset++] = CharCodes$1.u;
+        buffer[offset++] = CharCodes$1.e;
         return 4;
       } else {
-        buffer[offset++] = CharCodes.f;
-        buffer[offset++] = CharCodes.a;
-        buffer[offset++] = CharCodes.l;
-        buffer[offset++] = CharCodes.s;
-        buffer[offset++] = CharCodes.e;
+        buffer[offset++] = CharCodes$1.f;
+        buffer[offset++] = CharCodes$1.a;
+        buffer[offset++] = CharCodes$1.l;
+        buffer[offset++] = CharCodes$1.s;
+        buffer[offset++] = CharCodes$1.e;
         return 5;
       }
     };
@@ -23076,35 +23150,35 @@ var PDFBool = (
   })(PDFObject)
 );
 var IsDelimiter = new Uint8Array(256);
-IsDelimiter[CharCodes.LeftParen] = 1;
-IsDelimiter[CharCodes.RightParen] = 1;
-IsDelimiter[CharCodes.LessThan] = 1;
-IsDelimiter[CharCodes.GreaterThan] = 1;
-IsDelimiter[CharCodes.LeftSquareBracket] = 1;
-IsDelimiter[CharCodes.RightSquareBracket] = 1;
-IsDelimiter[CharCodes.LeftCurly] = 1;
-IsDelimiter[CharCodes.RightCurly] = 1;
-IsDelimiter[CharCodes.ForwardSlash] = 1;
-IsDelimiter[CharCodes.Percent] = 1;
+IsDelimiter[CharCodes$1.LeftParen] = 1;
+IsDelimiter[CharCodes$1.RightParen] = 1;
+IsDelimiter[CharCodes$1.LessThan] = 1;
+IsDelimiter[CharCodes$1.GreaterThan] = 1;
+IsDelimiter[CharCodes$1.LeftSquareBracket] = 1;
+IsDelimiter[CharCodes$1.RightSquareBracket] = 1;
+IsDelimiter[CharCodes$1.LeftCurly] = 1;
+IsDelimiter[CharCodes$1.RightCurly] = 1;
+IsDelimiter[CharCodes$1.ForwardSlash] = 1;
+IsDelimiter[CharCodes$1.Percent] = 1;
 var IsWhitespace = new Uint8Array(256);
-IsWhitespace[CharCodes.Null] = 1;
-IsWhitespace[CharCodes.Tab] = 1;
-IsWhitespace[CharCodes.Newline] = 1;
-IsWhitespace[CharCodes.FormFeed] = 1;
-IsWhitespace[CharCodes.CarriageReturn] = 1;
-IsWhitespace[CharCodes.Space] = 1;
+IsWhitespace[CharCodes$1.Null] = 1;
+IsWhitespace[CharCodes$1.Tab] = 1;
+IsWhitespace[CharCodes$1.Newline] = 1;
+IsWhitespace[CharCodes$1.FormFeed] = 1;
+IsWhitespace[CharCodes$1.CarriageReturn] = 1;
+IsWhitespace[CharCodes$1.Space] = 1;
 var IsIrregular = new Uint8Array(256);
 for (var idx$1 = 0, len$1 = 256; idx$1 < len$1; idx$1++) {
   IsIrregular[idx$1] = IsWhitespace[idx$1] || IsDelimiter[idx$1] ? 1 : 0;
 }
-IsIrregular[CharCodes.Hash] = 1;
+IsIrregular[CharCodes$1.Hash] = 1;
 var decodeName = function(name) {
   return name.replace(/#([\dABCDEF]{2})/g, function(_, hex) {
     return charFromHexCode(hex);
   });
 };
 var isRegularChar = function(charCode) {
-  return charCode >= CharCodes.ExclamationPoint && charCode <= CharCodes.Tilde && !IsIrregular[charCode];
+  return charCode >= CharCodes$1.ExclamationPoint && charCode <= CharCodes$1.Tilde && !IsIrregular[charCode];
 };
 var ENFORCER$1 = {};
 var pool$1 = /* @__PURE__ */ new Map();
@@ -23140,12 +23214,12 @@ var PDFName = (
         var byte = toCharCode(char);
         var nextChar = this.encodedName[idx + 1];
         if (!escaped) {
-          if (byte === CharCodes.Hash)
+          if (byte === CharCodes$1.Hash)
             escaped = true;
           else
             pushByte(byte);
         } else {
-          if (byte >= CharCodes.Zero && byte <= CharCodes.Nine || byte >= CharCodes.a && byte <= CharCodes.f || byte >= CharCodes.A && byte <= CharCodes.F) {
+          if (byte >= CharCodes$1.Zero && byte <= CharCodes$1.Nine || byte >= CharCodes$1.a && byte <= CharCodes$1.f || byte >= CharCodes$1.A && byte <= CharCodes$1.F) {
             hex += char;
             if (hex.length === 2 || !(nextChar >= "0" && nextChar <= "9" || nextChar >= "a" && nextChar <= "f" || nextChar >= "A" && nextChar <= "F")) {
               pushByte(parseInt(hex, 16));
@@ -23218,7 +23292,7 @@ var PDFName = (
     return PDFName2;
   })(PDFObject)
 );
-var PDFNull$1 = (
+var PDFNull = (
   /** @class */
   (function(_super) {
     __extends(PDFNull2, _super);
@@ -23238,16 +23312,16 @@ var PDFNull$1 = (
       return 4;
     };
     PDFNull2.prototype.copyBytesInto = function(buffer, offset) {
-      buffer[offset++] = CharCodes.n;
-      buffer[offset++] = CharCodes.u;
-      buffer[offset++] = CharCodes.l;
-      buffer[offset++] = CharCodes.l;
+      buffer[offset++] = CharCodes$1.n;
+      buffer[offset++] = CharCodes$1.u;
+      buffer[offset++] = CharCodes$1.l;
+      buffer[offset++] = CharCodes$1.l;
       return 4;
     };
     return PDFNull2;
   })(PDFObject)
 );
-const PDFNull = new PDFNull$1();
+const PDFNull$1 = new PDFNull();
 var PDFDict = (
   /** @class */
   (function(_super) {
@@ -23275,13 +23349,13 @@ var PDFDict = (
         preservePDFNull = false;
       }
       var value = this.dict.get(key);
-      if (value === PDFNull && !preservePDFNull)
+      if (value === PDFNull$1 && !preservePDFNull)
         return void 0;
       return value;
     };
     PDFDict2.prototype.has = function(key) {
       var value = this.dict.get(key);
-      return value !== void 0 && value !== PDFNull;
+      return value !== void 0 && value !== PDFNull$1;
     };
     PDFDict2.prototype.lookupMaybe = function(key) {
       var _a;
@@ -23289,9 +23363,9 @@ var PDFDict = (
       for (var _i = 1; _i < arguments.length; _i++) {
         types2[_i - 1] = arguments[_i];
       }
-      var preservePDFNull = types2.includes(PDFNull);
+      var preservePDFNull = types2.includes(PDFNull$1);
       var value = (_a = this.context).lookupMaybe.apply(_a, __spreadArrays([this.get(key, preservePDFNull)], types2));
-      if (value === PDFNull && !preservePDFNull)
+      if (value === PDFNull$1 && !preservePDFNull)
         return void 0;
       return value;
     };
@@ -23301,9 +23375,9 @@ var PDFDict = (
       for (var _i = 1; _i < arguments.length; _i++) {
         types2[_i - 1] = arguments[_i];
       }
-      var preservePDFNull = types2.includes(PDFNull);
+      var preservePDFNull = types2.includes(PDFNull$1);
       var value = (_a = this.context).lookup.apply(_a, __spreadArrays([this.get(key, preservePDFNull)], types2));
-      if (value === PDFNull && !preservePDFNull)
+      if (value === PDFNull$1 && !preservePDFNull)
         return void 0;
       return value;
     };
@@ -23354,19 +23428,19 @@ var PDFDict = (
     };
     PDFDict2.prototype.copyBytesInto = function(buffer, offset) {
       var initialOffset = offset;
-      buffer[offset++] = CharCodes.LessThan;
-      buffer[offset++] = CharCodes.LessThan;
-      buffer[offset++] = CharCodes.Newline;
+      buffer[offset++] = CharCodes$1.LessThan;
+      buffer[offset++] = CharCodes$1.LessThan;
+      buffer[offset++] = CharCodes$1.Newline;
       var entries = this.entries();
       for (var idx = 0, len = entries.length; idx < len; idx++) {
         var _a = entries[idx], key = _a[0], value = _a[1];
         offset += key.copyBytesInto(buffer, offset);
-        buffer[offset++] = CharCodes.Space;
+        buffer[offset++] = CharCodes$1.Space;
         offset += value.copyBytesInto(buffer, offset);
-        buffer[offset++] = CharCodes.Newline;
+        buffer[offset++] = CharCodes$1.Newline;
       }
-      buffer[offset++] = CharCodes.GreaterThan;
-      buffer[offset++] = CharCodes.GreaterThan;
+      buffer[offset++] = CharCodes$1.GreaterThan;
+      buffer[offset++] = CharCodes$1.GreaterThan;
       return offset - initialOffset;
     };
     PDFDict2.withContext = function(context) {
@@ -23419,28 +23493,28 @@ var PDFStream = (
       this.updateDict();
       var initialOffset = offset;
       offset += this.dict.copyBytesInto(buffer, offset);
-      buffer[offset++] = CharCodes.Newline;
-      buffer[offset++] = CharCodes.s;
-      buffer[offset++] = CharCodes.t;
-      buffer[offset++] = CharCodes.r;
-      buffer[offset++] = CharCodes.e;
-      buffer[offset++] = CharCodes.a;
-      buffer[offset++] = CharCodes.m;
-      buffer[offset++] = CharCodes.Newline;
+      buffer[offset++] = CharCodes$1.Newline;
+      buffer[offset++] = CharCodes$1.s;
+      buffer[offset++] = CharCodes$1.t;
+      buffer[offset++] = CharCodes$1.r;
+      buffer[offset++] = CharCodes$1.e;
+      buffer[offset++] = CharCodes$1.a;
+      buffer[offset++] = CharCodes$1.m;
+      buffer[offset++] = CharCodes$1.Newline;
       var contents = this.getContents();
       for (var idx = 0, len = contents.length; idx < len; idx++) {
         buffer[offset++] = contents[idx];
       }
-      buffer[offset++] = CharCodes.Newline;
-      buffer[offset++] = CharCodes.e;
-      buffer[offset++] = CharCodes.n;
-      buffer[offset++] = CharCodes.d;
-      buffer[offset++] = CharCodes.s;
-      buffer[offset++] = CharCodes.t;
-      buffer[offset++] = CharCodes.r;
-      buffer[offset++] = CharCodes.e;
-      buffer[offset++] = CharCodes.a;
-      buffer[offset++] = CharCodes.m;
+      buffer[offset++] = CharCodes$1.Newline;
+      buffer[offset++] = CharCodes$1.e;
+      buffer[offset++] = CharCodes$1.n;
+      buffer[offset++] = CharCodes$1.d;
+      buffer[offset++] = CharCodes$1.s;
+      buffer[offset++] = CharCodes$1.t;
+      buffer[offset++] = CharCodes$1.r;
+      buffer[offset++] = CharCodes$1.e;
+      buffer[offset++] = CharCodes$1.a;
+      buffer[offset++] = CharCodes$1.m;
       return offset - initialOffset;
     };
     return PDFStream2;
@@ -23561,7 +23635,7 @@ var PDFOperator = (
         } else {
           offset += copyStringIntoBuffer(arg, buffer, offset);
         }
-        buffer[offset++] = CharCodes.Space;
+        buffer[offset++] = CharCodes$1.Space;
       }
       offset += copyStringIntoBuffer(this.name, buffer, offset);
       return offset - initialOffset;
@@ -23717,7 +23791,7 @@ var PDFContentStream = (
       var offset = 0;
       for (var idx = 0, len = this.operators.length; idx < len; idx++) {
         offset += this.operators[idx].copyBytesInto(buffer, offset);
-        buffer[offset++] = CharCodes.Newline;
+        buffer[offset++] = CharCodes$1.Newline;
       }
       return buffer;
     };
@@ -23791,14 +23865,14 @@ var PDFContext = (
       for (var _i = 1; _i < arguments.length; _i++) {
         types2[_i - 1] = arguments[_i];
       }
-      var preservePDFNull = types2.includes(PDFNull);
+      var preservePDFNull = types2.includes(PDFNull$1);
       var result = ref2 instanceof PDFRef ? this.indirectObjects.get(ref2) : ref2;
-      if (!result || result === PDFNull && !preservePDFNull)
+      if (!result || result === PDFNull$1 && !preservePDFNull)
         return void 0;
       for (var idx = 0, len = types2.length; idx < len; idx++) {
         var type2 = types2[idx];
-        if (type2 === PDFNull) {
-          if (result === PDFNull)
+        if (type2 === PDFNull$1) {
+          if (result === PDFNull$1)
             return result;
         } else {
           if (result instanceof type2)
@@ -23817,8 +23891,8 @@ var PDFContext = (
         return result;
       for (var idx = 0, len = types2.length; idx < len; idx++) {
         var type2 = types2[idx];
-        if (type2 === PDFNull) {
-          if (result === PDFNull)
+        if (type2 === PDFNull$1) {
+          if (result === PDFNull$1)
             return result;
         } else {
           if (result instanceof type2)
@@ -23844,7 +23918,7 @@ var PDFContext = (
       if (literal instanceof PDFObject) {
         return literal;
       } else if (literal === null || literal === void 0) {
-        return PDFNull;
+        return PDFNull$1;
       } else if (typeof literal === "string") {
         return PDFName.of(literal);
       } else if (typeof literal === "number") {
@@ -24251,11 +24325,11 @@ var PDFCrossRefSection = (
     };
     PDFCrossRefSection2.prototype.copyBytesInto = function(buffer, offset) {
       var initialOffset = offset;
-      buffer[offset++] = CharCodes.x;
-      buffer[offset++] = CharCodes.r;
-      buffer[offset++] = CharCodes.e;
-      buffer[offset++] = CharCodes.f;
-      buffer[offset++] = CharCodes.Newline;
+      buffer[offset++] = CharCodes$1.x;
+      buffer[offset++] = CharCodes$1.r;
+      buffer[offset++] = CharCodes$1.e;
+      buffer[offset++] = CharCodes$1.f;
+      buffer[offset++] = CharCodes$1.Newline;
       offset += this.copySubsectionsIntoBuffer(this.subsections, buffer, offset);
       return offset - initialOffset;
     };
@@ -24266,10 +24340,10 @@ var PDFCrossRefSection = (
         var subsection = this.subsections[idx];
         var firstObjectNumber = String(subsection[0].ref.objectNumber);
         offset += copyStringIntoBuffer(firstObjectNumber, buffer, offset);
-        buffer[offset++] = CharCodes.Space;
+        buffer[offset++] = CharCodes$1.Space;
         var rangeLength = String(subsection.length);
         offset += copyStringIntoBuffer(rangeLength, buffer, offset);
-        buffer[offset++] = CharCodes.Newline;
+        buffer[offset++] = CharCodes$1.Newline;
         offset += this.copyEntriesIntoBuffer(subsection, buffer, offset);
       }
       return offset - initialOffset;
@@ -24280,13 +24354,13 @@ var PDFCrossRefSection = (
         var entry = entries[idx];
         var entryOffset = padStart$1(String(entry.offset), 10, "0");
         offset += copyStringIntoBuffer(entryOffset, buffer, offset);
-        buffer[offset++] = CharCodes.Space;
+        buffer[offset++] = CharCodes$1.Space;
         var entryGen = padStart$1(String(entry.ref.generationNumber), 5, "0");
         offset += copyStringIntoBuffer(entryGen, buffer, offset);
-        buffer[offset++] = CharCodes.Space;
-        buffer[offset++] = entry.deleted ? CharCodes.f : CharCodes.n;
-        buffer[offset++] = CharCodes.Space;
-        buffer[offset++] = CharCodes.Newline;
+        buffer[offset++] = CharCodes$1.Space;
+        buffer[offset++] = entry.deleted ? CharCodes$1.f : CharCodes$1.n;
+        buffer[offset++] = CharCodes$1.Space;
+        buffer[offset++] = CharCodes$1.Newline;
       }
       return 20 * length;
     };
@@ -24335,23 +24409,23 @@ var PDFTrailer = (
     };
     PDFTrailer2.prototype.copyBytesInto = function(buffer, offset) {
       var initialOffset = offset;
-      buffer[offset++] = CharCodes.s;
-      buffer[offset++] = CharCodes.t;
-      buffer[offset++] = CharCodes.a;
-      buffer[offset++] = CharCodes.r;
-      buffer[offset++] = CharCodes.t;
-      buffer[offset++] = CharCodes.x;
-      buffer[offset++] = CharCodes.r;
-      buffer[offset++] = CharCodes.e;
-      buffer[offset++] = CharCodes.f;
-      buffer[offset++] = CharCodes.Newline;
+      buffer[offset++] = CharCodes$1.s;
+      buffer[offset++] = CharCodes$1.t;
+      buffer[offset++] = CharCodes$1.a;
+      buffer[offset++] = CharCodes$1.r;
+      buffer[offset++] = CharCodes$1.t;
+      buffer[offset++] = CharCodes$1.x;
+      buffer[offset++] = CharCodes$1.r;
+      buffer[offset++] = CharCodes$1.e;
+      buffer[offset++] = CharCodes$1.f;
+      buffer[offset++] = CharCodes$1.Newline;
       offset += copyStringIntoBuffer(this.lastXRefOffset, buffer, offset);
-      buffer[offset++] = CharCodes.Newline;
-      buffer[offset++] = CharCodes.Percent;
-      buffer[offset++] = CharCodes.Percent;
-      buffer[offset++] = CharCodes.E;
-      buffer[offset++] = CharCodes.O;
-      buffer[offset++] = CharCodes.F;
+      buffer[offset++] = CharCodes$1.Newline;
+      buffer[offset++] = CharCodes$1.Percent;
+      buffer[offset++] = CharCodes$1.Percent;
+      buffer[offset++] = CharCodes$1.E;
+      buffer[offset++] = CharCodes$1.O;
+      buffer[offset++] = CharCodes$1.F;
       return offset - initialOffset;
     };
     PDFTrailer2.forLastCrossRefSectionOffset = function(offset) {
@@ -24374,14 +24448,14 @@ var PDFTrailerDict = (
     };
     PDFTrailerDict2.prototype.copyBytesInto = function(buffer, offset) {
       var initialOffset = offset;
-      buffer[offset++] = CharCodes.t;
-      buffer[offset++] = CharCodes.r;
-      buffer[offset++] = CharCodes.a;
-      buffer[offset++] = CharCodes.i;
-      buffer[offset++] = CharCodes.l;
-      buffer[offset++] = CharCodes.e;
-      buffer[offset++] = CharCodes.r;
-      buffer[offset++] = CharCodes.Newline;
+      buffer[offset++] = CharCodes$1.t;
+      buffer[offset++] = CharCodes$1.r;
+      buffer[offset++] = CharCodes$1.a;
+      buffer[offset++] = CharCodes$1.i;
+      buffer[offset++] = CharCodes$1.l;
+      buffer[offset++] = CharCodes$1.e;
+      buffer[offset++] = CharCodes$1.r;
+      buffer[offset++] = CharCodes$1.Newline;
       offset += this.dict.copyBytesInto(buffer, offset);
       return offset - initialOffset;
     };
@@ -24428,7 +24502,7 @@ var PDFObjectStream = (
       for (var idx = 0, len = this.objects.length; idx < len; idx++) {
         var _a = this.objects[idx], object = _a[1];
         offset += object.copyBytesInto(buffer, offset);
-        buffer[offset++] = CharCodes.Newline;
+        buffer[offset++] = CharCodes$1.Newline;
       }
       return buffer;
     };
@@ -24487,8 +24561,8 @@ var PDFWriter = (
               offset = 0;
               buffer = new Uint8Array(size);
               offset += header.copyBytesInto(buffer, offset);
-              buffer[offset++] = CharCodes.Newline;
-              buffer[offset++] = CharCodes.Newline;
+              buffer[offset++] = CharCodes$1.Newline;
+              buffer[offset++] = CharCodes$1.Newline;
               idx = 0, len = indirectObjects.length;
               _c.label = 2;
             case 2:
@@ -24496,24 +24570,24 @@ var PDFWriter = (
               _b = indirectObjects[idx], ref2 = _b[0], object = _b[1];
               objectNumber = String(ref2.objectNumber);
               offset += copyStringIntoBuffer(objectNumber, buffer, offset);
-              buffer[offset++] = CharCodes.Space;
+              buffer[offset++] = CharCodes$1.Space;
               generationNumber = String(ref2.generationNumber);
               offset += copyStringIntoBuffer(generationNumber, buffer, offset);
-              buffer[offset++] = CharCodes.Space;
-              buffer[offset++] = CharCodes.o;
-              buffer[offset++] = CharCodes.b;
-              buffer[offset++] = CharCodes.j;
-              buffer[offset++] = CharCodes.Newline;
+              buffer[offset++] = CharCodes$1.Space;
+              buffer[offset++] = CharCodes$1.o;
+              buffer[offset++] = CharCodes$1.b;
+              buffer[offset++] = CharCodes$1.j;
+              buffer[offset++] = CharCodes$1.Newline;
               offset += object.copyBytesInto(buffer, offset);
-              buffer[offset++] = CharCodes.Newline;
-              buffer[offset++] = CharCodes.e;
-              buffer[offset++] = CharCodes.n;
-              buffer[offset++] = CharCodes.d;
-              buffer[offset++] = CharCodes.o;
-              buffer[offset++] = CharCodes.b;
-              buffer[offset++] = CharCodes.j;
-              buffer[offset++] = CharCodes.Newline;
-              buffer[offset++] = CharCodes.Newline;
+              buffer[offset++] = CharCodes$1.Newline;
+              buffer[offset++] = CharCodes$1.e;
+              buffer[offset++] = CharCodes$1.n;
+              buffer[offset++] = CharCodes$1.d;
+              buffer[offset++] = CharCodes$1.o;
+              buffer[offset++] = CharCodes$1.b;
+              buffer[offset++] = CharCodes$1.j;
+              buffer[offset++] = CharCodes$1.Newline;
+              buffer[offset++] = CharCodes$1.Newline;
               n = object instanceof PDFObjectStream ? object.getObjectsCount() : 1;
               if (!this.shouldWaitForTick(n)) return [3, 4];
               return [4, waitForTick()];
@@ -24526,12 +24600,12 @@ var PDFWriter = (
             case 5:
               if (xref) {
                 offset += xref.copyBytesInto(buffer, offset);
-                buffer[offset++] = CharCodes.Newline;
+                buffer[offset++] = CharCodes$1.Newline;
               }
               if (trailerDict) {
                 offset += trailerDict.copyBytesInto(buffer, offset);
-                buffer[offset++] = CharCodes.Newline;
-                buffer[offset++] = CharCodes.Newline;
+                buffer[offset++] = CharCodes$1.Newline;
+                buffer[offset++] = CharCodes$1.Newline;
               }
               offset += trailer.copyBytesInto(buffer, offset);
               return [2, buffer];
@@ -24957,9 +25031,9 @@ var PDFHexString = (
       return this.value.length + 2;
     };
     PDFHexString2.prototype.copyBytesInto = function(buffer, offset) {
-      buffer[offset++] = CharCodes.LessThan;
+      buffer[offset++] = CharCodes$1.LessThan;
       offset += copyStringIntoBuffer(this.value, buffer, offset);
-      buffer[offset++] = CharCodes.GreaterThan;
+      buffer[offset++] = CharCodes$1.GreaterThan;
       return this.value.length + 2;
     };
     PDFHexString2.of = function(value) {
@@ -25151,32 +25225,32 @@ var PDFString = (
         var byte = toCharCode(char);
         var nextChar = this.value[idx + 1];
         if (!escaped) {
-          if (byte === CharCodes.BackSlash)
+          if (byte === CharCodes$1.BackSlash)
             escaped = true;
           else
             pushByte(byte);
         } else {
-          if (byte === CharCodes.Newline)
+          if (byte === CharCodes$1.Newline)
             pushByte();
-          else if (byte === CharCodes.CarriageReturn)
+          else if (byte === CharCodes$1.CarriageReturn)
             pushByte();
-          else if (byte === CharCodes.n)
-            pushByte(CharCodes.Newline);
-          else if (byte === CharCodes.r)
-            pushByte(CharCodes.CarriageReturn);
-          else if (byte === CharCodes.t)
-            pushByte(CharCodes.Tab);
-          else if (byte === CharCodes.b)
-            pushByte(CharCodes.Backspace);
-          else if (byte === CharCodes.f)
-            pushByte(CharCodes.FormFeed);
-          else if (byte === CharCodes.LeftParen)
-            pushByte(CharCodes.LeftParen);
-          else if (byte === CharCodes.RightParen)
-            pushByte(CharCodes.RightParen);
-          else if (byte === CharCodes.Backspace)
-            pushByte(CharCodes.BackSlash);
-          else if (byte >= CharCodes.Zero && byte <= CharCodes.Seven) {
+          else if (byte === CharCodes$1.n)
+            pushByte(CharCodes$1.Newline);
+          else if (byte === CharCodes$1.r)
+            pushByte(CharCodes$1.CarriageReturn);
+          else if (byte === CharCodes$1.t)
+            pushByte(CharCodes$1.Tab);
+          else if (byte === CharCodes$1.b)
+            pushByte(CharCodes$1.Backspace);
+          else if (byte === CharCodes$1.f)
+            pushByte(CharCodes$1.FormFeed);
+          else if (byte === CharCodes$1.LeftParen)
+            pushByte(CharCodes$1.LeftParen);
+          else if (byte === CharCodes$1.RightParen)
+            pushByte(CharCodes$1.RightParen);
+          else if (byte === CharCodes$1.Backspace)
+            pushByte(CharCodes$1.BackSlash);
+          else if (byte >= CharCodes$1.Zero && byte <= CharCodes$1.Seven) {
             octal += char;
             if (octal.length === 3 || !(nextChar >= "0" && nextChar <= "7")) {
               pushByte(parseInt(octal, 8));
@@ -25215,9 +25289,9 @@ var PDFString = (
       return this.value.length + 2;
     };
     PDFString2.prototype.copyBytesInto = function(buffer, offset) {
-      buffer[offset++] = CharCodes.LeftParen;
+      buffer[offset++] = CharCodes$1.LeftParen;
       offset += copyStringIntoBuffer(this.value, buffer, offset);
-      buffer[offset++] = CharCodes.RightParen;
+      buffer[offset++] = CharCodes$1.RightParen;
       return this.value.length + 2;
     };
     PDFString2.of = function(value) {
@@ -28655,7 +28729,7 @@ var PDFPageEmbedder = (
       });
     };
     PDFPageEmbedder2.prototype.decodeContents = function(contents) {
-      var newline = Uint8Array.of(CharCodes.Newline);
+      var newline = Uint8Array.of(CharCodes$1.Newline);
       var decodedContents = [];
       for (var idx = 0, len = contents.size(); idx < len; idx++) {
         var stream2 = contents.lookup(idx, PDFStream);
@@ -30300,25 +30374,25 @@ var PDFPageTree = (
   })(PDFDict)
 );
 var IsDigit = new Uint8Array(256);
-IsDigit[CharCodes.Zero] = 1;
-IsDigit[CharCodes.One] = 1;
-IsDigit[CharCodes.Two] = 1;
-IsDigit[CharCodes.Three] = 1;
-IsDigit[CharCodes.Four] = 1;
-IsDigit[CharCodes.Five] = 1;
-IsDigit[CharCodes.Six] = 1;
-IsDigit[CharCodes.Seven] = 1;
-IsDigit[CharCodes.Eight] = 1;
-IsDigit[CharCodes.Nine] = 1;
+IsDigit[CharCodes$1.Zero] = 1;
+IsDigit[CharCodes$1.One] = 1;
+IsDigit[CharCodes$1.Two] = 1;
+IsDigit[CharCodes$1.Three] = 1;
+IsDigit[CharCodes$1.Four] = 1;
+IsDigit[CharCodes$1.Five] = 1;
+IsDigit[CharCodes$1.Six] = 1;
+IsDigit[CharCodes$1.Seven] = 1;
+IsDigit[CharCodes$1.Eight] = 1;
+IsDigit[CharCodes$1.Nine] = 1;
 var IsNumericPrefix = new Uint8Array(256);
-IsNumericPrefix[CharCodes.Period] = 1;
-IsNumericPrefix[CharCodes.Plus] = 1;
-IsNumericPrefix[CharCodes.Minus] = 1;
+IsNumericPrefix[CharCodes$1.Period] = 1;
+IsNumericPrefix[CharCodes$1.Plus] = 1;
+IsNumericPrefix[CharCodes$1.Minus] = 1;
 var IsNumeric = new Uint8Array(256);
 for (var idx = 0, len = 256; idx < len; idx++) {
   IsNumeric[idx] = IsDigit[idx] || IsNumericPrefix[idx] ? 1 : 0;
 }
-var Newline$1 = CharCodes.Newline, CarriageReturn$1 = CharCodes.CarriageReturn;
+var Newline$1 = CharCodes$1.Newline, CarriageReturn$1 = CharCodes$1.CarriageReturn;
 var BaseParser = (
   /** @class */
   (function() {
@@ -30350,7 +30424,7 @@ var BaseParser = (
         if (!IsNumeric[byte])
           break;
         value += charFromCode(this.bytes.next());
-        if (byte === CharCodes.Period)
+        if (byte === CharCodes$1.Period)
           break;
       }
       while (!this.bytes.done()) {
@@ -30389,7 +30463,7 @@ var BaseParser = (
       }
     };
     BaseParser2.prototype.skipComment = function() {
-      if (this.bytes.peek() !== CharCodes.Percent)
+      if (this.bytes.peek() !== CharCodes$1.Percent)
         return false;
       while (!this.bytes.done()) {
         var byte = this.bytes.peek();
@@ -30432,7 +30506,7 @@ var ByteStream = (
     };
     ByteStream2.prototype.next = function() {
       var byte = this.bytes[this.idx++];
-      if (byte === CharCodes.Newline) {
+      if (byte === CharCodes$1.Newline) {
         this.line += 1;
         this.column = 0;
       } else {
@@ -30476,74 +30550,74 @@ var ByteStream = (
     return ByteStream2;
   })()
 );
-var Space = CharCodes.Space, CarriageReturn = CharCodes.CarriageReturn, Newline = CharCodes.Newline;
+var Space = CharCodes$1.Space, CarriageReturn = CharCodes$1.CarriageReturn, Newline = CharCodes$1.Newline;
 var stream = [
-  CharCodes.s,
-  CharCodes.t,
-  CharCodes.r,
-  CharCodes.e,
-  CharCodes.a,
-  CharCodes.m
+  CharCodes$1.s,
+  CharCodes$1.t,
+  CharCodes$1.r,
+  CharCodes$1.e,
+  CharCodes$1.a,
+  CharCodes$1.m
 ];
 var endstream = [
-  CharCodes.e,
-  CharCodes.n,
-  CharCodes.d,
-  CharCodes.s,
-  CharCodes.t,
-  CharCodes.r,
-  CharCodes.e,
-  CharCodes.a,
-  CharCodes.m
+  CharCodes$1.e,
+  CharCodes$1.n,
+  CharCodes$1.d,
+  CharCodes$1.s,
+  CharCodes$1.t,
+  CharCodes$1.r,
+  CharCodes$1.e,
+  CharCodes$1.a,
+  CharCodes$1.m
 ];
 var Keywords = {
   header: [
-    CharCodes.Percent,
-    CharCodes.P,
-    CharCodes.D,
-    CharCodes.F,
-    CharCodes.Dash
+    CharCodes$1.Percent,
+    CharCodes$1.P,
+    CharCodes$1.D,
+    CharCodes$1.F,
+    CharCodes$1.Dash
   ],
   eof: [
-    CharCodes.Percent,
-    CharCodes.Percent,
-    CharCodes.E,
-    CharCodes.O,
-    CharCodes.F
+    CharCodes$1.Percent,
+    CharCodes$1.Percent,
+    CharCodes$1.E,
+    CharCodes$1.O,
+    CharCodes$1.F
   ],
-  obj: [CharCodes.o, CharCodes.b, CharCodes.j],
+  obj: [CharCodes$1.o, CharCodes$1.b, CharCodes$1.j],
   endobj: [
-    CharCodes.e,
-    CharCodes.n,
-    CharCodes.d,
-    CharCodes.o,
-    CharCodes.b,
-    CharCodes.j
+    CharCodes$1.e,
+    CharCodes$1.n,
+    CharCodes$1.d,
+    CharCodes$1.o,
+    CharCodes$1.b,
+    CharCodes$1.j
   ],
-  xref: [CharCodes.x, CharCodes.r, CharCodes.e, CharCodes.f],
+  xref: [CharCodes$1.x, CharCodes$1.r, CharCodes$1.e, CharCodes$1.f],
   trailer: [
-    CharCodes.t,
-    CharCodes.r,
-    CharCodes.a,
-    CharCodes.i,
-    CharCodes.l,
-    CharCodes.e,
-    CharCodes.r
+    CharCodes$1.t,
+    CharCodes$1.r,
+    CharCodes$1.a,
+    CharCodes$1.i,
+    CharCodes$1.l,
+    CharCodes$1.e,
+    CharCodes$1.r
   ],
   startxref: [
-    CharCodes.s,
-    CharCodes.t,
-    CharCodes.a,
-    CharCodes.r,
-    CharCodes.t,
-    CharCodes.x,
-    CharCodes.r,
-    CharCodes.e,
-    CharCodes.f
+    CharCodes$1.s,
+    CharCodes$1.t,
+    CharCodes$1.a,
+    CharCodes$1.r,
+    CharCodes$1.t,
+    CharCodes$1.x,
+    CharCodes$1.r,
+    CharCodes$1.e,
+    CharCodes$1.f
   ],
-  true: [CharCodes.t, CharCodes.r, CharCodes.u, CharCodes.e],
-  false: [CharCodes.f, CharCodes.a, CharCodes.l, CharCodes.s, CharCodes.e],
-  null: [CharCodes.n, CharCodes.u, CharCodes.l, CharCodes.l],
+  true: [CharCodes$1.t, CharCodes$1.r, CharCodes$1.u, CharCodes$1.e],
+  false: [CharCodes$1.f, CharCodes$1.a, CharCodes$1.l, CharCodes$1.s, CharCodes$1.e],
+  null: [CharCodes$1.n, CharCodes$1.u, CharCodes$1.l, CharCodes$1.l],
   stream,
   streamEOF1: __spreadArrays(stream, [Space, CarriageReturn, Newline]),
   streamEOF2: __spreadArrays(stream, [CarriageReturn, Newline]),
@@ -30573,18 +30647,18 @@ var PDFObjectParser = (
       if (this.matchKeyword(Keywords.false))
         return PDFBool.False;
       if (this.matchKeyword(Keywords.null))
-        return PDFNull;
+        return PDFNull$1;
       var byte = this.bytes.peek();
-      if (byte === CharCodes.LessThan && this.bytes.peekAhead(1) === CharCodes.LessThan) {
+      if (byte === CharCodes$1.LessThan && this.bytes.peekAhead(1) === CharCodes$1.LessThan) {
         return this.parseDictOrStream();
       }
-      if (byte === CharCodes.LessThan)
+      if (byte === CharCodes$1.LessThan)
         return this.parseHexString();
-      if (byte === CharCodes.LeftParen)
+      if (byte === CharCodes$1.LeftParen)
         return this.parseString();
-      if (byte === CharCodes.ForwardSlash)
+      if (byte === CharCodes$1.ForwardSlash)
         return this.parseName();
-      if (byte === CharCodes.LeftSquareBracket)
+      if (byte === CharCodes$1.LeftSquareBracket)
         return this.parseArray();
       if (IsNumeric[byte])
         return this.parseNumberOrRef();
@@ -30597,8 +30671,8 @@ var PDFObjectParser = (
       if (IsDigit[this.bytes.peek()]) {
         var secondNum = this.parseRawNumber();
         this.skipWhitespaceAndComments();
-        if (this.bytes.peek() === CharCodes.R) {
-          this.bytes.assertNext(CharCodes.R);
+        if (this.bytes.peek() === CharCodes$1.R) {
+          this.bytes.assertNext(CharCodes$1.R);
           return PDFRef.of(firstNum, secondNum);
         }
       }
@@ -30607,11 +30681,11 @@ var PDFObjectParser = (
     };
     PDFObjectParser2.prototype.parseHexString = function() {
       var value = "";
-      this.bytes.assertNext(CharCodes.LessThan);
-      while (!this.bytes.done() && this.bytes.peek() !== CharCodes.GreaterThan) {
+      this.bytes.assertNext(CharCodes$1.LessThan);
+      while (!this.bytes.done() && this.bytes.peek() !== CharCodes$1.GreaterThan) {
         value += charFromCode(this.bytes.next());
       }
-      this.bytes.assertNext(CharCodes.GreaterThan);
+      this.bytes.assertNext(CharCodes$1.GreaterThan);
       return PDFHexString.of(value);
     };
     PDFObjectParser2.prototype.parseString = function() {
@@ -30622,12 +30696,12 @@ var PDFObjectParser = (
         var byte = this.bytes.next();
         value += charFromCode(byte);
         if (!isEscaped) {
-          if (byte === CharCodes.LeftParen)
+          if (byte === CharCodes$1.LeftParen)
             nestingLvl += 1;
-          if (byte === CharCodes.RightParen)
+          if (byte === CharCodes$1.RightParen)
             nestingLvl -= 1;
         }
-        if (byte === CharCodes.BackSlash) {
+        if (byte === CharCodes$1.BackSlash) {
           isEscaped = !isEscaped;
         } else if (isEscaped) {
           isEscaped = false;
@@ -30639,7 +30713,7 @@ var PDFObjectParser = (
       throw new UnbalancedParenthesisError(this.bytes.position());
     };
     PDFObjectParser2.prototype.parseName = function() {
-      this.bytes.assertNext(CharCodes.ForwardSlash);
+      this.bytes.assertNext(CharCodes$1.ForwardSlash);
       var name = "";
       while (!this.bytes.done()) {
         var byte = this.bytes.peek();
@@ -30651,31 +30725,31 @@ var PDFObjectParser = (
       return PDFName.of(name);
     };
     PDFObjectParser2.prototype.parseArray = function() {
-      this.bytes.assertNext(CharCodes.LeftSquareBracket);
+      this.bytes.assertNext(CharCodes$1.LeftSquareBracket);
       this.skipWhitespaceAndComments();
       var pdfArray = PDFArray.withContext(this.context);
-      while (this.bytes.peek() !== CharCodes.RightSquareBracket) {
+      while (this.bytes.peek() !== CharCodes$1.RightSquareBracket) {
         var element = this.parseObject();
         pdfArray.push(element);
         this.skipWhitespaceAndComments();
       }
-      this.bytes.assertNext(CharCodes.RightSquareBracket);
+      this.bytes.assertNext(CharCodes$1.RightSquareBracket);
       return pdfArray;
     };
     PDFObjectParser2.prototype.parseDict = function() {
-      this.bytes.assertNext(CharCodes.LessThan);
-      this.bytes.assertNext(CharCodes.LessThan);
+      this.bytes.assertNext(CharCodes$1.LessThan);
+      this.bytes.assertNext(CharCodes$1.LessThan);
       this.skipWhitespaceAndComments();
       var dict = /* @__PURE__ */ new Map();
-      while (!this.bytes.done() && this.bytes.peek() !== CharCodes.GreaterThan && this.bytes.peekAhead(1) !== CharCodes.GreaterThan) {
+      while (!this.bytes.done() && this.bytes.peek() !== CharCodes$1.GreaterThan && this.bytes.peekAhead(1) !== CharCodes$1.GreaterThan) {
         var key = this.parseName();
         var value = this.parseObject();
         dict.set(key, value);
         this.skipWhitespaceAndComments();
       }
       this.skipWhitespaceAndComments();
-      this.bytes.assertNext(CharCodes.GreaterThan);
-      this.bytes.assertNext(CharCodes.GreaterThan);
+      this.bytes.assertNext(CharCodes$1.GreaterThan);
+      this.bytes.assertNext(CharCodes$1.GreaterThan);
       var Type = dict.get(PDFName.of("Type"));
       if (Type === PDFName.of("Catalog")) {
         return PDFCatalog.fromMapWithContext(dict, this.context);
@@ -30967,7 +31041,7 @@ var PDFParser = (
       while (!this.bytes.done()) {
         if (this.matchKeyword(Keywords.header)) {
           var major = this.parseRawInt();
-          this.bytes.assertNext(CharCodes.Period);
+          this.bytes.assertNext(CharCodes$1.Period);
           var minor = this.parseRawInt();
           var header = PDFHeader.forVersion(major, minor);
           this.skipBinaryHeaderComment();
@@ -31108,9 +31182,9 @@ var PDFParser = (
         var secondInt = this.parseRawInt();
         this.skipWhitespaceAndComments();
         var byte = this.bytes.peek();
-        if (byte === CharCodes.n || byte === CharCodes.f) {
+        if (byte === CharCodes$1.n || byte === CharCodes$1.f) {
           var ref2 = PDFRef.of(objectNumber, secondInt);
-          if (this.bytes.next() === CharCodes.n) {
+          if (this.bytes.next() === CharCodes$1.n) {
             xref.addEntry(ref2, firstInt);
           } else {
             xref.addDeletedEntry(ref2, firstInt);
@@ -31175,7 +31249,7 @@ var PDFParser = (
       while (!this.bytes.done()) {
         var initialOffset = this.bytes.offset();
         var byte = this.bytes.peek();
-        var isAlphaNumeric = byte >= CharCodes.Space && byte <= CharCodes.Tilde;
+        var isAlphaNumeric = byte >= CharCodes$1.Space && byte <= CharCodes$1.Tilde;
         if (isAlphaNumeric) {
           if (this.matchKeyword(Keywords.xref) || this.matchKeyword(Keywords.trailer) || this.matchKeyword(Keywords.startxref) || this.matchIndirectObjectHeader()) {
             this.bytes.moveTo(initialOffset);
@@ -36395,7 +36469,6 @@ function createWindow() {
   });
 }
 app$1.whenReady().then(() => {
-  initSchema();
   registerPreferencesHandlers();
   registerCollectionHandlers();
   registerSubgroupHandlers();
@@ -36407,7 +36480,8 @@ app$1.whenReady().then(() => {
   registerSettingsHandlers();
   registerFileHandlers();
   registerReportHandlers();
-  detectOrphans();
+  const session = restoreActiveSession();
+  if (session) detectOrphans();
   createWindow();
 });
 app$1.on("will-quit", () => {

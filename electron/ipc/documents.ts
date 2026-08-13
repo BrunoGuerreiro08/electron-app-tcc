@@ -1,5 +1,5 @@
 import { ipcMain } from 'electron'
-import { db } from '../db'
+import { getDb } from '../db'
 import { randomUUID } from 'node:crypto'
 
 interface DocumentInput {
@@ -14,13 +14,13 @@ interface DocumentInput {
 
 export function registerDocumentHandlers() {
     ipcMain.handle('documents:list', () => {
-        return db.prepare('SELECT * FROM documents ORDER BY created_at DESC').all()
+        return getDb().prepare('SELECT * FROM documents ORDER BY created_at DESC').all()
     })
 
     // "Unfiled" documents — logged but not linked to any category yet.
     // Supports the "add throughout the year, organize later" workflow.
     ipcMain.handle('documents:listUnlinked', () => {
-        return db
+        return getDb()
             .prepare(
                 `SELECT d.* FROM documents d
          LEFT JOIN document_category_links l ON l.document_id = d.id
@@ -32,7 +32,7 @@ export function registerDocumentHandlers() {
 
     ipcMain.handle('documents:create', (_event, input: DocumentInput) => {
         const id = randomUUID()
-        db.prepare(
+        getDb().prepare(
             `INSERT INTO documents (id, title, issuer, issued_at, quantity, hours, notes, file_path, file_status)
        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`
         ).run(
@@ -50,10 +50,10 @@ export function registerDocumentHandlers() {
     })
 
     ipcMain.handle('documents:update', (_event, id: string, updates: Partial<DocumentInput>) => {
-        const current = db.prepare('SELECT * FROM documents WHERE id = ?').get(id) as any
+        const current = getDb().prepare('SELECT * FROM documents WHERE id = ?').get(id) as any
         if (!current) throw new Error('Document not found')
 
-        db.prepare(
+        getDb().prepare(
             `UPDATE documents SET title = ?, issuer = ?, issued_at = ?, quantity = ?, hours = ?, notes = ?
        WHERE id = ?`
         ).run(
@@ -71,6 +71,6 @@ export function registerDocumentHandlers() {
         // Cascades document_tags and document_category_links.
         // File deletion (native fs) is a separate concern — wire in once
         // the FileHandler service exists.
-        db.prepare('DELETE FROM documents WHERE id = ?').run(id)
+        getDb().prepare('DELETE FROM documents WHERE id = ?').run(id)
     })
 }
