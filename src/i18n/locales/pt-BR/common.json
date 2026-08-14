@@ -13,7 +13,43 @@
     "retry": "Tentar novamente",
     "download": "Baixar",
     "export": "Exportar",
-    "changeFolder": "Alterar pasta"
+    "changeFolder": "Alterar pasta",
+    "logout": "Sair"
+  },
+  "nav": {
+    "menu": "Menu",
+    "home": "Início",
+    "dashboard": "Painel",
+    "export": "Exportar",
+    "settings": "Configurações",
+    "profile": "Perfil",
+    "security": "Segurança",
+    "documents": "Documentos",
+    "collections": "Coleções",
+    "newCollection": "Nova coleção",
+    "help": "Ajuda",
+    "documentation": "Documentação",
+    "support": "Suporte"
+  },
+  "sidebar": {
+    "toggleTooltip": "Alternar Barra Lateral (Ctrl+B)",
+    "logoutConfirm": {
+      "title": "Tem certeza que deseja sair?",
+      "description": "Você precisará verificar seu e-mail institucional novamente para acessar na próxima vez."
+    }
+  },
+  "serverStatus": {
+    "unreachable": "Servidor inacessível — trabalhando offline",
+    "reconnectTooltip": "Offline — Clique para reconectar"
+  },
+  "theme": {
+    "light": "Modo Claro",
+    "dark": "Modo Escuro",
+    "system": "Tema do Sistema",
+    "tooltip": "Alterar Tema"
+  },
+  "user": {
+    "guest": "Visitante"
   },
   "fields": {
     "name": "Nome"
@@ -22,8 +58,8 @@
     "loading": "Carregando…",
     "saving": "Salvando…",
     "deleting": "Excluindo…",
-    "empty": "Nada por aqui ainda",
-    "error": "Algo deu errado"
+    "empty": "Nada aqui ainda",
+    "error": "Ocorreu um erro"
   },
   "confirmDelete": {
     "title": "Tem certeza?",
@@ -34,11 +70,6 @@
   "validation": {
     "required": "Este campo é obrigatório",
     "invalid": "Este valor é inválido"
-  },
-  "serverStatus": {
-    "online": "Online",
-    "offline": "Offline",
-    "connecting": "Conectando…"
   },
   "language": {
     "tooltip": "Alterar idioma",

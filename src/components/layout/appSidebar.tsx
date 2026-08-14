@@ -59,13 +59,13 @@ import { usePreferencesStore } from '@/store/preferenceStore'
 import { useTranslation } from 'react-i18next'
 
 export function AppSidebar() {
+    const { t } = useTranslation()
     const { theme, setTheme } = useTheme()
     const { state, toggleSidebar } = useSidebar()
     const logout = useAuthStore((state) => state.logout)
     const isCollapsed = state === "collapsed"
     const location = useLocation()
 
-    const { t } = useTranslation('common')
     const language = usePreferencesStore((s) => s.language)
     const setLanguage = usePreferencesStore((s) => s.setLanguage)
 
@@ -130,7 +130,7 @@ export function AppSidebar() {
             <SidebarContent className="py-2">
                 <SidebarGroup>
                     <SidebarGroupLabel className="text-xs font-medium px-3 text-muted-foreground">
-                        Menu
+                        {t('nav.menu')}
                     </SidebarGroupLabel>
 
                     <SidebarGroupContent>
@@ -139,12 +139,12 @@ export function AppSidebar() {
                             <SidebarMenuItem>
                                 <SidebarMenuButton
                                     asChild
-                                    tooltip="Home"
+                                    tooltip={t('nav.home')}
                                     isActive={location.pathname === "/"}
                                 >
                                     <NavLink to="/" className="flex items-center gap-3">
                                         <Home className="h-4 w-4 shrink-0" />
-                                        <span>Home</span>
+                                        <span>{t('nav.home')}</span>
                                     </NavLink>
                                 </SidebarMenuButton>
                             </SidebarMenuItem>
@@ -152,12 +152,12 @@ export function AppSidebar() {
                             <SidebarMenuItem>
                                 <SidebarMenuButton
                                     asChild
-                                    tooltip="Dashboard"
+                                    tooltip={t('nav.dashboard')}
                                     isActive={location.pathname === "/dashboard"}
                                 >
                                     <NavLink to="/dashboard" className="flex items-center gap-3">
                                         <Hash className="h-4 w-4 shrink-0" />
-                                        <span>Dashboard</span>
+                                        <span>{t('nav.dashboard')}</span>
                                     </NavLink>
                                 </SidebarMenuButton>
                             </SidebarMenuItem>
@@ -165,12 +165,12 @@ export function AppSidebar() {
                             <SidebarMenuItem>
                                 <SidebarMenuButton
                                     asChild
-                                    tooltip="Exportar"
+                                    tooltip={t('nav.export')}
                                     isActive={location.pathname === "/export"}
                                 >
                                     <NavLink to="/export" className="flex items-center gap-3">
                                         <Printer className="h-4 w-4 shrink-0" />
-                                        <span>Exportar</span>
+                                        <span>{t('nav.export')}</span>
                                     </NavLink>
                                 </SidebarMenuButton>
                             </SidebarMenuItem>
@@ -183,11 +183,11 @@ export function AppSidebar() {
                                 <SidebarMenuItem>
                                     <CollapsibleTrigger asChild>
                                         <SidebarMenuButton
-                                            tooltip="Configurações"
+                                            tooltip={t('nav.settings')}
                                             isActive={location.pathname.startsWith("/settings")}
                                         >
                                             <SlidersHorizontal className="h-4 w-4 shrink-0" />
-                                            <span>Configurações</span>
+                                            <span>{t('nav.settings')}</span>
                                             <ChevronRight className="ml-auto h-3 w-3 text-muted-foreground transition-transform duration-200 group-data-[state=open]/collapsible:rotate-90" />
                                         </SidebarMenuButton>
                                     </CollapsibleTrigger>
@@ -200,7 +200,7 @@ export function AppSidebar() {
                                                     isActive={location.pathname === "/settings/profile"}
                                                 >
                                                     <NavLink to="/settings/profile">
-                                                        <User className="h-3.5 w-3.5 mr-1" /> Perfil
+                                                        <User className="h-3.5 w-3.5 mr-1" /> {t('nav.profile')}
                                                     </NavLink>
                                                 </SidebarMenuSubButton>
                                             </SidebarMenuSubItem>
@@ -210,7 +210,7 @@ export function AppSidebar() {
                                                     isActive={location.pathname === "/settings/security"}
                                                 >
                                                     <NavLink to="/settings/security">
-                                                        <Shield className="h-3.5 w-3.5 mr-1" /> Segurança
+                                                        <Shield className="h-3.5 w-3.5 mr-1" /> {t('nav.security')}
                                                     </NavLink>
                                                 </SidebarMenuSubButton>
                                             </SidebarMenuSubItem>
@@ -223,12 +223,12 @@ export function AppSidebar() {
                             <SidebarMenuItem>
                                 <SidebarMenuButton
                                     asChild
-                                    tooltip="Documentos"
+                                    tooltip={t('nav.documents')}
                                     isActive={location.pathname.startsWith("/documents")}
                                 >
                                     <NavLink to="/documents">
                                         <FileText className="h-4 w-4 shrink-0" />
-                                        <span>Documentos</span>
+                                        <span>{t('nav.documents')}</span>
                                     </NavLink>
                                 </SidebarMenuButton>
                             </SidebarMenuItem>
@@ -241,11 +241,11 @@ export function AppSidebar() {
                                 <SidebarMenuItem>
                                     <CollapsibleTrigger asChild>
                                         <SidebarMenuButton
-                                            tooltip="Coleções"
+                                            tooltip={t('nav.collections')}
                                             isActive={location.pathname.startsWith("/collections")}
                                         >
                                             <Library className="h-4 w-4 shrink-0" />
-                                            <span>Coleções</span>
+                                            <span>{t('nav.collections')}</span>
                                             <ChevronRight className="ml-auto h-3 w-3 text-muted-foreground transition-transform duration-200 group-data-[state=open]/collapsible:rotate-90" />
                                         </SidebarMenuButton>
                                     </CollapsibleTrigger>
@@ -272,7 +272,7 @@ export function AppSidebar() {
                                                 <SidebarMenuSubButton asChild onClick={() => setNewDialogOpen(true)}>
                                                     <button type="button" className="text-muted-foreground">
                                                         <Plus className="h-3.5 w-3.5" />
-                                                        Nova coleção
+                                                        {t('nav.newCollection')}
                                                     </button>
                                                 </SidebarMenuSubButton>
                                             </SidebarMenuSubItem>
@@ -284,7 +284,7 @@ export function AppSidebar() {
                             <Dialog open={newDialogOpen} onOpenChange={setNewDialogOpen}>
                                 <DialogContent>
                                     <DialogHeader>
-                                        <DialogTitle>Nova coleção</DialogTitle>
+                                        <DialogTitle>{t('nav.newCollection')}</DialogTitle>
                                     </DialogHeader>
                                     <Input
                                         placeholder="e.g. 2026 Progression Portfolio"
@@ -295,7 +295,7 @@ export function AppSidebar() {
                                     />
                                     <DialogFooter>
                                         <Button onClick={handleCreate} disabled={!newName.trim()}>
-                                            Criar
+                                            {t('actions.create')}
                                         </Button>
                                     </DialogFooter>
                                 </DialogContent>
@@ -315,7 +315,7 @@ export function AppSidebar() {
                                             isActive={location.pathname.startsWith("/help")}
                                         >
                                             <BookOpen className="h-4 w-4 shrink-0" />
-                                            <span>Ajuda</span>
+                                            <span>{t('nav.help')}</span>
                                             <ChevronRight className="ml-auto h-3 w-3 text-muted-foreground transition-transform duration-200 group-data-[state=open]/collapsible:rotate-90" />
                                         </SidebarMenuButton>
                                     </CollapsibleTrigger>
@@ -328,7 +328,7 @@ export function AppSidebar() {
                                                     isActive={location.pathname === "/help/docs"}
                                                 >
                                                     <NavLink to="/help/docs">
-                                                        <FileText className="h-3.5 w-3.5 mr-1" /> Documentação
+                                                        <FileText className="h-3.5 w-3.5 mr-1" /> {t('nav.documentation')}
                                                     </NavLink>
                                                 </SidebarMenuSubButton>
                                             </SidebarMenuSubItem>
@@ -338,7 +338,7 @@ export function AppSidebar() {
                                                     isActive={location.pathname === "/help/support"}
                                                 >
                                                     <NavLink to="/help/support">
-                                                        <LifeBuoy className="h-3.5 w-3.5 mr-1" /> Suporte
+                                                        <LifeBuoy className="h-3.5 w-3.5 mr-1" /> {t('nav.support')}
                                                     </NavLink>
                                                 </SidebarMenuSubButton>
                                             </SidebarMenuSubItem>
@@ -379,18 +379,18 @@ export function AppSidebar() {
                             <AlertDialogTrigger asChild>
                                 <SidebarMenuButton
                                     className="text-destructive hover:bg-destructive/10 hover:text-destructive data-[active=true]:bg-transparent"
-                                    tooltip="Log out"
+                                    tooltip="{t('actions.logout')}"
                                 >
                                     <LogOut className="h-4 w-4 shrink-0" />
-                                    <span>Log out</span>
+                                    <span>{t('actions.logout')}</span>
                                 </SidebarMenuButton>
                             </AlertDialogTrigger>
 
                             <AlertDialogContent>
                                 <AlertDialogHeader>
-                                    <AlertDialogTitle>Are you sure you want to log out?</AlertDialogTitle>
+                                    <AlertDialogTitle>{t('sidebar.logoutConfirm.title')}</AlertDialogTitle>
                                     <AlertDialogDescription>
-                                        You will need to re-verify your institutional email address to gain access next time.
+                                        {t('sidebar.logoutConfirm.title')}
                                     </AlertDialogDescription>
                                 </AlertDialogHeader>
                                 <AlertDialogFooter>
@@ -399,7 +399,7 @@ export function AppSidebar() {
                                         onClick={logout}
                                         className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
                                     >
-                                        Log out
+                                        {t('actions.logout')}
                                     </AlertDialogAction>
                                 </AlertDialogFooter>
                             </AlertDialogContent>

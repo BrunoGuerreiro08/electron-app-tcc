@@ -13,7 +13,43 @@
         "retry": "Retry",
         "download": "Download",
         "export": "Export",
-        "changeFolder": "Change folder"
+        "changeFolder": "Change folder",
+        "logout": "Log out"
+    },
+    "nav": {
+        "menu": "Menu",
+        "home": "Home",
+        "dashboard": "Dashboard",
+        "export": "Export",
+        "settings": "Settings",
+        "profile": "Profile",
+        "security": "Security",
+        "documents": "Documents",
+        "collections": "Collections",
+        "newCollection": "New collection",
+        "help": "Help",
+        "documentation": "Documentation",
+        "support": "Support"
+    },
+    "sidebar": {
+        "toggleTooltip": "Toggle Sidebar (Ctrl+B)",
+        "logoutConfirm": {
+            "title": "Are you sure you want to log out?",
+            "description": "You will need to re-verify your institutional email address to gain access next time."
+        }
+    },
+    "serverStatus": {
+        "unreachable": "Server unreachable — working offline",
+        "reconnectTooltip": "Offline — Click to reconnect"
+    },
+    "theme": {
+        "light": "Light Mode",
+        "dark": "Dark Mode",
+        "system": "System Theme",
+        "tooltip": "Change Theme"
+    },
+    "user": {
+        "guest": "Guest"
     },
     "fields": {
         "name": "Name"
@@ -34,11 +70,6 @@
     "validation": {
         "required": "This field is required",
         "invalid": "This value is invalid"
-    },
-    "serverStatus": {
-        "online": "Online",
-        "offline": "Offline",
-        "connecting": "Connecting…"
     },
     "language": {
         "tooltip": "Change language",

@@ -4,6 +4,7 @@ import { WifiOff, RefreshCw } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip'
 import { cn } from '@/lib/utils'
+import { useTranslation } from 'react-i18next'
 
 interface ServerStatusIndicatorProps {
   variant?: 'full' | 'icon'
@@ -11,6 +12,7 @@ interface ServerStatusIndicatorProps {
 }
 
 export function ServerStatusIndicator({ variant = 'full', className }: ServerStatusIndicatorProps) {
+  const { t } = useTranslation();
   const { status, check, startPolling } = useServerStatusStore()
 
   useEffect(() => {
@@ -35,7 +37,7 @@ export function ServerStatusIndicator({ variant = 'full', className }: ServerSta
           </div>
         </TooltipTrigger>
         <TooltipContent side="right" className="flex items-center gap-2">
-          <span>Offline — Clique para reconectar</span>
+          <span>{t('serverStatus.reconnectTooltip')}</span>
           <RefreshCw className="h-3 w-3 animate-spin-slow" />
         </TooltipContent>
       </Tooltip>
@@ -50,7 +52,7 @@ export function ServerStatusIndicator({ variant = 'full', className }: ServerSta
       )}
     >
       <WifiOff className="h-3.5 w-3.5 shrink-0" />
-      <span className="truncate">Server unreachable — working offline</span>
+      <span className="truncate">{t('serverStatus.unreachable')}</span>
       <Button variant="ghost" size="icon" className="h-5 w-5 ml-auto shrink-0 text-destructive hover:bg-destructive/20 hover:text-destructive" onClick={check}>
         <RefreshCw className="h-3 w-3" />
       </Button>
