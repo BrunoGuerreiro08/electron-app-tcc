@@ -14,7 +14,10 @@
         "download": "Download",
         "export": "Export",
         "changeFolder": "Change folder",
-        "logout": "Log out"
+        "logout": "Log out",
+        "backToCollection": "Back to Collection",
+        "exportDossier": "Export Dossier (.pdf)",
+        "generatingDossier": "Generating Dossier…"
     },
     "nav": {
         "menu": "Menu",
@@ -59,7 +62,8 @@
         "saving": "Saving…",
         "deleting": "Deleting…",
         "empty": "Nothing here yet",
-        "error": "Something went wrong"
+        "error": "Something went wrong",
+        "loadingCollectionData": "Loading collection data…"
     },
     "confirmDelete": {
         "title": "Are you sure?",

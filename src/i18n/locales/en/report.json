@@ -1,0 +1,24 @@
+{
+    "title": "Report & Export",
+    "description": "Generate reports and PDF compilations with your supporting documents.",
+    "selector": {
+        "title": "Selected Collection",
+        "placeholder": "Choose a collection to export…"
+    },
+    "emptyState": {
+        "title": "No collection selected",
+        "description": "Select a collection above to view the report."
+    },
+    "preview": {
+        "title": "Report Preview",
+        "collection": "Collection",
+        "professor": "Professor",
+        "issuedAt": "Issued",
+        "noGoal": "No goal",
+        "capped": "(Capped)",
+        "noDocuments": "No associated documents",
+        "pointsSuffix": "{{count}} pts",
+        "totalScore": "Total: {{score}} pts",
+        "exportConsolidated": "Export Dossier (.pdf)"
+    }
+}

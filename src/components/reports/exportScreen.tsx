@@ -10,8 +10,10 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Badge } from '@/components/ui/badge'
 import { Printer, Download, FileText, CheckCircle, AlertCircle, ArrowLeft } from 'lucide-react'
+import { useTranslation } from 'react-i18next'
 
 export function ExportScreen() {
+    const { t } = useTranslation(['common', 'report'])
     const { collectionId: urlCollectionId } = useParams<{ collectionId?: string }>()
     const navigate = useNavigate()
 
@@ -122,10 +124,10 @@ export function ExportScreen() {
                     <div>
                         <h1 className="text-2xl font-semibold flex items-center gap-2">
                             <Printer className="h-6 w-6 text-primary" />
-                            Relatório & Exportação
+                            {t('report.title')}
                         </h1>
                         <p className="text-sm text-muted-foreground">
-                            Gere relatórios consolidados e compilações em PDF com seus comprovantes.
+                            {t('report.description')}
                         </p>
                     </div>
                 </div>
@@ -133,7 +135,7 @@ export function ExportScreen() {
                 {reportData && (
                     <Button onClick={handleExportDossier} disabled={isExporting} className="gap-2">
                         <Download className="h-4 w-4" />
-                        {isExporting ? 'Gerando Dossiê...' : 'Exportar Dossiê (.pdf)'}
+                        {isExporting ? t('actions.generatingDossier') : t('actions.exportDossier')}
                     </Button>
                 )}
             </div>
@@ -141,12 +143,12 @@ export function ExportScreen() {
             {/* Collection Selector */}
             <Card>
                 <CardHeader className="pb-3">
-                    <CardTitle className="text-base font-medium">Coleção Selecionada</CardTitle>
+                    <CardTitle className="text-base font-medium">{t('report.selector.title')}</CardTitle>
                 </CardHeader>
                 <CardContent>
                     <Select value={selectedCollectionId} onValueChange={handleSelectCollection}>
                         <SelectTrigger className="w-full sm:w-[350px]">
-                            <SelectValue placeholder="Escolha uma coleção para exportar..." />
+                            <SelectValue placeholder={t('report.selector.placeholder')} />
                         </SelectTrigger>
                         <SelectContent>
                             {collections.map((c) => (
@@ -163,12 +165,12 @@ export function ExportScreen() {
             {!selectedCollectionId ? (
                 <div className="border border-dashed rounded-lg p-12 text-center text-muted-foreground">
                     <FileText className="h-10 w-10 mx-auto mb-3 text-muted-foreground/50" />
-                    <p className="font-medium">Nenhuma coleção selecionada</p>
-                    <p className="text-sm">Selecione uma coleção acima para visualizar o relatório.</p>
+                    <p className="font-medium">{t('report.emptyState.title')}</p>
+                    <p className="text-sm">{t('report.emptySTate.description')}</p>
                 </div>
             ) : loading ? (
                 <div className="p-12 text-center text-sm text-muted-foreground">
-                    Carregando dados da coleção...
+                    {t('states.loadingCollectionData')}
                 </div>
             ) : reportData ? (
                 <Card>
@@ -176,11 +178,11 @@ export function ExportScreen() {
                         <div>
                             <CardTitle className="text-lg">{reportData.collectionName}</CardTitle>
                             <p className="text-xs text-muted-foreground mt-1">
-                                Docente: {reportData.userName} | Emissão: {reportData.generatedAt}
+                                {t('report.professor')}: {reportData.userName} | {t('issuedAt')}: {reportData.generatedAt}
                             </p>
                         </div>
                         <Badge variant="outline" className="text-base font-bold text-primary px-3 py-1">
-                            {reportData.totalScore.toFixed(2)} pts
+                            {t('report.review.totalScore', { score: reportData.totalScore.toFixed(2) })} pts
                         </Badge>
                     </CardHeader>
                     <CardContent className="p-6 space-y-6">
@@ -189,8 +191,8 @@ export function ExportScreen() {
                                 <div className="flex justify-between items-center bg-muted/40 p-2.5 rounded">
                                     <span className="font-semibold text-sm">{subgroup.name}</span>
                                     <div className="flex items-center gap-3">
-                                        <Badge variant="secondary">{subgroup.completion || 'Sem meta'}</Badge>
-                                        <span className="font-bold text-sm">{subgroup.total.toFixed(2)} pts</span>
+                                        <Badge variant="secondary">{subgroup.completion || t('report.preview.noGoal')}</Badge>
+                                        <span className="font-bold text-sm">{t('report.preview.pointsSuffix', { count: subgroup.total.toFixed(2) })} pts</span>
                                     </div>
                                 </div>
 
@@ -201,7 +203,7 @@ export function ExportScreen() {
                                                 <span>{cat.name}</span>
                                                 <span>
                                                     {cat.total.toFixed(2)} pts{' '}
-                                                    {cat.capped && <span className="text-xs text-muted-foreground">(Teto)</span>}
+                                                    {cat.capped && <span className="text-xs text-muted-foreground">{t('report.preview.capped')}</span>}
                                                 </span>
                                             </div>
 
@@ -229,7 +231,7 @@ export function ExportScreen() {
                                                     ))}
                                                 </div>
                                             ) : (
-                                                <div className="text-xs text-muted-foreground italic">Sem documentos associados</div>
+                                                <div className="text-xs text-muted-foreground italic">{t('report.preview.noGoal')}</div>
                                             )}
                                         </div>
                                     ))}

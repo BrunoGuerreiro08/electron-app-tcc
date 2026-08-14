@@ -1,0 +1,24 @@
+{
+    "title": "Relatório & Exportação",
+    "description": "Gere relatórios e compilações em PDF com seus comprovantes.",
+    "selector": {
+        "title": "Coleção Selecionada",
+        "placeholder": "Escolha uma coleção para exportar…"
+    },
+    "emptyState": {
+        "title": "Nenhuma coleção selecionada",
+        "description": "Selecione uma coleção acima para visualizar o relatório."
+    },
+    "preview": {
+        "title": "Pré-visualização do Relatório",
+        "collection": "Coleção",
+        "professor": "Docente",
+        "issuedAt": "Emissão",
+        "noGoal": "Sem meta",
+        "capped": "(Teto)",
+        "noDocuments": "Sem documentos associados",
+        "pointsSuffix": "{{count}} pts",
+        "totalScore": "Total: {{score}} pts",
+        "exportConsolidated": "Exportar Dossiê (.pdf)"
+    }
+}

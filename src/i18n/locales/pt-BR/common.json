@@ -14,7 +14,10 @@
     "download": "Baixar",
     "export": "Exportar",
     "changeFolder": "Alterar pasta",
-    "logout": "Sair"
+    "logout": "Sair",
+    "backToCollection": "Voltar para a Coleção",
+    "exportDossier": "Exportar Dossiê (.pdf)",
+    "generatingDossier": "Gerando Dossiê…"
   },
   "nav": {
     "menu": "Menu",
@@ -59,7 +62,8 @@
     "saving": "Salvando…",
     "deleting": "Excluindo…",
     "empty": "Nada aqui ainda",
-    "error": "Ocorreu um erro"
+    "error": "Ocorreu um erro",
+    "loadingCollectionData": "Carregando dados da coleção…"
   },
   "confirmDelete": {
     "title": "Tem certeza?",
