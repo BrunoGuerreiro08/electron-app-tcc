@@ -10,7 +10,10 @@
     "test": "vitest run",
     "test:watch": "vitest",
     "preview": "vite preview",
-    "postinstall": "electron-rebuild -f -w better-sqlite3"
+    "postinstall": "electron-rebuild -f -w better-sqlite3",
+    "reset:server": "docker compose exec -T postgres psql -U portfolio -d portfolio -c \"TRUNCATE TABLE sync_log, sessions, users CASCADE;\" && docker compose exec -T redis redis-cli flushdb",
+    "reset:local": "node scripts/reset-local-data.mjs",
+    "reset:all": "npm run reset:local && npm run reset:server"
   },
   "dependencies": {
     "@fontsource-variable/jetbrains-mono": "^5.2.8",
