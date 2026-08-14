@@ -54,6 +54,7 @@ i18n.use(initReactI18next).init({
     fallbackLng: 'pt-BR',
     ns: ['auth', 'common', 'collections', 'categories', 'home', 'certificates', 'reports', 'settings'],
     defaultNS: 'common',
+    fallbackNS: 'common',
     interpolation: { escapeValue: false }, // React already escapes
     returnNull: false,
 })
