@@ -1,6 +1,7 @@
 import { ipcMain, BrowserWindow } from 'electron'
 import {
     attachFileToDocument,
+    detectDroppedFiles,
     detectOrphans,
     openDocumentFile,
     pickFile,
@@ -28,5 +29,13 @@ export function registerFileHandlers() {
 
     ipcMain.handle('files:detectOrphans', () => {
         return detectOrphans()
+    })
+
+    // Replaces the old pickImportFolder + scanFolder pair: there's no
+    // folder picker anymore. This just re-lists whatever's currently
+    // sitting in the storage folder's documents/ dir under a non-owned
+    // name — called whenever the document library screen mounts.
+    ipcMain.handle('files:detectDroppedFiles', () => {
+        return detectDroppedFiles()
     })
 }

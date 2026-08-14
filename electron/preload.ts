@@ -31,6 +31,8 @@ contextBridge.exposeInMainWorld('api', {
         list: () => ipcRenderer.invoke('documents:list'),
         listUnlinked: () => ipcRenderer.invoke('documents:listUnlinked'),
         create: (input: unknown) => ipcRenderer.invoke('documents:create', input),
+        bulkImport: (items: { fileName: string; title: string }[]) =>
+            ipcRenderer.invoke('documents:bulkImport', items),
         update: (id: string, updates: unknown) =>
             ipcRenderer.invoke('documents:update', id, updates),
         delete: (id: string) => ipcRenderer.invoke('documents:delete', id),
@@ -74,6 +76,7 @@ contextBridge.exposeInMainWorld('api', {
         remove: (documentId: string) => ipcRenderer.invoke('files:remove', documentId),
         open: (documentId: string) => ipcRenderer.invoke('files:open', documentId),
         detectOrphans: () => ipcRenderer.invoke('files:detectOrphans'),
+        detectDroppedFiles: () => ipcRenderer.invoke('files:detectDroppedFiles'),
     },
     reports: {
         printToPdf: (htmlContent: string) =>

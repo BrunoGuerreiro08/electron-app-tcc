@@ -26,6 +26,11 @@ declare global {
                 list: () => Promise<any[]>
                 listUnlinked: () => Promise<any[]>
                 create: (input: unknown) => Promise<string>
+                bulkImport: (
+                    items: { fileName: string; title: string }[]
+                ) => Promise<
+                    { fileName: string; ok: boolean; documentId?: string; error?: string }[]
+                >
                 update: (id: string, updates: unknown) => Promise<void>
                 delete: (id: string) => Promise<void>
             }
@@ -62,6 +67,7 @@ declare global {
                 remove: (documentId: string) => Promise<void>
                 open: (documentId: string) => Promise<void>
                 detectOrphans: () => Promise<{ orphanedFiles: string[]; missingFiles: string[] }>
+                detectDroppedFiles: () => Promise<import('./entities').ScannedFile[]>
             }
             reports: {
                 printToPdf: (htmlContent: string) => Promise<Uint8Array>

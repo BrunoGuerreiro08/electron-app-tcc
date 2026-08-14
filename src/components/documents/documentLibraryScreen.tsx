@@ -17,12 +17,14 @@ import {
     AlertDialogTrigger,
 } from '@/components/ui/alert-dialog'
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs'
-import { Plus, Trash2, Link2, Pencil } from 'lucide-react'
+import { Plus, Trash2, Link2, Pencil, FolderInput, X } from 'lucide-react'
 import { TagsEditor } from './tagsEditor'
 import { LinkCategoriesDialog } from './linkCategoriesDialog'
 import { fileRepository } from '@/repository/fileRepository'
 import { Paperclip, ExternalLink, XCircle } from 'lucide-react'
 import { DocumentFormDialog } from './documentFormDialog'
+import { NewFilesDialog } from './newFilesDialog'
+import type { ScannedFile } from '@/types/entities'
 
 export function DocumentLibraryScreen() {
     const [documents, setDocuments] = useState<Document[]>([])
@@ -42,6 +44,9 @@ export function DocumentLibraryScreen() {
     >(null)
 
     const [linkDialogDoc, setLinkDialogDoc] = useState<string | null>(null)
+    const [droppedFiles, setDroppedFiles] = useState<ScannedFile[]>([])
+    const [reviewDialogOpen, setReviewDialogOpen] = useState(false)
+    const [bannerDismissed, setBannerDismissed] = useState(false)
 
     const refresh = async () => {
         setLoading(true)
@@ -65,6 +70,24 @@ export function DocumentLibraryScreen() {
     useEffect(() => {
         refresh()
     }, [filter])
+
+    // Runs once when the library screen is opened, per the "rescan on
+    // open" design — not on every filter change, since switching between
+    // All/Unfiled shouldn't re-trigger a filesystem scan.
+    const checkForDroppedFiles = async () => {
+        const files = await fileRepository.detectDroppedFiles()
+        setDroppedFiles(files)
+        if (files.length > 0) setBannerDismissed(false)
+    }
+
+    useEffect(() => {
+        checkForDroppedFiles()
+    }, [])
+
+    const handleImported = () => {
+        refresh()
+        checkForDroppedFiles() // some dropped files may remain (invalid ones, or ones left unchecked)
+    }
 
     const [fileError, setFileError] = useState<string | null>(null)
 
@@ -120,6 +143,30 @@ export function DocumentLibraryScreen() {
                     New document
                 </Button>
             </div>
+
+            {droppedFiles.length > 0 && !bannerDismissed && (
+                <button
+                    onClick={() => setReviewDialogOpen(true)}
+                    className="flex w-full items-center gap-2 rounded-md border border-dashed bg-muted/40 px-3 py-2 text-left text-sm hover:bg-muted/70"
+                >
+                    <FolderInput className="h-4 w-4 shrink-0 text-muted-foreground" />
+                    <span className="flex-1">
+                        {droppedFiles.length} new file{droppedFiles.length === 1 ? '' : 's'} found in your
+                        document folder — click to review and import.
+                    </span>
+                    <span
+                        role="button"
+                        tabIndex={0}
+                        onClick={(e) => {
+                            e.stopPropagation()
+                            setBannerDismissed(true)
+                        }}
+                        className="shrink-0 rounded p-0.5 text-muted-foreground hover:bg-muted"
+                    >
+                        <X className="h-3.5 w-3.5" />
+                    </span>
+                </button>
+            )}
             {fileError && (
                 <>
                     <p className="text-sm text-destructive">{fileError}</p>
@@ -259,6 +306,12 @@ export function DocumentLibraryScreen() {
                     onChanged={refresh}
                 />
             )}
+            <NewFilesDialog
+                open={reviewDialogOpen}
+                onOpenChange={setReviewDialogOpen}
+                files={droppedFiles}
+                onImported={handleImported}
+            />
             <DocumentFormDialog
                 open={documentDialog !== null}
                 onOpenChange={(open) => !open && setDocumentDialog(null)}

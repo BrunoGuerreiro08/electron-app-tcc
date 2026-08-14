@@ -43,3 +43,11 @@ export interface Tag {
     name: string
     color: string | null
 }
+
+export interface ScannedFile {
+    path: string
+    name: string
+    size: number
+    valid: boolean
+    reason?: string
+}

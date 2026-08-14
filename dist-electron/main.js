@@ -16520,6 +16520,16 @@ function migrateStorageFolder(newRoot) {
 }
 const ALLOWED_EXTENSIONS = [".pdf", ".jpg", ".jpeg", ".png"];
 const MAX_SIZE_BYTES = 20 * 1024 * 1024;
+const UUID = "[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}";
+const OWNED_FILENAME_PATTERN = new RegExp(`^${UUID}-${UUID}\\.[a-zA-Z0-9]+$`, "i");
+function isOwnedFilename(name) {
+  return OWNED_FILENAME_PATTERN.test(name);
+}
+function documentsDir() {
+  const dir = path.join(getStorageRoot(), "documents");
+  fs.mkdirSync(dir, { recursive: true });
+  return dir;
+}
 async function pickFile(win) {
   const result = await dialog.showOpenDialog(win, {
     properties: ["openFile"],
@@ -16546,9 +16556,7 @@ function attachFileToDocument(documentId, sourcePath) {
   if (size > MAX_SIZE_BYTES) {
     return { ok: false, error: "File exceeds the 20 MB limit." };
   }
-  const root = getStorageRoot();
-  const destDir = path.join(root, "documents");
-  fs.mkdirSync(destDir, { recursive: true });
+  const destDir = documentsDir();
   const destination = path.join(destDir, `${documentId}-${randomUUID()}${ext}`);
   fs.copyFileSync(sourcePath, destination);
   try {
@@ -16562,14 +16570,43 @@ function attachFileToDocument(documentId, sourcePath) {
   }
   return { ok: true, filePath: destination };
 }
+function adoptDroppedFile(documentId, fileName) {
+  if (fileName !== path.basename(fileName)) {
+    return { ok: false, error: "Invalid file name." };
+  }
+  const dir = documentsDir();
+  const sourcePath = path.join(dir, fileName);
+  if (!fs.existsSync(sourcePath)) {
+    return { ok: false, error: "File no longer exists — it may have been moved or deleted." };
+  }
+  const ext = path.extname(fileName).toLowerCase();
+  if (!ALLOWED_EXTENSIONS.includes(ext)) {
+    return { ok: false, error: "Only PDF, JPG, and PNG files are accepted." };
+  }
+  const { size } = fs.statSync(sourcePath);
+  if (size > MAX_SIZE_BYTES) {
+    return { ok: false, error: "File exceeds the 20 MB limit." };
+  }
+  const destination = path.join(dir, `${documentId}-${randomUUID()}${ext}`);
+  fs.renameSync(sourcePath, destination);
+  try {
+    getDb().prepare(`UPDATE documents SET file_path = ?, file_status = 'ready' WHERE id = ?`).run(
+      destination,
+      documentId
+    );
+  } catch (err) {
+    fs.renameSync(destination, sourcePath);
+    throw err;
+  }
+  return { ok: true, filePath: destination };
+}
 function removeFileFromDocument(documentId) {
-  const row = getDb().prepare("SELECT file_path FROM documents WHERE id = ?").get(documentId);
+  const db2 = getDb();
+  const row = db2.prepare("SELECT file_path FROM documents WHERE id = ?").get(documentId);
   if ((row == null ? void 0 : row.file_path) && fs.existsSync(row.file_path)) {
     fs.unlinkSync(row.file_path);
   }
-  getDb().prepare(
-    `UPDATE documents SET file_path = NULL, file_status = 'pending' WHERE id = ?`
-  ).run(documentId);
+  db2.prepare(`UPDATE documents SET file_path = NULL, file_status = 'pending' WHERE id = ?`).run(documentId);
 }
 function openDocumentFile(documentId) {
   const row = getDb().prepare("SELECT file_path FROM documents WHERE id = ?").get(documentId);
@@ -16587,6 +16624,7 @@ function detectOrphans() {
   );
   if (fs.existsSync(root)) {
     for (const entry of fs.readdirSync(root)) {
+      if (!isOwnedFilename(entry)) continue;
       const full = path.resolve(path.join(root, entry));
       if (!referencedPaths.has(full)) {
         orphanedFiles.push(full);
@@ -16607,6 +16645,34 @@ function detectOrphans() {
     }
   }
   return { orphanedFiles, missingFiles };
+}
+function detectDroppedFiles() {
+  const dir = documentsDir();
+  const results = [];
+  for (const entry of fs.readdirSync(dir, { withFileTypes: true })) {
+    if (!entry.isFile()) continue;
+    if (isOwnedFilename(entry.name)) continue;
+    const fullPath = path.join(dir, entry.name);
+    const ext = path.extname(entry.name).toLowerCase();
+    const { size } = fs.statSync(fullPath);
+    if (!ALLOWED_EXTENSIONS.includes(ext)) {
+      results.push({ path: fullPath, name: entry.name, size, valid: false, reason: "Unsupported file type." });
+      continue;
+    }
+    if (size > MAX_SIZE_BYTES) {
+      const mb = (size / (1024 * 1024)).toFixed(1);
+      results.push({
+        path: fullPath,
+        name: entry.name,
+        size,
+        valid: false,
+        reason: `Exceeds the 20 MB limit (${mb} MB).`
+      });
+      continue;
+    }
+    results.push({ path: fullPath, name: entry.name, size, valid: true });
+  }
+  return results;
 }
 function registerCollectionHandlers() {
   ipcMain$1.handle("collections:get", (_event, id2) => {
@@ -16806,6 +16872,21 @@ function registerDocumentHandlers() {
     );
     return id2;
   });
+  ipcMain$1.handle("documents:bulkImport", (_event, items2) => {
+    const results = [];
+    for (const item of items2) {
+      const id2 = randomUUID();
+      getDb().prepare(`INSERT INTO documents (id, title, quantity, file_status) VALUES (?, ?, 1, 'pending')`).run(id2, item.title);
+      const adopted = adoptDroppedFile(id2, item.fileName);
+      if (!adopted.ok) {
+        getDb().prepare("DELETE FROM documents WHERE id = ?").run(id2);
+        results.push({ fileName: item.fileName, ok: false, error: adopted.error });
+        continue;
+      }
+      results.push({ fileName: item.fileName, ok: true, documentId: id2 });
+    }
+    return results;
+  });
   ipcMain$1.handle("documents:update", (_event, id2, updates) => {
     const current = getDb().prepare("SELECT * FROM documents WHERE id = ?").get(id2);
     if (!current) throw new Error("Document not found");
@@ -16954,6 +17035,9 @@ function registerFileHandlers() {
   });
   ipcMain$1.handle("files:detectOrphans", () => {
     return detectOrphans();
+  });
+  ipcMain$1.handle("files:detectDroppedFiles", () => {
+    return detectDroppedFiles();
   });
 }
 var tslib$1 = { exports: {} };
