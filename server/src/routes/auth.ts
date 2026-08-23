@@ -15,16 +15,20 @@ function randomCode(): string {
 }
 
 authRoutes.post('/request-otp', async (c) => {
-    const body = await c.req.json<{ email?: string }>()
+    const body = await c.req.json<{ email?: string; lang?: 'pt' | 'en' }>()
     const email = body.email?.trim().toLowerCase()
 
     if (!email || !EMAIL_RE.test(email)) {
         return c.json({ error: 'Enter a valid email address.' }, 400)
     }
 
+    const acceptLang = c.req.header('accept-language') ?? ''
+    const preferredLang = body.lang ?? (acceptLang.includes('en') ? 'en' : 'pt')
+
     const code = randomCode()
     await storeOtp(email, code)
-    await sendOtpEmail(email, code)
+
+    await sendOtpEmail(email, code, preferredLang)
 
     return c.json({ ok: true })
 })

@@ -1,14 +1,20 @@
+import { usePreferencesStore } from '@/store/preferenceStore'
 import type { AuthRepository, Session, User, VerifyResult } from '@/types/auth'
 
 const API_BASE = import.meta.env.VITE_API_BASE_URL ?? 'http://localhost:3000'
 
 export const httpAuthRepository: AuthRepository = {
     async requestCode(email: string) {
+        const storeLang = usePreferencesStore.getState().language
+
+        const lang = storeLang.startsWith('en') ? 'en' : 'pt'
+
         const res = await fetch(`${API_BASE}/auth/request-otp`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ email }),
+            body: JSON.stringify({ email, lang }),
         })
+
         if (!res.ok) {
             const { error } = await res.json()
             throw new Error(error ?? 'Failed to request code.')
