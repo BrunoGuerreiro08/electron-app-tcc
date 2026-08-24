@@ -13,6 +13,7 @@ import { registerSettingsHandlers } from './ipc/settings'
 import { registerFileHandlers } from './ipc/files'
 import { registerReportHandlers } from './ipc/reports'
 import { registerPreferencesHandlers } from './ipc/preferences'
+import { registerTemplateHandlers } from './ipc/templates'
 
 const __filename = fileURLToPath(import.meta.url)
 const __dirname = path.dirname(__filename)
@@ -71,6 +72,7 @@ app.whenReady().then(() => {
     registerSettingsHandlers()
     registerFileHandlers()
     registerReportHandlers()
+    registerTemplateHandlers()
 
     // If a user was already logged in on this device, reopen their db/store
     // before the renderer loads so collections:list etc. work immediately

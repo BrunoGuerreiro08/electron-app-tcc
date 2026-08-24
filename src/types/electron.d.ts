@@ -78,6 +78,24 @@ declare global {
                 setLanguage: (language: 'en' | 'pt-BR') => Promise<void>
                 setTheme: (theme: 'light' | 'dark') => Promise<void>
             }
+            templates: {
+                listOfficial: () => Promise<import('./entities').TemplateSummary[]>
+                listImported: () => Promise<import('./entities').TemplateSummary[]>
+                pickAndImport: () => Promise<
+                    | { ok: true; fileName: string; template: import('./entities').TemplateFile }
+                    | { ok: false; errors: string[] }
+                    | null
+                >
+                apply: (
+                    source: { kind: 'official' | 'imported'; fileName: string },
+                    collectionName: string,
+                    color: string | null
+                ) => Promise<string>
+                exportCollection: (
+                    collectionId: string
+                ) => Promise<{ ok: true; filePath: string } | { ok: false; error: string } | null>
+                deleteImported: (fileName: string) => Promise<void>
+            }
         }
     }
 }

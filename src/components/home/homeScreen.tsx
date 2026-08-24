@@ -15,8 +15,9 @@ import {
     DialogTrigger,
     DialogFooter,
 } from '@/components/ui/dialog'
-import { FolderOpen, Plus, FileText, Loader2 } from 'lucide-react'
+import { FolderOpen, Plus, FileText, Loader2, FileStack } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
+import { UseTemplateDialog } from '@/components/collections/useTemplateDialog'
 
 export function HomeScreen() {
     const { t } = useTranslation(['common', 'home'])
@@ -25,6 +26,7 @@ export function HomeScreen() {
     const [unfiled, setUnfiled] = useState<Document[]>([])
     const [newName, setNewName] = useState('')
     const [dialogOpen, setDialogOpen] = useState(false)
+    const [templateDialogOpen, setTemplateDialogOpen] = useState(false)
 
     const { storageFolder, isCustomFolder, migrating, error, load: loadSettings, changeFolder } =
         useSettingsStore()
@@ -46,6 +48,12 @@ export function HomeScreen() {
         setNewName('')
         setDialogOpen(false)
         navigate(`/collections/${id}`)
+    }
+
+    const handleTemplateCreated = (collectionId: string) => {
+        // call whatever refreshes `collections` after handleCreate() today —
+        // I don't have that function's name from the fragment you shared
+        navigate(`/collections/${collectionId}`)
     }
 
     return (
@@ -106,32 +114,44 @@ export function HomeScreen() {
             {/* Collections */}
             <div className="flex items-center justify-between">
                 <h2 className="text-lg font-medium">{t('home:collections.title')}</h2>
-                <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
-                    <DialogTrigger asChild>
-                        <Button size="sm">
-                            <Plus className="h-4 w-4" />
-                            {t('home:collections.newCollection')}
-                        </Button>
-                    </DialogTrigger>
-                    <DialogContent>
-                        <DialogHeader>
-                            <DialogTitle>{t('home:collections.newCollection')}</DialogTitle>
-                        </DialogHeader>
-                        <Input
-                            placeholder={t('home:collections.placeholder')}
-                            value={newName}
-                            onChange={(e) => setNewName(e.target.value)}
-                            autoFocus
-                            onKeyDown={(e) => e.key === 'Enter' && handleCreate()}
-                        />
-                        <DialogFooter>
-                            <Button onClick={handleCreate} disabled={!newName.trim()}>
-                                {t('common:actions.create')}
+                <div className="flex gap-2">
+                    <Button size="sm" variant="outline" onClick={() => setTemplateDialogOpen(true)}>
+                        <FileStack className="h-4 w-4" />
+                        From template
+                    </Button>
+                    <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
+                        <DialogTrigger asChild>
+                            <Button size="sm">
+                                <Plus className="h-4 w-4" />
+                                {t('home:collections.newCollection')}
                             </Button>
-                        </DialogFooter>
-                    </DialogContent>
-                </Dialog>
+                        </DialogTrigger>
+                        <DialogContent>
+                            <DialogHeader>
+                                <DialogTitle>{t('home:collections.newCollection')}</DialogTitle>
+                            </DialogHeader>
+                            <Input
+                                placeholder={t('home:collections.placeholder')}
+                                value={newName}
+                                onChange={(e) => setNewName(e.target.value)}
+                                autoFocus
+                                onKeyDown={(e) => e.key === 'Enter' && handleCreate()}
+                            />
+                            <DialogFooter>
+                                <Button onClick={handleCreate} disabled={!newName.trim()}>
+                                    {t('common:actions.create')}
+                                </Button>
+                            </DialogFooter>
+                        </DialogContent>
+                    </Dialog>
+                </div>
             </div>
+
+            <UseTemplateDialog
+                open={templateDialogOpen}
+                onOpenChange={setTemplateDialogOpen}
+                onCreated={handleTemplateCreated}
+            />
 
             {loading ? (
                 <p className="text-sm text-muted-foreground">{t('common:states.loading')}</p>

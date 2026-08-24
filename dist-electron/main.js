@@ -16462,7 +16462,7 @@ function initSchema(db2) {
   `);
 }
 const DEFAULT_SUBDIR = "document-files";
-function requireActiveUserId() {
+function requireActiveUserId$1() {
   const userId = getActiveUserId();
   if (!userId) {
     throw new Error("No active user — cannot resolve storage root before login.");
@@ -16470,7 +16470,7 @@ function requireActiveUserId() {
   return userId;
 }
 function defaultStorageRoot() {
-  return path.join(app$1.getPath("userData"), "users", requireActiveUserId(), DEFAULT_SUBDIR);
+  return path.join(app$1.getPath("userData"), "users", requireActiveUserId$1(), DEFAULT_SUBDIR);
 }
 function getStorageRoot() {
   const configured = getConfiguredStorageFolder();
@@ -16780,7 +16780,7 @@ function validateCapped(rule) {
   }
   return errors2;
 }
-function validateRule(rule) {
+function validateRule$1(rule) {
   if (!rule || typeof rule !== "object") {
     return { valid: false, errors: [{ key: "ruleRequired" }] };
   }
@@ -16808,7 +16808,7 @@ function registerCategoryHandlers() {
   ipcMain$1.handle(
     "categories:create",
     (_event, subgroupId, name, rule, displayOrder = 0) => {
-      const { valid: valid2, errors: errors2 } = validateRule(rule);
+      const { valid: valid2, errors: errors2 } = validateRule$1(rule);
       if (!valid2) {
         throw new Error(`Invalid rule: ${errors2.join(" ")}`);
       }
@@ -16827,7 +16827,7 @@ function registerCategoryHandlers() {
       const name = updates.name ?? current.name;
       let ruleJson = current.rule;
       if (updates.rule) {
-        const { valid: valid2, errors: errors2 } = validateRule(updates.rule);
+        const { valid: valid2, errors: errors2 } = validateRule$1(updates.rule);
         if (!valid2) throw new Error(`Invalid rule: ${errors2.join(" ")}`);
         ruleJson = JSON.stringify(updates.rule);
       }
@@ -36518,6 +36518,283 @@ function registerPreferencesHandlers() {
     setTheme(theme);
   });
 }
+function requireActiveUserId() {
+  const userId = getActiveUserId();
+  if (!userId) throw new Error("No active user — cannot resolve templates folder before login.");
+  return userId;
+}
+function getImportedTemplatesDir() {
+  const dir = path.join(app$1.getPath("userData"), "users", requireActiveUserId(), "templates", "imported");
+  fs.mkdirSync(dir, { recursive: true });
+  return dir;
+}
+function getOfficialTemplatesDir() {
+  return app$1.isPackaged ? path.join(process.resourcesPath, "templates", "official") : path.join(app$1.getAppPath(), "electron", "templates", "official");
+}
+function slugify(name) {
+  return name.toLowerCase().trim().replace(/[^a-z0-9]+/g, "-").replace(/(^-|-$)/g, "") || "template";
+}
+function validateFlatOrHours(rule, fieldPath, errors2) {
+  if (!rule || typeof rule !== "object") {
+    errors2.push(`${fieldPath}: rule is missing or not an object.`);
+    return false;
+  }
+  const r = rule;
+  if (r.type === "flat") {
+    if (typeof r.pointsPerUnit !== "number" || r.pointsPerUnit <= 0) {
+      errors2.push(`${fieldPath}: flat rule needs a positive numeric pointsPerUnit.`);
+      return false;
+    }
+    return true;
+  }
+  if (r.type === "hours") {
+    if (typeof r.pointsPerUnit !== "number" || r.pointsPerUnit <= 0) {
+      errors2.push(`${fieldPath}: hours rule needs a positive numeric pointsPerUnit.`);
+      return false;
+    }
+    if (typeof r.unitSize !== "number" || r.unitSize <= 0) {
+      errors2.push(`${fieldPath}: hours rule needs a positive numeric unitSize.`);
+      return false;
+    }
+    return true;
+  }
+  errors2.push(`${fieldPath}: expected "flat" or "hours", got "${String(r.type)}".`);
+  return false;
+}
+function validateRule(rule, fieldPath, errors2) {
+  if (!rule || typeof rule !== "object") {
+    errors2.push(`${fieldPath}: rule is missing or not an object.`);
+    return false;
+  }
+  const r = rule;
+  if (r.type === "flat" || r.type === "hours") {
+    return validateFlatOrHours(r, fieldPath, errors2);
+  }
+  if (r.type === "capped") {
+    if (typeof r.cap !== "number" || r.cap <= 0) {
+      errors2.push(`${fieldPath}: capped rule needs a numeric cap greater than zero.`);
+      return false;
+    }
+    if (!validateFlatOrHours(r.inner, `${fieldPath}.inner`, errors2)) {
+      return false;
+    }
+    return true;
+  }
+  errors2.push(`${fieldPath}: unknown rule type "${String(r.type)}".`);
+  return false;
+}
+function validateTemplate(data) {
+  if (!data || typeof data !== "object") {
+    return { ok: false, errors: ["Template file is not a valid JSON object."] };
+  }
+  const errors2 = [];
+  const t = data;
+  if (t.schemaVersion !== 1) {
+    errors2.push(`Unsupported schemaVersion (expected 1, got ${JSON.stringify(t.schemaVersion)}).`);
+  }
+  if (typeof t.name !== "string" || t.name.trim() === "") {
+    errors2.push("Template is missing a name.");
+  }
+  let hasValidCategory = false;
+  if (!Array.isArray(t.subgroups) || t.subgroups.length === 0) {
+    errors2.push("Template must have at least one subgroup.");
+  } else {
+    t.subgroups.forEach((sg, i) => {
+      const sgPath = `subgroups[${i}]`;
+      if (!sg || typeof sg !== "object") {
+        errors2.push(`${sgPath}: not a valid object.`);
+        return;
+      }
+      const s = sg;
+      if (typeof s.name !== "string" || s.name.trim() === "") {
+        errors2.push(`${sgPath}: missing a name.`);
+      }
+      if (typeof s.min_points === "number" && typeof s.max_points === "number" && s.max_points <= s.min_points) {
+        errors2.push(`${sgPath}: max_points must be greater than min_points.`);
+      }
+      if (!Array.isArray(s.categories) || s.categories.length === 0) {
+        errors2.push(`${sgPath}: must have at least one category.`);
+        return;
+      }
+      s.categories.forEach((cat, j) => {
+        const catPath = `${sgPath}.categories[${j}]`;
+        if (!cat || typeof cat !== "object") {
+          errors2.push(`${catPath}: not a valid object.`);
+          return;
+        }
+        const c = cat;
+        if (typeof c.name !== "string" || c.name.trim() === "") {
+          errors2.push(`${catPath}: missing a name.`);
+        }
+        if (validateRule(c.rule, `${catPath}.rule`, errors2)) {
+          hasValidCategory = true;
+        }
+      });
+    });
+  }
+  if (Array.isArray(t.subgroups) && t.subgroups.length > 0 && !hasValidCategory) {
+    errors2.push("Template must have at least one category with a valid scoring rule.");
+  }
+  if (errors2.length > 0) {
+    return { ok: false, errors: errors2 };
+  }
+  return { ok: true, errors: [], template: t };
+}
+function readAndValidate(filePath) {
+  let raw;
+  try {
+    raw = fs.readFileSync(filePath, "utf-8");
+  } catch {
+    return { ok: false, errors: ["Could not read the file."] };
+  }
+  let parsed;
+  try {
+    parsed = JSON.parse(raw);
+  } catch {
+    return { ok: false, errors: ["File is not valid JSON."] };
+  }
+  return validateTemplate(parsed);
+}
+function listTemplatesIn(dir, source) {
+  if (!fs.existsSync(dir)) return [];
+  const summaries = [];
+  for (const entry of fs.readdirSync(dir)) {
+    if (!entry.endsWith(".json")) continue;
+    const result = readAndValidate(path.join(dir, entry));
+    if (result.ok && result.template) {
+      summaries.push({ fileName: entry, source, template: result.template });
+    }
+  }
+  return summaries;
+}
+function listOfficialTemplates() {
+  return listTemplatesIn(getOfficialTemplatesDir(), "official");
+}
+function listImportedTemplates() {
+  return listTemplatesIn(getImportedTemplatesDir(), "imported");
+}
+async function pickAndImportTemplate(win) {
+  const result = await dialog.showOpenDialog(win, {
+    properties: ["openFile"],
+    filters: [{ name: "Template", extensions: ["json"] }]
+  });
+  if (result.canceled || result.filePaths.length === 0) return null;
+  const validation2 = readAndValidate(result.filePaths[0]);
+  if (!validation2.ok || !validation2.template) {
+    return { ok: false, errors: validation2.errors };
+  }
+  const dir = getImportedTemplatesDir();
+  const base = slugify(validation2.template.name);
+  let fileName = `${base}.json`;
+  let destination = path.join(dir, fileName);
+  let suffix = 2;
+  while (fs.existsSync(destination)) {
+    fileName = `${base}-${suffix}.json`;
+    destination = path.join(dir, fileName);
+    suffix++;
+  }
+  fs.copyFileSync(result.filePaths[0], destination);
+  return { ok: true, fileName, template: validation2.template };
+}
+function deleteImportedTemplate(fileName) {
+  if (fileName !== path.basename(fileName)) {
+    throw new Error("Invalid file name.");
+  }
+  const filePath = path.join(getImportedTemplatesDir(), fileName);
+  if (fs.existsSync(filePath)) fs.unlinkSync(filePath);
+}
+function applyTemplate(source, collectionName, color) {
+  const dir = source.kind === "official" ? getOfficialTemplatesDir() : getImportedTemplatesDir();
+  const filePath = path.join(dir, source.fileName);
+  const validation2 = readAndValidate(filePath);
+  if (!validation2.ok || !validation2.template) {
+    throw new Error(`Template is no longer valid: ${validation2.errors.join(" ")}`);
+  }
+  const template = validation2.template;
+  const db2 = getDb();
+  const create = db2.transaction(() => {
+    const collectionId = randomUUID();
+    db2.prepare("INSERT INTO collections (id, name, color) VALUES (?, ?, ?)").run(
+      collectionId,
+      collectionName,
+      color
+    );
+    for (const sg of template.subgroups) {
+      const subgroupId = randomUUID();
+      db2.prepare(
+        `INSERT INTO subgroups (id, collection_id, name, display_order, min_points, max_points)
+                 VALUES (?, ?, ?, ?, ?, ?)`
+      ).run(subgroupId, collectionId, sg.name, sg.display_order, sg.min_points ?? null, sg.max_points ?? null);
+      for (const cat of sg.categories) {
+        db2.prepare(
+          `INSERT INTO categories (id, subgroup_id, name, rule, display_order)
+                     VALUES (?, ?, ?, ?, ?)`
+        ).run(randomUUID(), subgroupId, cat.name, JSON.stringify(cat.rule), cat.display_order);
+      }
+    }
+    return collectionId;
+  });
+  return create();
+}
+async function exportCollectionAsTemplate(win, collectionId) {
+  const db2 = getDb();
+  const collection = db2.prepare("SELECT id, name FROM collections WHERE id = ?").get(collectionId);
+  if (!collection) return { ok: false, error: "Collection not found." };
+  const subgroupRows = db2.prepare("SELECT * FROM subgroups WHERE collection_id = ? ORDER BY display_order").all(collectionId);
+  const template = {
+    schemaVersion: 1,
+    name: collection.name,
+    subgroups: subgroupRows.map((sg) => {
+      const categoryRows = db2.prepare("SELECT * FROM categories WHERE subgroup_id = ? ORDER BY display_order").all(sg.id);
+      return {
+        name: sg.name,
+        display_order: sg.display_order,
+        min_points: sg.min_points,
+        max_points: sg.max_points,
+        categories: categoryRows.map((cat) => ({
+          name: cat.name,
+          display_order: cat.display_order,
+          rule: JSON.parse(cat.rule)
+        }))
+      };
+    })
+  };
+  const result = await dialog.showSaveDialog(win, {
+    title: "Export template",
+    defaultPath: `${slugify(collection.name)}.template.json`,
+    filters: [{ name: "Template", extensions: ["json"] }]
+  });
+  if (result.canceled || !result.filePath) return null;
+  fs.writeFileSync(result.filePath, JSON.stringify(template, null, 2), "utf-8");
+  return { ok: true, filePath: result.filePath };
+}
+function registerTemplateHandlers() {
+  ipcMain$1.handle("templates:listOfficial", () => {
+    return listOfficialTemplates();
+  });
+  ipcMain$1.handle("templates:listImported", () => {
+    return listImportedTemplates();
+  });
+  ipcMain$1.handle("templates:pickAndImport", async (event) => {
+    const win = BrowserWindow.fromWebContents(event.sender);
+    if (!win) return null;
+    return pickAndImportTemplate(win);
+  });
+  ipcMain$1.handle(
+    "templates:apply",
+    (_event, source, collectionName, color) => {
+      return applyTemplate(source, collectionName, color);
+    }
+  );
+  ipcMain$1.handle("templates:exportCollection", async (event, collectionId) => {
+    const win = BrowserWindow.fromWebContents(event.sender);
+    if (!win) return null;
+    return exportCollectionAsTemplate(win, collectionId);
+  });
+  ipcMain$1.handle("templates:deleteImported", (_event, fileName) => {
+    deleteImportedTemplate(fileName);
+  });
+}
 const __filename$1 = fileURLToPath(import.meta.url);
 const __dirname$1 = path.dirname(__filename$1);
 const isDev = process.env.NODE_ENV === "development";
@@ -36564,6 +36841,7 @@ app$1.whenReady().then(() => {
   registerSettingsHandlers();
   registerFileHandlers();
   registerReportHandlers();
+  registerTemplateHandlers();
   const session = restoreActiveSession();
   if (session) detectOrphans();
   createWindow();

@@ -92,4 +92,17 @@ contextBridge.exposeInMainWorld('api', {
         setLanguage: (language: 'en' | 'pt-BR') => ipcRenderer.invoke('preferences:setLanguage', language),
         setTheme: (theme: 'light' | 'dark') => ipcRenderer.invoke('preferences:setTheme', theme),
     },
+    templates: {
+        listOfficial: () => ipcRenderer.invoke('templates:listOfficial'),
+        listImported: () => ipcRenderer.invoke('templates:listImported'),
+        pickAndImport: () => ipcRenderer.invoke('templates:pickAndImport'),
+        apply: (
+            source: { kind: 'official' | 'imported'; fileName: string },
+            collectionName: string,
+            color: string | null
+        ) => ipcRenderer.invoke('templates:apply', source, collectionName, color),
+        exportCollection: (collectionId: string) =>
+            ipcRenderer.invoke('templates:exportCollection', collectionId),
+        deleteImported: (fileName: string) => ipcRenderer.invoke('templates:deleteImported', fileName),
+    },
 })

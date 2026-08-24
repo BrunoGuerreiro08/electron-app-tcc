@@ -5,6 +5,7 @@ import { useCollectionDetail } from '@/hooks/useCollectionDetail'
 import { collectionRepository } from '@/repository/collectionRepository'
 import { subgroupRepository } from '@/repository/subgroupRepository'
 import { categoryRepository } from '@/repository/categoryRepository'
+import { templateRepository } from '@/repository/templateRepository'
 import type { Rule } from '@/services/scoringEngine/types'
 import type { Category, Collection, Subgroup } from '@/types/entities'
 import { EditSubgroupDialog } from './editSubgroupDialog'
@@ -36,7 +37,7 @@ import {
     AlertDialogTitle,
     AlertDialogTrigger,
 } from '@/components/ui/alert-dialog'
-import { Plus, Trash2, Pencil, Check, X, Printer } from 'lucide-react'
+import { Plus, Trash2, Pencil, Check, X, Printer, FileOutput } from 'lucide-react'
 import { CategoryFormDialog } from './categoryFormDialog'
 
 const COMPLETION_STYLES: Record<string, string> = {
@@ -81,6 +82,9 @@ export function CollectionDetailScreen() {
 
     const [editingSubgroup, setEditingSubgroup] = useState<Subgroup | null>(null)
 
+    const [exportingTemplate, setExportingTemplate] = useState(false)
+    const [templateExportError, setTemplateExportError] = useState<string | null>(null)
+
     const navigate = useNavigate()
 
     const loadCollection = async () => {
@@ -124,6 +128,22 @@ export function CollectionDetailScreen() {
     const handleDeleteCategory = async (id: string) => {
         await categoryRepository.delete(id)
         refresh()
+    }
+
+    // exportCollectionAsTemplate opens its own native save dialog and
+    // returns null if the user cancels it — that's not an error, just
+    // nothing to report. Only an explicit { ok: false } is shown.
+    const handleExportTemplate = async () => {
+        setTemplateExportError(null)
+        setExportingTemplate(true)
+        try {
+            const result = await templateRepository.exportCollection(collectionId!)
+            if (result && !result.ok) {
+                setTemplateExportError(result.error)
+            }
+        } finally {
+            setExportingTemplate(false)
+        }
     }
 
     return (
@@ -193,6 +213,20 @@ export function CollectionDetailScreen() {
                         {t('collections:header.exportButton')}
                     </Button>
 
+                    <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={handleExportTemplate}
+                        disabled={exportingTemplate}
+                    >
+                        <FileOutput className="h-4 w-4 mr-1.5" />
+                        {/* NOTE: hardcoded — no visibility into the locale JSON files
+                            (see file-reading caveat flagged earlier). Suggest adding
+                            collections:header.exportTemplateButton / .exporting to
+                            match the naming pattern exportButton already uses. */}
+                        {exportingTemplate ? 'Exporting…' : 'Export as template'}
+                    </Button>
+
                     <Dialog open={subgroupDialogOpen} onOpenChange={setSubgroupDialogOpen}>
                         <DialogTrigger asChild>
                             <Button size="sm">
@@ -220,6 +254,10 @@ export function CollectionDetailScreen() {
                     </Dialog>
                 </div>
             </div>
+
+            {templateExportError && (
+                <p className="text-sm text-destructive">{templateExportError}</p>
+            )}
 
             {subgroups.length === 0 ? (
                 <p className="text-sm text-muted-foreground">
