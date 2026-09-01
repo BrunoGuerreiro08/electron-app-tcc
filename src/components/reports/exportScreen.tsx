@@ -13,7 +13,7 @@ import { Printer, Download, FileText, CheckCircle, AlertCircle, ArrowLeft } from
 import { useTranslation } from 'react-i18next'
 
 export function ExportScreen() {
-    const { t } = useTranslation(['common', 'report'])
+    const { t } = useTranslation(['common', 'reports'])
     const { collectionId: urlCollectionId } = useParams<{ collectionId?: string }>()
     const navigate = useNavigate()
 

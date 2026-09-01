@@ -9,7 +9,7 @@ import enCollections from './locales/en/collections.json'
 import enCategories from './locales/en/categories.json'
 import enHome from './locales/en/home.json'
 // import enCertificates from './locales/en/certificates.json'
-// import enReports from './locales/en/reports.json'
+import enReports from './locales/en/reports.json'
 // import enSettings from './locales/en/settings.json'
 
 // Portuguese (Brazil)
@@ -19,7 +19,7 @@ import ptCollections from './locales/pt-BR/collections.json'
 import ptCategories from './locales/pt-BR/categories.json'
 import ptHome from './locales/pt-BR/home.json'
 // import ptCertificates from './locales/pt-BR/certificates.json'
-// import ptReports from './locales/pt-BR/reports.json'
+import ptReports from './locales/pt-BR/reports.json'
 // import ptSettings from './locales/pt-BR/settings.json'
 
 export const SUPPORTED_LANGUAGES = ['en', 'pt-BR'] as const
@@ -33,7 +33,7 @@ export const resources = {
         categories: enCategories,
         home: enHome,
         // certificates: enCertificates,
-        // reports: enReports,
+        reports: enReports,
         // settings: enSettings,
     },
     'pt-BR': {
@@ -43,14 +43,14 @@ export const resources = {
         categories: ptCategories,
         home: ptHome,
         // certificates: ptCertificates,
-        // reports: ptReports,
+        reports: ptReports,
         // settings: ptSettings,
     },
 } as const
 
 i18n.use(initReactI18next).init({
     resources,
-    lng: 'pt-BR', // placeholder — overwritten by initI18n() below before first render
+    lng: 'pt-BR',
     fallbackLng: 'pt-BR',
     ns: ['auth', 'common', 'collections', 'categories', 'home', 'certificates', 'reports', 'settings'],
     defaultNS: 'common',
