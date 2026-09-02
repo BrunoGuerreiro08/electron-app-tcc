@@ -8,9 +8,40 @@ export interface Collection {
     updated_at: string
 }
 
+/**
+ * New level between Collection and SubGroup, added to represent
+ * group-spanning thresholds/bonuses a single subgroup can't express on
+ * its own (e.g. a combined minimum across several subgroups, or a
+ * surplus bonus computed on that combined total).
+ */
+export interface Group {
+    id: string
+    collection_id: string
+    name: string
+    display_order: number
+    min_points: number | null
+    max_points: number | null
+    /**
+     * Fraction (e.g. 0.25) applied to points earned above min_points to
+     * produce a separate "surplus bonus" figure — see
+     * GroupScoreResult.bonus in scoringEngine/types.ts. Null means this
+     * mechanism doesn't apply to this group (most groups), not "bonus
+     * is zero".
+     */
+    bonus_rate: number | null
+}
+
 export interface Subgroup {
     id: string
     collection_id: string
+    /**
+     * Required in practice everywhere in the app, even though the
+     * underlying SQLite column is nullable for migration reasons (see
+     * db.ts) — every subgroup belongs to exactly one group now.
+     * bonus_rate moved to Group (see above) — a group-spanning bonus
+     * needs to sit above the subgroups it spans, not on one of them.
+     */
+    group_id: string
     name: string
     display_order: number
     min_points: number | null
@@ -82,11 +113,20 @@ export interface TemplateSubgroup {
     categories: TemplateCategory[]
 }
 
+export interface TemplateGroup {
+    name: string
+    display_order: number
+    min_points: number | null
+    max_points: number | null
+    bonus_rate: number | null
+    subgroups: TemplateSubgroup[]
+}
+
 export interface TemplateFile {
     schemaVersion: 1
     name: string
     description?: string
-    subgroups: TemplateSubgroup[]
+    groups: TemplateGroup[]
 }
 
 export interface TemplateSummary {

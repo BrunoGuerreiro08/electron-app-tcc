@@ -3,11 +3,13 @@ import { useNavigate, useParams } from 'react-router-dom'
 import { useTranslation, Trans } from 'react-i18next'
 import { useCollectionDetail } from '@/hooks/useCollectionDetail'
 import { collectionRepository } from '@/repository/collectionRepository'
+import { groupRepository } from '@/repository/groupRepository'
 import { subgroupRepository } from '@/repository/subgroupRepository'
 import { categoryRepository } from '@/repository/categoryRepository'
 import { templateRepository } from '@/repository/templateRepository'
 import type { Rule } from '@/services/scoringEngine/types'
-import type { Category, Collection, Subgroup } from '@/types/entities'
+import type { Category, Collection, Group, Subgroup } from '@/types/entities'
+import { EditGroupDialog } from './editGroupDialog'
 import { EditSubgroupDialog } from './editSubgroupDialog'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -63,16 +65,21 @@ function ruleSummary(rule: Rule, t: (key: string, opts?: Record<string, unknown>
 export function CollectionDetailScreen() {
     const { t } = useTranslation(['collections', 'categories', 'common'])
     const { collectionId } = useParams<{ collectionId: string }>()
-    const { subgroups, score, loading, refresh } = useCollectionDetail(collectionId!)
+    const { groups, score, loading, refresh } = useCollectionDetail(collectionId!)
 
     const [collection, setCollection] = useState<Collection | null>(null)
+    const [openGroups, setOpenGroups] = useState<string[]>([])
     const [openSubgroups, setOpenSubgroups] = useState<string[]>([])
 
     const [editingName, setEditingName] = useState(false)
     const [nameInput, setNameInput] = useState('')
 
+    const [newGroupName, setNewGroupName] = useState('')
+    const [groupDialogOpen, setGroupDialogOpen] = useState(false)
+    const [editingGroup, setEditingGroup] = useState<Group | null>(null)
+
     const [newSubgroupName, setNewSubgroupName] = useState('')
-    const [subgroupDialogOpen, setSubgroupDialogOpen] = useState(false)
+    const [subgroupDialogGroupId, setSubgroupDialogGroupId] = useState<string | null>(null)
 
     const [categoryDialog, setCategoryDialog] = useState<
         | { mode: 'create'; subgroupId: string }
@@ -101,9 +108,14 @@ export function CollectionDetailScreen() {
         return <div className="p-6 text-sm text-muted-foreground">{t('common:states.loading')}</div>
     }
 
-    const scoreFor = (subgroupId: string) => score?.subgroups.find((s) => s.subgroupId === subgroupId)
+    const groupScoreFor = (groupId: string) => score?.groups.find((g) => g.groupId === groupId)
+    const subgroupScoreFor = (subgroupId: string) =>
+        score?.groups.flatMap((g) => g.subgroups).find((s) => s.subgroupId === subgroupId)
     const categoryScoreFor = (categoryId: string) =>
-        score?.subgroups.flatMap((s) => s.categories).find((c) => c.categoryId === categoryId)
+        score?.groups
+            .flatMap((g) => g.subgroups)
+            .flatMap((s) => s.categories)
+            .find((c) => c.categoryId === categoryId)
 
     const handleSaveName = async () => {
         if (!nameInput.trim()) return
@@ -112,11 +124,24 @@ export function CollectionDetailScreen() {
         loadCollection()
     }
 
+    const handleCreateGroup = async () => {
+        if (!newGroupName.trim()) return
+        await groupRepository.create(collectionId!, newGroupName.trim())
+        setNewGroupName('')
+        setGroupDialogOpen(false)
+        refresh()
+    }
+
+    const handleDeleteGroup = async (id: string) => {
+        await groupRepository.delete(id)
+        refresh()
+    }
+
     const handleCreateSubgroup = async () => {
-        if (!newSubgroupName.trim()) return
-        await subgroupRepository.create(collectionId!, newSubgroupName.trim())
+        if (!newSubgroupName.trim() || !subgroupDialogGroupId) return
+        await subgroupRepository.create(collectionId!, subgroupDialogGroupId, newSubgroupName.trim())
         setNewSubgroupName('')
-        setSubgroupDialogOpen(false)
+        setSubgroupDialogGroupId(null)
         refresh()
     }
 
@@ -227,26 +252,29 @@ export function CollectionDetailScreen() {
                         {exportingTemplate ? 'Exporting…' : 'Export as template'}
                     </Button>
 
-                    <Dialog open={subgroupDialogOpen} onOpenChange={setSubgroupDialogOpen}>
+                    <Dialog open={groupDialogOpen} onOpenChange={setGroupDialogOpen}>
                         <DialogTrigger asChild>
                             <Button size="sm">
                                 <Plus className="h-4 w-4" />
-                                {t('collections:subgroupCreateDialog.title')}
+                                {/* NOTE: hardcoded, same i18n caveat as elsewhere —
+                                    suggest collections:groupCreateDialog.* mirroring
+                                    subgroupCreateDialog's existing key shape. */}
+                                Add group
                             </Button>
                         </DialogTrigger>
                         <DialogContent>
                             <DialogHeader>
-                                <DialogTitle>{t('collections:subgroupCreateDialog.title')}</DialogTitle>
+                                <DialogTitle>Add group</DialogTitle>
                             </DialogHeader>
                             <Input
-                                placeholder={t('collections:subgroupCreateDialog.namePlaceholder')}
-                                value={newSubgroupName}
-                                onChange={(e) => setNewSubgroupName(e.target.value)}
+                                placeholder="Group name"
+                                value={newGroupName}
+                                onChange={(e) => setNewGroupName(e.target.value)}
                                 autoFocus
-                                onKeyDown={(e) => e.key === 'Enter' && handleCreateSubgroup()}
+                                onKeyDown={(e) => e.key === 'Enter' && handleCreateGroup()}
                             />
                             <DialogFooter>
-                                <Button onClick={handleCreateSubgroup} disabled={!newSubgroupName.trim()}>
+                                <Button onClick={handleCreateGroup} disabled={!newGroupName.trim()}>
                                     {t('common:actions.create')}
                                 </Button>
                             </DialogFooter>
@@ -259,7 +287,34 @@ export function CollectionDetailScreen() {
                 <p className="text-sm text-destructive">{templateExportError}</p>
             )}
 
-            {subgroups.length === 0 ? (
+            {/* Subgroup creation is scoped to a specific group (the "+" inside
+                each group's accordion content sets subgroupDialogGroupId), but
+                rendered once here rather than once per group — avoids N nearly-
+                identical Dialog instances mounted simultaneously. */}
+            <Dialog
+                open={subgroupDialogGroupId !== null}
+                onOpenChange={(open) => !open && setSubgroupDialogGroupId(null)}
+            >
+                <DialogContent>
+                    <DialogHeader>
+                        <DialogTitle>{t('collections:subgroupCreateDialog.title')}</DialogTitle>
+                    </DialogHeader>
+                    <Input
+                        placeholder={t('collections:subgroupCreateDialog.namePlaceholder')}
+                        value={newSubgroupName}
+                        onChange={(e) => setNewSubgroupName(e.target.value)}
+                        autoFocus
+                        onKeyDown={(e) => e.key === 'Enter' && handleCreateSubgroup()}
+                    />
+                    <DialogFooter>
+                        <Button onClick={handleCreateSubgroup} disabled={!newSubgroupName.trim()}>
+                            {t('common:actions.create')}
+                        </Button>
+                    </DialogFooter>
+                </DialogContent>
+            </Dialog>
+
+            {groups.length === 0 ? (
                 <p className="text-sm text-muted-foreground">
                     {t('collections:emptyStates.noSubgroups')}
                 </p>
@@ -267,51 +322,55 @@ export function CollectionDetailScreen() {
                 <Accordion
                     type="multiple"
                     className="space-y-2"
-                    value={openSubgroups}
-                    onValueChange={setOpenSubgroups}
+                    value={openGroups}
+                    onValueChange={setOpenGroups}
                 >
-                    {subgroups.map((sg) => {
-                        const sgScore = scoreFor(sg.id)
+                    {groups.map((g) => {
+                        const gScore = groupScoreFor(g.id)
                         return (
-                            <AccordionItem key={sg.id} value={sg.id} className="rounded-md border px-4">
+                            <AccordionItem key={g.id} value={g.id} className="rounded-md border px-4">
                                 <AccordionTrigger className="hover:no-underline">
                                     <div className="flex flex-1 items-center justify-between pr-4">
-                                        <span className="font-medium">{sg.name}</span>
+                                        <span className="font-semibold">{g.name}</span>
                                         <div className="flex items-center gap-2">
                                             <span className="text-sm text-muted-foreground">
-                                                {sg.min_points != null
+                                                {g.min_points != null
                                                     ? t('collections:subgroupCard.scoreWithMin', {
-                                                        total: sgScore?.total ?? 0,
-                                                        min: sg.min_points,
+                                                        total: gScore?.total ?? 0,
+                                                        min: g.min_points,
                                                     })
                                                     : t('collections:subgroupCard.scoreNoMin', {
-                                                        total: sgScore?.total ?? 0,
+                                                        total: gScore?.total ?? 0,
                                                     })}
                                             </span>
-                                            {sgScore?.completion && (
-                                                <Badge className={COMPLETION_STYLES[sgScore.completion]} variant="secondary">
-                                                    {t(`collections:completion.${sgScore.completion}`)}
+                                            {gScore?.bonus != null && gScore.bonus > 0 && (
+                                                <Badge variant="secondary" className="text-xs">
+                                                    +{gScore.bonus.toFixed(2)} bonus
+                                                </Badge>
+                                            )}
+                                            {gScore?.completion && (
+                                                <Badge className={COMPLETION_STYLES[gScore.completion]} variant="secondary">
+                                                    {t(`collections:completion.${gScore.completion}`)}
                                                 </Badge>
                                             )}
                                         </div>
                                     </div>
                                 </AccordionTrigger>
-                                <AccordionContent key={sg.categories.length} className="space-y-3">
+                                <AccordionContent
+                                    key={g.subgroups.map((sg) => openSubgroups.includes(sg.id)).join(',')}
+                                    className="space-y-3"
+                                >
                                     <div className="flex items-center justify-between">
                                         <div className="flex gap-2">
                                             <Button
                                                 variant="outline"
                                                 size="sm"
-                                                onClick={() => setCategoryDialog({ mode: 'create', subgroupId: sg.id })}
+                                                onClick={() => setSubgroupDialogGroupId(g.id)}
                                             >
                                                 <Plus className="h-3.5 w-3.5" />
-                                                {t('categories:dialog.createTitle')}
+                                                {t('collections:subgroupCreateDialog.title')}
                                             </Button>
-                                            <Button
-                                                variant="ghost"
-                                                size="sm"
-                                                onClick={() => setEditingSubgroup(sg)}
-                                            >
+                                            <Button variant="ghost" size="sm" onClick={() => setEditingGroup(g)}>
                                                 <Pencil className="h-3.5 w-3.5" />
                                                 {t('common:actions.edit')}
                                             </Button>
@@ -325,7 +384,7 @@ export function CollectionDetailScreen() {
                                             <AlertDialogContent>
                                                 <AlertDialogHeader>
                                                     <AlertDialogTitle>
-                                                        {t('collections:subgroupCard.deleteConfirm.title', { name: sg.name })}
+                                                        {t('collections:subgroupCard.deleteConfirm.title', { name: g.name })}
                                                     </AlertDialogTitle>
                                                     <AlertDialogDescription>
                                                         {t('collections:subgroupCard.deleteConfirm.description')}
@@ -333,7 +392,7 @@ export function CollectionDetailScreen() {
                                                 </AlertDialogHeader>
                                                 <AlertDialogFooter>
                                                     <AlertDialogCancel>{t('common:actions.cancel')}</AlertDialogCancel>
-                                                    <AlertDialogAction onClick={() => handleDeleteSubgroup(sg.id)}>
+                                                    <AlertDialogAction onClick={() => handleDeleteGroup(g.id)}>
                                                         {t('common:actions.delete')}
                                                     </AlertDialogAction>
                                                 </AlertDialogFooter>
@@ -341,108 +400,196 @@ export function CollectionDetailScreen() {
                                         </AlertDialog>
                                     </div>
 
-                                    {sg.categories.length === 0 ? (
+                                    {g.subgroups.length === 0 ? (
                                         <p className="text-xs text-muted-foreground">
-                                            {t('collections:emptyStates.noCategories')}
+                                            {t('collections:emptyStates.noSubgroups')}
                                         </p>
                                     ) : (
-                                        <div className="space-y-3">
-                                            {sg.categories.map((cat) => {
-                                                const catScore = categoryScoreFor(cat.id)
+                                        <Accordion
+                                            type="multiple"
+                                            className="space-y-2"
+                                            value={openSubgroups}
+                                            onValueChange={setOpenSubgroups}
+                                        >
+                                            {g.subgroups.map((sg) => {
+                                                const sgScore = subgroupScoreFor(sg.id)
                                                 return (
-                                                    <div key={cat.id} className="rounded-md border p-3">
-                                                        <div className="flex items-center justify-between">
-                                                            <div>
-                                                                <p className="text-sm font-medium">{cat.name}</p>
-                                                                <p className="text-xs text-muted-foreground">
-                                                                    {ruleSummary(cat.rule, t)}
-                                                                </p>
-                                                            </div>
-                                                            <div className="flex items-center gap-1">
-                                                                <span className="text-sm">
-                                                                    {t('collections:categoryCard.scoreSimple', {
-                                                                        total: catScore?.total ?? 0,
-                                                                    })}
-                                                                    {catScore?.capped && (
-                                                                        <span className="ml-1 text-xs text-muted-foreground">
-                                                                            {t('collections:categoryCard.rawSuffix', {
-                                                                                raw: catScore.rawTotal,
+                                                    <AccordionItem key={sg.id} value={sg.id} className="rounded-md border px-4">
+                                                        <AccordionTrigger className="hover:no-underline">
+                                                            <div className="flex flex-1 items-center justify-between pr-4">
+                                                                <span className="font-medium">{sg.name}</span>
+                                                                <div className="flex items-center gap-2">
+                                                                    <span className="text-sm text-muted-foreground">
+                                                                        {sg.min_points != null
+                                                                            ? t('collections:subgroupCard.scoreWithMin', {
+                                                                                total: sgScore?.total ?? 0,
+                                                                                min: sg.min_points,
+                                                                            })
+                                                                            : t('collections:subgroupCard.scoreNoMin', {
+                                                                                total: sgScore?.total ?? 0,
                                                                             })}
-                                                                        </span>
+                                                                    </span>
+                                                                    {sgScore?.completion && (
+                                                                        <Badge className={COMPLETION_STYLES[sgScore.completion]} variant="secondary">
+                                                                            {t(`collections:completion.${sgScore.completion}`)}
+                                                                        </Badge>
                                                                     )}
-                                                                </span>
-                                                                <Button
-                                                                    variant="ghost"
-                                                                    size="icon"
-                                                                    className="h-6 w-6"
-                                                                    onClick={() => setCategoryDialog({ mode: 'edit', category: cat })}
-                                                                >
-                                                                    <Pencil className="h-3 w-3" />
-                                                                </Button>
+                                                                </div>
+                                                            </div>
+                                                        </AccordionTrigger>
+                                                        <AccordionContent key={sg.categories.length} className="space-y-3">
+                                                            <div className="flex items-center justify-between">
+                                                                <div className="flex gap-2">
+                                                                    <Button
+                                                                        variant="outline"
+                                                                        size="sm"
+                                                                        onClick={() => setCategoryDialog({ mode: 'create', subgroupId: sg.id })}
+                                                                    >
+                                                                        <Plus className="h-3.5 w-3.5" />
+                                                                        {t('categories:dialog.createTitle')}
+                                                                    </Button>
+                                                                    <Button
+                                                                        variant="ghost"
+                                                                        size="sm"
+                                                                        onClick={() => setEditingSubgroup(sg)}
+                                                                    >
+                                                                        <Pencil className="h-3.5 w-3.5" />
+                                                                        {t('common:actions.edit')}
+                                                                    </Button>
+                                                                </div>
                                                                 <AlertDialog>
                                                                     <AlertDialogTrigger asChild>
-                                                                        <Button
-                                                                            variant="ghost"
-                                                                            size="icon"
-                                                                            className="h-6 w-6 text-destructive"
-                                                                        >
-                                                                            <Trash2 className="h-3 w-3" />
+                                                                        <Button variant="ghost" size="icon" className="h-7 w-7 text-destructive">
+                                                                            <Trash2 className="h-3.5 w-3.5" />
                                                                         </Button>
                                                                     </AlertDialogTrigger>
                                                                     <AlertDialogContent>
                                                                         <AlertDialogHeader>
                                                                             <AlertDialogTitle>
-                                                                                {t('collections:categoryCard.deleteConfirm.title', {
-                                                                                    name: cat.name,
-                                                                                })}
+                                                                                {t('collections:subgroupCard.deleteConfirm.title', { name: sg.name })}
                                                                             </AlertDialogTitle>
                                                                             <AlertDialogDescription>
-                                                                                {t('collections:categoryCard.deleteConfirm.description', {
-                                                                                    count: cat.documents.length,
-                                                                                })}
+                                                                                {t('collections:subgroupCard.deleteConfirm.description')}
                                                                             </AlertDialogDescription>
                                                                         </AlertDialogHeader>
                                                                         <AlertDialogFooter>
-                                                                            <AlertDialogCancel>
-                                                                                {t('common:actions.cancel')}
-                                                                            </AlertDialogCancel>
-                                                                            <AlertDialogAction
-                                                                                onClick={() => handleDeleteCategory(cat.id)}
-                                                                            >
+                                                                            <AlertDialogCancel>{t('common:actions.cancel')}</AlertDialogCancel>
+                                                                            <AlertDialogAction onClick={() => handleDeleteSubgroup(sg.id)}>
                                                                                 {t('common:actions.delete')}
                                                                             </AlertDialogAction>
                                                                         </AlertDialogFooter>
                                                                     </AlertDialogContent>
                                                                 </AlertDialog>
                                                             </div>
-                                                        </div>
 
-                                                        {cat.documents.length > 0 && (
-                                                            <ul className="mt-2 space-y-1 border-t pt-2">
-                                                                {cat.documents.map((doc) => {
-                                                                    const contribution = catScore?.breakdown.find(
-                                                                        (b) => b.documentId === doc.id
-                                                                    )
-                                                                    return (
-                                                                        <li
-                                                                            key={doc.id}
-                                                                            className="flex items-center justify-between text-xs text-muted-foreground"
-                                                                        >
-                                                                            <span>{doc.title}</span>
-                                                                            <span>
-                                                                                {t('collections:categoryCard.documentPoints', {
-                                                                                    points: contribution?.points.toFixed(2) ?? 0,
-                                                                                })}
-                                                                            </span>
-                                                                        </li>
-                                                                    )
-                                                                })}
-                                                            </ul>
-                                                        )}
-                                                    </div>
+                                                            {sg.categories.length === 0 ? (
+                                                                <p className="text-xs text-muted-foreground">
+                                                                    {t('collections:emptyStates.noCategories')}
+                                                                </p>
+                                                            ) : (
+                                                                <div className="space-y-3">
+                                                                    {sg.categories.map((cat) => {
+                                                                        const catScore = categoryScoreFor(cat.id)
+                                                                        return (
+                                                                            <div key={cat.id} className="rounded-md border p-3">
+                                                                                <div className="flex items-center justify-between">
+                                                                                    <div>
+                                                                                        <p className="text-sm font-medium">{cat.name}</p>
+                                                                                        <p className="text-xs text-muted-foreground">
+                                                                                            {ruleSummary(cat.rule, t)}
+                                                                                        </p>
+                                                                                    </div>
+                                                                                    <div className="flex items-center gap-1">
+                                                                                        <span className="text-sm">
+                                                                                            {t('collections:categoryCard.scoreSimple', {
+                                                                                                total: catScore?.total ?? 0,
+                                                                                            })}
+                                                                                            {catScore?.capped && (
+                                                                                                <span className="ml-1 text-xs text-muted-foreground">
+                                                                                                    {t('collections:categoryCard.rawSuffix', {
+                                                                                                        raw: catScore.rawTotal,
+                                                                                                    })}
+                                                                                                </span>
+                                                                                            )}
+                                                                                        </span>
+                                                                                        <Button
+                                                                                            variant="ghost"
+                                                                                            size="icon"
+                                                                                            className="h-6 w-6"
+                                                                                            onClick={() => setCategoryDialog({ mode: 'edit', category: cat })}
+                                                                                        >
+                                                                                            <Pencil className="h-3 w-3" />
+                                                                                        </Button>
+                                                                                        <AlertDialog>
+                                                                                            <AlertDialogTrigger asChild>
+                                                                                                <Button
+                                                                                                    variant="ghost"
+                                                                                                    size="icon"
+                                                                                                    className="h-6 w-6 text-destructive"
+                                                                                                >
+                                                                                                    <Trash2 className="h-3 w-3" />
+                                                                                                </Button>
+                                                                                            </AlertDialogTrigger>
+                                                                                            <AlertDialogContent>
+                                                                                                <AlertDialogHeader>
+                                                                                                    <AlertDialogTitle>
+                                                                                                        {t('collections:categoryCard.deleteConfirm.title', {
+                                                                                                            name: cat.name,
+                                                                                                        })}
+                                                                                                    </AlertDialogTitle>
+                                                                                                    <AlertDialogDescription>
+                                                                                                        {t('collections:categoryCard.deleteConfirm.description', {
+                                                                                                            count: cat.documents.length,
+                                                                                                        })}
+                                                                                                    </AlertDialogDescription>
+                                                                                                </AlertDialogHeader>
+                                                                                                <AlertDialogFooter>
+                                                                                                    <AlertDialogCancel>
+                                                                                                        {t('common:actions.cancel')}
+                                                                                                    </AlertDialogCancel>
+                                                                                                    <AlertDialogAction
+                                                                                                        onClick={() => handleDeleteCategory(cat.id)}
+                                                                                                    >
+                                                                                                        {t('common:actions.delete')}
+                                                                                                    </AlertDialogAction>
+                                                                                                </AlertDialogFooter>
+                                                                                            </AlertDialogContent>
+                                                                                        </AlertDialog>
+                                                                                    </div>
+                                                                                </div>
+
+                                                                                {cat.documents.length > 0 && (
+                                                                                    <ul className="mt-2 space-y-1 border-t pt-2">
+                                                                                        {cat.documents.map((doc) => {
+                                                                                            const contribution = catScore?.breakdown.find(
+                                                                                                (b) => b.documentId === doc.id
+                                                                                            )
+                                                                                            return (
+                                                                                                <li
+                                                                                                    key={doc.id}
+                                                                                                    className="flex items-center justify-between text-xs text-muted-foreground"
+                                                                                                >
+                                                                                                    <span>{doc.title}</span>
+                                                                                                    <span>
+                                                                                                        {t('collections:categoryCard.documentPoints', {
+                                                                                                            points: contribution?.points.toFixed(2) ?? 0,
+                                                                                                        })}
+                                                                                                    </span>
+                                                                                                </li>
+                                                                                            )
+                                                                                        })}
+                                                                                    </ul>
+                                                                                )}
+                                                                            </div>
+                                                                        )
+                                                                    })}
+                                                                </div>
+                                                            )}
+                                                        </AccordionContent>
+                                                    </AccordionItem>
                                                 )
                                             })}
-                                        </div>
+                                        </Accordion>
                                     )}
                                 </AccordionContent>
                             </AccordionItem>
@@ -457,6 +604,11 @@ export function CollectionDetailScreen() {
                 onSaved={refresh}
                 subgroupId={categoryDialog?.mode === 'create' ? categoryDialog.subgroupId : undefined}
                 category={categoryDialog?.mode === 'edit' ? categoryDialog.category : undefined}
+            />
+            <EditGroupDialog
+                group={editingGroup}
+                onOpenChange={(open) => !open && setEditingGroup(null)}
+                onSaved={refresh}
             />
             <EditSubgroupDialog
                 subgroup={editingSubgroup}

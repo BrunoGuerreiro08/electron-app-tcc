@@ -1,10 +1,12 @@
 import { ruleHandlerRegistry } from './ruleHandlers'
+import { computeSubgroupBonus } from './subgroupBonus'
 import type {
     CategoryScoreResult,
     CollectionScoreResult,
+    CompletionState,
+    GroupScoreResult,
     Rule,
     ScorableDocument,
-    SubgroupCompletionState,
     SubgroupScoreResult,
 } from './types'
 
@@ -21,9 +23,17 @@ export interface SubgroupInput {
     categories: CategoryInput[]
 }
 
+export interface GroupInput {
+    id: string
+    minPoints?: number | null
+    maxPoints?: number | null
+    bonusRate?: number | null
+    subgroups: SubgroupInput[]
+}
+
 export interface CollectionInput {
     id: string
-    subgroups: SubgroupInput[]
+    groups: GroupInput[]
 }
 
 /**
@@ -67,20 +77,27 @@ export function computeCategoryScore(input: CategoryInput): CategoryScoreResult 
 }
 
 /**
- * Derives a subgroup's completion state purely from its current total
- * and its stored thresholds — no additional state is kept (NFR-07-06).
- * Returns null when no thresholds are defined (NFR-07-07).
+ * Derives a completion state purely from a current total and its stored
+ * thresholds — no additional state is kept (NFR-07-06). Returns null
+ * when no thresholds are defined (NFR-07-07). Level-agnostic: used
+ * identically for both SubGroup and Group, since the logic only ever
+ * depends on (total, min, max), never on what's above or below in the
+ * hierarchy.
  */
-export function computeSubgroupCompletion(
+export function computeCompletionState(
     total: number,
     minPoints?: number | null,
     maxPoints?: number | null
-): SubgroupCompletionState {
+): CompletionState {
     if (minPoints == null && maxPoints == null) return null
     if (minPoints != null && total < minPoints) return 'incomplete'
     if (maxPoints != null && total > maxPoints) return 'exceeded'
     return 'complete'
 }
+
+// Old name kept as an alias — computeSubgroupScore below already called
+// this before Group existed; no need to churn every call site.
+export const computeSubgroupCompletion = computeCompletionState
 
 export function computeSubgroupScore(input: SubgroupInput): SubgroupScoreResult {
     const categories = input.categories.map(computeCategoryScore)
@@ -93,18 +110,44 @@ export function computeSubgroupScore(input: SubgroupInput): SubgroupScoreResult 
         total,
         minPoints,
         maxPoints,
-        completion: computeSubgroupCompletion(total, minPoints, maxPoints),
+        completion: computeCompletionState(total, minPoints, maxPoints),
         categories,
     }
 }
 
-export function computeCollectionScore(input: CollectionInput): CollectionScoreResult {
+/**
+ * Sums its subgroups' totals (each already individually capped by its
+ * own maxPoints, e.g. Subgrupo I3's 12-point cap) into the group's own
+ * total, then checks that combined total against the GROUP's own
+ * threshold — this is what makes a group-spanning minimum (e.g. Grupo
+ * I's 32 points across I1+I2+I3) representable at all, which a 2-level
+ * SubGroup-only hierarchy couldn't do.
+ */
+export function computeGroupScore(input: GroupInput): GroupScoreResult {
     const subgroups = input.subgroups.map(computeSubgroupScore)
     const total = subgroups.reduce((sum, s) => sum + s.total, 0)
+    const minPoints = input.minPoints ?? null
+    const maxPoints = input.maxPoints ?? null
+    const bonusRate = input.bonusRate ?? null
+
+    return {
+        groupId: input.id,
+        total,
+        minPoints,
+        maxPoints,
+        completion: computeCompletionState(total, minPoints, maxPoints),
+        bonus: computeSubgroupBonus(total, minPoints, bonusRate),
+        subgroups,
+    }
+}
+
+export function computeCollectionScore(input: CollectionInput): CollectionScoreResult {
+    const groups = input.groups.map(computeGroupScore)
+    const total = groups.reduce((sum, g) => sum + g.total, 0)
 
     return {
         collectionId: input.id,
         total,
-        subgroups,
+        groups,
     }
 }

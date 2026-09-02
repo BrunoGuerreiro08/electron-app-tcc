@@ -1,4 +1,7 @@
 export * from './types'
 export * from './ruleHandlers'
 export * from './validateRule'
+export * from './validateSubgroup'
+export * from './validateGroup'
+export * from './subgroupBonus'
 export * from './computeScore'

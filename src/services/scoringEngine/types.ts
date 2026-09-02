@@ -50,21 +50,47 @@ export interface CategoryScoreResult {
     breakdown: DocumentContribution[]
 }
 
-export type SubgroupCompletionState = 'incomplete' | 'complete' | 'exceeded' | null
+// CompletionState is level-agnostic — the same incomplete/complete/
+// exceeded logic applies identically whether it's a SubGroup or a Group
+// being checked against its own min/max. Kept the original name as an
+// alias since SubgroupScoreResult already used it before Group existed.
+export type CompletionState = 'incomplete' | 'complete' | 'exceeded' | null
+export type SubgroupCompletionState = CompletionState
 
 export interface SubgroupScoreResult {
     subgroupId: string
     total: number
     minPoints: number | null
     maxPoints: number | null
-    completion: SubgroupCompletionState
+    completion: CompletionState
     categories: CategoryScoreResult[]
+}
+
+export interface GroupScoreResult {
+    groupId: string
+    total: number
+    minPoints: number | null
+    maxPoints: number | null
+    completion: CompletionState
+    /**
+     * Points earned above minPoints, revalued at the group's bonusRate,
+     * kept as a SEPARATE figure — never added into `total`. Mirrors a
+     * source spreadsheet that displays "Total Grupo I" and "Excedente"
+     * as two distinct numbers. null means bonusRate/minPoints weren't
+     * configured — "not applicable here", not "0 bonus". This lives on
+     * Group, not SubGroup — a group-spanning bonus needs to sit above
+     * the subgroups it spans. See computeSubgroupBonus in
+     * subgroupBonus.ts (name kept — the function itself is level-
+     * agnostic, it just takes total/min/rate).
+     */
+    bonus: number | null
+    subgroups: SubgroupScoreResult[]
 }
 
 export interface CollectionScoreResult {
     collectionId: string
     total: number
-    subgroups: SubgroupScoreResult[]
+    groups: GroupScoreResult[]
 }
 
 // ---- Validation ----

@@ -16405,9 +16405,40 @@ function initSchema(db2) {
       updated_at TEXT NOT NULL DEFAULT (datetime('now'))
     );
 
+    -- New level between Collection and SubGroup. Mirrors the same
+    -- min/max/bonus_rate shape subgroups briefly carried (see migration
+    -- below) — but this is now their real home: a group-spanning
+    -- threshold/bonus needs to sit ABOVE the subgroups it spans, not on
+    -- one of them standing in for the whole group.
+    CREATE TABLE IF NOT EXISTS groups (
+      id TEXT PRIMARY KEY,
+      collection_id TEXT NOT NULL REFERENCES collections(id) ON DELETE CASCADE,
+      name TEXT NOT NULL,
+      display_order INTEGER NOT NULL DEFAULT 0,
+      min_points REAL,
+      max_points REAL,
+      bonus_rate REAL
+    );
+
+    -- group_id is nullable at the SQL level (SQLite can't retroactively
+    -- add a NOT NULL constraint without a full table rebuild, which felt
+    -- too risky to do automatically on someone's real data mid-project).
+    -- The hierarchy is mandatory in practice: every subgroup gets a
+    -- group_id via the migration below on first launch after this
+    -- change, and every code path that creates a subgroup going forward
+    -- must supply one — group_id should be treated as required
+    -- everywhere in TypeScript (see Subgroup in entities.ts), this
+    -- nullability is purely a SQLite migration accommodation.
+    --
+    -- collection_id is KEPT even though it's now reachable via
+    -- group_id -> groups.collection_id — dropping it risks breaking
+    -- existing queries in subgroups.ts I haven't seen. Redundant but
+    -- harmless; worth revisiting once that file's actual queries are
+    -- visible.
     CREATE TABLE IF NOT EXISTS subgroups (
       id TEXT PRIMARY KEY,
       collection_id TEXT NOT NULL REFERENCES collections(id) ON DELETE CASCADE,
+      group_id TEXT REFERENCES groups(id) ON DELETE CASCADE,
       name TEXT NOT NULL,
       display_order INTEGER NOT NULL DEFAULT 0,
       min_points REAL,
@@ -16460,6 +16491,31 @@ function initSchema(db2) {
       UNIQUE (document_id, category_id)
     );
   `);
+  try {
+    db2.exec(`ALTER TABLE subgroups ADD COLUMN group_id TEXT REFERENCES groups(id) ON DELETE CASCADE`);
+  } catch {
+  }
+  try {
+    db2.exec(`ALTER TABLE subgroups DROP COLUMN bonus_rate`);
+  } catch {
+  }
+  const orphanCollections = db2.prepare(`SELECT DISTINCT collection_id FROM subgroups WHERE group_id IS NULL`).all();
+  if (orphanCollections.length > 0) {
+    const createGroup2 = db2.prepare(
+      `INSERT INTO groups (id, collection_id, name, display_order) VALUES (?, ?, 'Geral', 0)`
+    );
+    const backfillSubgroups = db2.prepare(
+      `UPDATE subgroups SET group_id = ? WHERE collection_id = ? AND group_id IS NULL`
+    );
+    const migrate = db2.transaction(() => {
+      for (const { collection_id } of orphanCollections) {
+        const groupId = randomUUID();
+        createGroup2.run(groupId, collection_id);
+        backfillSubgroups.run(groupId, collection_id);
+      }
+    });
+    migrate();
+  }
 }
 const DEFAULT_SUBDIR = "document-files";
 function requireActiveUserId$1() {
@@ -16703,6 +16759,71 @@ function registerCollectionHandlers() {
   });
   ipcMain$1.handle("collections:delete", (_event, id2) => {
     getDb().prepare("DELETE FROM collections WHERE id = ?").run(id2);
+  });
+}
+function validateThresholds(minPoints, maxPoints, bonusRate) {
+  if (minPoints != null && !Number.isFinite(minPoints)) {
+    throw new Error("min_points must be a finite number.");
+  }
+  if (maxPoints != null && !Number.isFinite(maxPoints)) {
+    throw new Error("max_points must be a finite number.");
+  }
+  if (minPoints != null && maxPoints != null && maxPoints <= minPoints) {
+    throw new Error("max_points must be greater than min_points.");
+  }
+  if (bonusRate != null) {
+    if (!Number.isFinite(bonusRate) || bonusRate <= 0) {
+      throw new Error("bonus_rate must be a positive number.");
+    }
+    if (minPoints == null) {
+      throw new Error(
+        "bonus_rate requires min_points to be set — a surplus bonus is only meaningful relative to a minimum."
+      );
+    }
+  }
+}
+function listGroupsByCollection(collectionId) {
+  return getDb().prepare("SELECT * FROM groups WHERE collection_id = ? ORDER BY display_order").all(collectionId);
+}
+function createGroup(collectionId, input) {
+  const id2 = randomUUID();
+  getDb().prepare(`INSERT INTO groups (id, collection_id, name, display_order) VALUES (?, ?, ?, ?)`).run(id2, collectionId, input.name, input.displayOrder ?? 0);
+  return id2;
+}
+function updateGroup(id2, updates) {
+  const db2 = getDb();
+  const current = db2.prepare("SELECT * FROM groups WHERE id = ?").get(id2);
+  if (!current) throw new Error("Group not found.");
+  const minPoints = updates.minPoints !== void 0 ? updates.minPoints : current.min_points;
+  const maxPoints = updates.maxPoints !== void 0 ? updates.maxPoints : current.max_points;
+  const bonusRate = updates.bonusRate !== void 0 ? updates.bonusRate : current.bonus_rate;
+  validateThresholds(minPoints, maxPoints, bonusRate);
+  db2.prepare(
+    `UPDATE groups SET name = ?, display_order = ?, min_points = ?, max_points = ?, bonus_rate = ? WHERE id = ?`
+  ).run(
+    updates.name ?? current.name,
+    updates.displayOrder ?? current.display_order,
+    minPoints,
+    maxPoints,
+    bonusRate,
+    id2
+  );
+}
+function deleteGroup(id2) {
+  getDb().prepare("DELETE FROM groups WHERE id = ?").run(id2);
+}
+function registerGroupHandlers() {
+  ipcMain$1.handle("groups:listByCollection", (_event, collectionId) => {
+    return listGroupsByCollection(collectionId);
+  });
+  ipcMain$1.handle("groups:create", (_event, collectionId, name, displayOrder) => {
+    return createGroup(collectionId, { name, displayOrder });
+  });
+  ipcMain$1.handle("groups:update", (_event, id2, updates) => {
+    return updateGroup(id2, updates);
+  });
+  ipcMain$1.handle("groups:delete", (_event, id2) => {
+    deleteGroup(id2);
   });
 }
 function registerSubgroupHandlers() {
@@ -36596,43 +36717,69 @@ function validateTemplate(data) {
     errors2.push("Template is missing a name.");
   }
   let hasValidCategory = false;
-  if (!Array.isArray(t.subgroups) || t.subgroups.length === 0) {
-    errors2.push("Template must have at least one subgroup.");
+  if (!Array.isArray(t.groups) || t.groups.length === 0) {
+    errors2.push("Template must have at least one group.");
   } else {
-    t.subgroups.forEach((sg, i) => {
-      const sgPath = `subgroups[${i}]`;
-      if (!sg || typeof sg !== "object") {
-        errors2.push(`${sgPath}: not a valid object.`);
+    t.groups.forEach((grp, g) => {
+      const grpPath = `groups[${g}]`;
+      if (!grp || typeof grp !== "object") {
+        errors2.push(`${grpPath}: not a valid object.`);
         return;
       }
-      const s = sg;
-      if (typeof s.name !== "string" || s.name.trim() === "") {
-        errors2.push(`${sgPath}: missing a name.`);
+      const group = grp;
+      if (typeof group.name !== "string" || group.name.trim() === "") {
+        errors2.push(`${grpPath}: missing a name.`);
       }
-      if (typeof s.min_points === "number" && typeof s.max_points === "number" && s.max_points <= s.min_points) {
-        errors2.push(`${sgPath}: max_points must be greater than min_points.`);
+      if (typeof group.min_points === "number" && typeof group.max_points === "number" && group.max_points <= group.min_points) {
+        errors2.push(`${grpPath}: max_points must be greater than min_points.`);
       }
-      if (!Array.isArray(s.categories) || s.categories.length === 0) {
-        errors2.push(`${sgPath}: must have at least one category.`);
+      if (group.bonus_rate != null) {
+        if (typeof group.bonus_rate !== "number" || group.bonus_rate <= 0) {
+          errors2.push(`${grpPath}: bonus_rate must be a positive number when present.`);
+        }
+        if (typeof group.min_points !== "number") {
+          errors2.push(`${grpPath}: bonus_rate requires min_points to be set — a surplus bonus is only meaningful relative to a minimum.`);
+        }
+      }
+      if (!Array.isArray(group.subgroups) || group.subgroups.length === 0) {
+        errors2.push(`${grpPath}: must have at least one subgroup.`);
         return;
       }
-      s.categories.forEach((cat, j) => {
-        const catPath = `${sgPath}.categories[${j}]`;
-        if (!cat || typeof cat !== "object") {
-          errors2.push(`${catPath}: not a valid object.`);
+      group.subgroups.forEach((sg, i) => {
+        const sgPath = `${grpPath}.subgroups[${i}]`;
+        if (!sg || typeof sg !== "object") {
+          errors2.push(`${sgPath}: not a valid object.`);
           return;
         }
-        const c = cat;
-        if (typeof c.name !== "string" || c.name.trim() === "") {
-          errors2.push(`${catPath}: missing a name.`);
+        const s = sg;
+        if (typeof s.name !== "string" || s.name.trim() === "") {
+          errors2.push(`${sgPath}: missing a name.`);
         }
-        if (validateRule(c.rule, `${catPath}.rule`, errors2)) {
-          hasValidCategory = true;
+        if (typeof s.min_points === "number" && typeof s.max_points === "number" && s.max_points <= s.min_points) {
+          errors2.push(`${sgPath}: max_points must be greater than min_points.`);
         }
+        if (!Array.isArray(s.categories) || s.categories.length === 0) {
+          errors2.push(`${sgPath}: must have at least one category.`);
+          return;
+        }
+        s.categories.forEach((cat, j) => {
+          const catPath = `${sgPath}.categories[${j}]`;
+          if (!cat || typeof cat !== "object") {
+            errors2.push(`${catPath}: not a valid object.`);
+            return;
+          }
+          const c = cat;
+          if (typeof c.name !== "string" || c.name.trim() === "") {
+            errors2.push(`${catPath}: missing a name.`);
+          }
+          if (validateRule(c.rule, `${catPath}.rule`, errors2)) {
+            hasValidCategory = true;
+          }
+        });
       });
     });
   }
-  if (Array.isArray(t.subgroups) && t.subgroups.length > 0 && !hasValidCategory) {
+  if (Array.isArray(t.groups) && t.groups.length > 0 && !hasValidCategory) {
     errors2.push("Template must have at least one category with a valid scoring rule.");
   }
   if (errors2.length > 0) {
@@ -36719,17 +36866,40 @@ function applyTemplate(source, collectionName, color) {
       collectionName,
       color
     );
-    for (const sg of template.subgroups) {
-      const subgroupId = randomUUID();
+    for (const grp of template.groups) {
+      const groupId = randomUUID();
       db2.prepare(
-        `INSERT INTO subgroups (id, collection_id, name, display_order, min_points, max_points)
-                 VALUES (?, ?, ?, ?, ?, ?)`
-      ).run(subgroupId, collectionId, sg.name, sg.display_order, sg.min_points ?? null, sg.max_points ?? null);
-      for (const cat of sg.categories) {
+        `INSERT INTO groups (id, collection_id, name, display_order, min_points, max_points, bonus_rate)
+                 VALUES (?, ?, ?, ?, ?, ?, ?)`
+      ).run(
+        groupId,
+        collectionId,
+        grp.name,
+        grp.display_order,
+        grp.min_points ?? null,
+        grp.max_points ?? null,
+        grp.bonus_rate ?? null
+      );
+      for (const sg of grp.subgroups) {
+        const subgroupId = randomUUID();
         db2.prepare(
-          `INSERT INTO categories (id, subgroup_id, name, rule, display_order)
-                     VALUES (?, ?, ?, ?, ?)`
-        ).run(randomUUID(), subgroupId, cat.name, JSON.stringify(cat.rule), cat.display_order);
+          `INSERT INTO subgroups (id, collection_id, group_id, name, display_order, min_points, max_points)
+                     VALUES (?, ?, ?, ?, ?, ?, ?)`
+        ).run(
+          subgroupId,
+          collectionId,
+          groupId,
+          sg.name,
+          sg.display_order,
+          sg.min_points ?? null,
+          sg.max_points ?? null
+        );
+        for (const cat of sg.categories) {
+          db2.prepare(
+            `INSERT INTO categories (id, subgroup_id, name, rule, display_order)
+                         VALUES (?, ?, ?, ?, ?)`
+          ).run(randomUUID(), subgroupId, cat.name, JSON.stringify(cat.rule), cat.display_order);
+        }
       }
     }
     return collectionId;
@@ -36740,22 +36910,32 @@ async function exportCollectionAsTemplate(win, collectionId) {
   const db2 = getDb();
   const collection = db2.prepare("SELECT id, name FROM collections WHERE id = ?").get(collectionId);
   if (!collection) return { ok: false, error: "Collection not found." };
-  const subgroupRows = db2.prepare("SELECT * FROM subgroups WHERE collection_id = ? ORDER BY display_order").all(collectionId);
+  const groupRows = db2.prepare("SELECT * FROM groups WHERE collection_id = ? ORDER BY display_order").all(collectionId);
   const template = {
     schemaVersion: 1,
     name: collection.name,
-    subgroups: subgroupRows.map((sg) => {
-      const categoryRows = db2.prepare("SELECT * FROM categories WHERE subgroup_id = ? ORDER BY display_order").all(sg.id);
+    groups: groupRows.map((grp) => {
+      const subgroupRows = db2.prepare("SELECT * FROM subgroups WHERE group_id = ? ORDER BY display_order").all(grp.id);
       return {
-        name: sg.name,
-        display_order: sg.display_order,
-        min_points: sg.min_points,
-        max_points: sg.max_points,
-        categories: categoryRows.map((cat) => ({
-          name: cat.name,
-          display_order: cat.display_order,
-          rule: JSON.parse(cat.rule)
-        }))
+        name: grp.name,
+        display_order: grp.display_order,
+        min_points: grp.min_points,
+        max_points: grp.max_points,
+        bonus_rate: grp.bonus_rate,
+        subgroups: subgroupRows.map((sg) => {
+          const categoryRows = db2.prepare("SELECT * FROM categories WHERE subgroup_id = ? ORDER BY display_order").all(sg.id);
+          return {
+            name: sg.name,
+            display_order: sg.display_order,
+            min_points: sg.min_points,
+            max_points: sg.max_points,
+            categories: categoryRows.map((cat) => ({
+              name: cat.name,
+              display_order: cat.display_order,
+              rule: JSON.parse(cat.rule)
+            }))
+          };
+        })
       };
     })
   };
@@ -36832,6 +37012,7 @@ function createWindow() {
 app$1.whenReady().then(() => {
   registerPreferencesHandlers();
   registerCollectionHandlers();
+  registerGroupHandlers();
   registerSubgroupHandlers();
   registerCategoryHandlers();
   registerDocumentHandlers();

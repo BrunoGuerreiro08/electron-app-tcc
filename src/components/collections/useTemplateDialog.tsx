@@ -107,8 +107,8 @@ export function UseTemplateDialog({ open, onOpenChange, onCreated }: Props) {
                 <DialogHeader>
                     <DialogTitle>New collection from template</DialogTitle>
                     <DialogDescription>
-                        Start from a pre-built structure of subgroups, categories, and scoring
-                        rules — fully editable once created.
+                        Start from a pre-built structure of groups, subgroups, categories, and
+                        scoring rules — fully editable once created.
                     </DialogDescription>
                 </DialogHeader>
 
@@ -149,24 +149,34 @@ export function UseTemplateDialog({ open, onOpenChange, onCreated }: Props) {
                                         : 'No imported templates yet — use "Import template" above.'}
                                 </p>
                             ) : (
-                                list.map((t) => (
-                                    <button
-                                        key={t.fileName}
-                                        onClick={() => handleSelect(t)}
-                                        className={`block w-full border-b p-2 text-left text-sm last:border-b-0 hover:bg-muted/60 ${selected?.fileName === t.fileName && selected.source === t.source
-                                            ? 'bg-muted'
-                                            : ''
-                                            }`}
-                                    >
-                                        <p className="font-medium">{t.template.name}</p>
-                                        <p className="text-xs text-muted-foreground">
-                                            {t.template.subgroups.length} subgroup
-                                            {t.template.subgroups.length === 1 ? '' : 's'} ·{' '}
-                                            {t.template.subgroups.reduce((n, sg) => n + sg.categories.length, 0)}{' '}
-                                            categories
-                                        </p>
-                                    </button>
-                                ))
+                                list.map((t) => {
+                                    const subgroupCount = t.template.groups.reduce(
+                                        (n, g) => n + g.subgroups.length,
+                                        0
+                                    )
+                                    const categoryCount = t.template.groups.reduce(
+                                        (n, g) => n + g.subgroups.reduce((m, sg) => m + sg.categories.length, 0),
+                                        0
+                                    )
+                                    return (
+                                        <button
+                                            key={t.fileName}
+                                            onClick={() => handleSelect(t)}
+                                            className={`block w-full border-b p-2 text-left text-sm last:border-b-0 hover:bg-muted/60 ${selected?.fileName === t.fileName && selected.source === t.source
+                                                    ? 'bg-muted'
+                                                    : ''
+                                                }`}
+                                        >
+                                            <p className="font-medium">{t.template.name}</p>
+                                            <p className="text-xs text-muted-foreground">
+                                                {t.template.groups.length} group
+                                                {t.template.groups.length === 1 ? '' : 's'} · {subgroupCount}{' '}
+                                                subgroup{subgroupCount === 1 ? '' : 's'} · {categoryCount}{' '}
+                                                categories
+                                            </p>
+                                        </button>
+                                    )
+                                })
                             )}
                         </div>
 
@@ -178,23 +188,40 @@ export function UseTemplateDialog({ open, onOpenChange, onCreated }: Props) {
                                 </p>
                             ) : (
                                 <>
-                                    {selected.template.subgroups.map((sg, i) => (
-                                        <div key={i} className="space-y-1">
+                                    {selected.template.groups.map((grp, gi) => (
+                                        <div key={gi} className="space-y-2">
                                             <div className="flex items-center gap-2">
-                                                <p className="text-sm font-medium">{sg.name}</p>
-                                                {(sg.min_points != null || sg.max_points != null) && (
+                                                <p className="text-sm font-semibold">{grp.name}</p>
+                                                {(grp.min_points != null || grp.max_points != null) && (
                                                     <Badge variant="outline" className="text-xs">
-                                                        {sg.min_points ?? '–'}–{sg.max_points ?? '–'} pts
+                                                        {grp.min_points ?? '–'}–{grp.max_points ?? '–'} pts
+                                                    </Badge>
+                                                )}
+                                                {grp.bonus_rate != null && (
+                                                    <Badge variant="secondary" className="text-xs">
+                                                        +{Math.round(grp.bonus_rate * 100)}% surplus bonus
                                                     </Badge>
                                                 )}
                                             </div>
-                                            <ul className="space-y-0.5 pl-3 text-xs text-muted-foreground">
-                                                {sg.categories.map((cat, j) => (
-                                                    <li key={j}>
-                                                        {cat.name} · {cat.rule.type}
-                                                    </li>
-                                                ))}
-                                            </ul>
+                                            {grp.subgroups.map((sg, si) => (
+                                                <div key={si} className="space-y-1 pl-3">
+                                                    <div className="flex items-center gap-2">
+                                                        <p className="text-sm font-medium">{sg.name}</p>
+                                                        {(sg.min_points != null || sg.max_points != null) && (
+                                                            <Badge variant="outline" className="text-xs">
+                                                                {sg.min_points ?? '–'}–{sg.max_points ?? '–'} pts
+                                                            </Badge>
+                                                        )}
+                                                    </div>
+                                                    <ul className="space-y-0.5 pl-3 text-xs text-muted-foreground">
+                                                        {sg.categories.map((cat, ci) => (
+                                                            <li key={ci}>
+                                                                {cat.name} · {cat.rule.type}
+                                                            </li>
+                                                        ))}
+                                                    </ul>
+                                                </div>
+                                            ))}
                                         </div>
                                     ))}
                                 </>

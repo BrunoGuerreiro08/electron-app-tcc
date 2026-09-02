@@ -3,8 +3,8 @@ import type { Subgroup } from '@/types/entities'
 export const subgroupRepository = {
     listByCollection: (collectionId: string): Promise<Subgroup[]> =>
         window.api.subgroups.listByCollection(collectionId),
-    create: (collectionId: string, name: string, displayOrder?: number): Promise<string> =>
-        window.api.subgroups.create(collectionId, name, displayOrder),
+    create: (collectionId: string, groupId: string, name: string, displayOrder?: number): Promise<string> =>
+        window.api.subgroups.create(collectionId, groupId, name, displayOrder),
     update: (
         id: string,
         updates: { name?: string; minPoints?: number | null; maxPoints?: number | null }

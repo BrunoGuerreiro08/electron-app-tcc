@@ -3,32 +3,9 @@ import path from 'node:path'
 import { randomUUID } from 'node:crypto'
 import { app, dialog, type BrowserWindow } from 'electron'
 import { getDb, getActiveUserId } from './db'
+import { Rule } from '../src/services/scoringEngine'
 
 // --- Schema ---------------------------------------------------------
-//
-// Mirrors the REAL src/services/scoringEngine/types.ts (confirmed —
-// this replaces the earlier entities.md-guessed shape). One detail that
-// matters for validation: CappedRule.inner is FlatRule | HoursRule
-// ONLY — capped rules can't nest inside each other.
-export interface FlatRule {
-    type: 'flat'
-    pointsPerUnit: number
-}
-
-export interface HoursRule {
-    type: 'hours'
-    pointsPerUnit: number
-    unitSize: number
-}
-
-export interface CappedRule {
-    type: 'capped'
-    inner: FlatRule | HoursRule
-    cap: number
-}
-
-export type Rule = FlatRule | HoursRule | CappedRule
-
 export interface TemplateCategory {
     name: string
     display_order: number
@@ -43,11 +20,20 @@ export interface TemplateSubgroup {
     categories: TemplateCategory[]
 }
 
+export interface TemplateGroup {
+    name: string
+    display_order: number
+    min_points?: number | null
+    max_points?: number | null
+    bonus_rate?: number | null
+    subgroups: TemplateSubgroup[]
+}
+
 export interface TemplateFile {
     schemaVersion: 1
     name: string
     description?: string
-    subgroups: TemplateSubgroup[]
+    groups: TemplateGroup[]
 }
 
 export interface TemplateSummary {
@@ -183,54 +169,87 @@ export function validateTemplate(data: unknown): ValidationResult {
 
     let hasValidCategory = false
 
-    if (!Array.isArray(t.subgroups) || t.subgroups.length === 0) {
-        errors.push('Template must have at least one subgroup.')
+    if (!Array.isArray(t.groups) || t.groups.length === 0) {
+        errors.push('Template must have at least one group.')
     } else {
-        t.subgroups.forEach((sg: unknown, i: number) => {
-            const sgPath = `subgroups[${i}]`
-            if (!sg || typeof sg !== 'object') {
-                errors.push(`${sgPath}: not a valid object.`)
+        t.groups.forEach((grp: unknown, g: number) => {
+            const grpPath = `groups[${g}]`
+            if (!grp || typeof grp !== 'object') {
+                errors.push(`${grpPath}: not a valid object.`)
                 return
             }
-            const s = sg as Record<string, unknown>
+            const group = grp as Record<string, unknown>
 
-            if (typeof s.name !== 'string' || s.name.trim() === '') {
-                errors.push(`${sgPath}: missing a name.`)
+            if (typeof group.name !== 'string' || group.name.trim() === '') {
+                errors.push(`${grpPath}: missing a name.`)
             }
             if (
-                typeof s.min_points === 'number' &&
-                typeof s.max_points === 'number' &&
-                s.max_points <= s.min_points
+                typeof group.min_points === 'number' &&
+                typeof group.max_points === 'number' &&
+                group.max_points <= group.min_points
             ) {
-                errors.push(`${sgPath}: max_points must be greater than min_points.`)
+                errors.push(`${grpPath}: max_points must be greater than min_points.`)
+            }
+            if (group.bonus_rate != null) {
+                if (typeof group.bonus_rate !== 'number' || group.bonus_rate <= 0) {
+                    errors.push(`${grpPath}: bonus_rate must be a positive number when present.`)
+                }
+                if (typeof group.min_points !== 'number') {
+                    errors.push(`${grpPath}: bonus_rate requires min_points to be set — a surplus bonus is only meaningful relative to a minimum.`)
+                }
             }
 
-            if (!Array.isArray(s.categories) || s.categories.length === 0) {
-                errors.push(`${sgPath}: must have at least one category.`)
+            if (!Array.isArray(group.subgroups) || group.subgroups.length === 0) {
+                errors.push(`${grpPath}: must have at least one subgroup.`)
                 return
             }
 
-            s.categories.forEach((cat: unknown, j: number) => {
-                const catPath = `${sgPath}.categories[${j}]`
-                if (!cat || typeof cat !== 'object') {
-                    errors.push(`${catPath}: not a valid object.`)
+            group.subgroups.forEach((sg: unknown, i: number) => {
+                const sgPath = `${grpPath}.subgroups[${i}]`
+                if (!sg || typeof sg !== 'object') {
+                    errors.push(`${sgPath}: not a valid object.`)
                     return
                 }
-                const c = cat as Record<string, unknown>
+                const s = sg as Record<string, unknown>
 
-                if (typeof c.name !== 'string' || c.name.trim() === '') {
-                    errors.push(`${catPath}: missing a name.`)
+                if (typeof s.name !== 'string' || s.name.trim() === '') {
+                    errors.push(`${sgPath}: missing a name.`)
                 }
-                if (validateRule(c.rule, `${catPath}.rule`, errors)) {
-                    hasValidCategory = true
+                if (
+                    typeof s.min_points === 'number' &&
+                    typeof s.max_points === 'number' &&
+                    s.max_points <= s.min_points
+                ) {
+                    errors.push(`${sgPath}: max_points must be greater than min_points.`)
                 }
+
+                if (!Array.isArray(s.categories) || s.categories.length === 0) {
+                    errors.push(`${sgPath}: must have at least one category.`)
+                    return
+                }
+
+                s.categories.forEach((cat: unknown, j: number) => {
+                    const catPath = `${sgPath}.categories[${j}]`
+                    if (!cat || typeof cat !== 'object') {
+                        errors.push(`${catPath}: not a valid object.`)
+                        return
+                    }
+                    const c = cat as Record<string, unknown>
+
+                    if (typeof c.name !== 'string' || c.name.trim() === '') {
+                        errors.push(`${catPath}: missing a name.`)
+                    }
+                    if (validateRule(c.rule, `${catPath}.rule`, errors)) {
+                        hasValidCategory = true
+                    }
+                })
             })
         })
     }
 
     // Mirrors NFR-A01-01: a template with no valid category anywhere is
     // useless even if every individual field technically parsed.
-    if (Array.isArray(t.subgroups) && t.subgroups.length > 0 && !hasValidCategory) {
+    if (Array.isArray(t.groups) && t.groups.length > 0 && !hasValidCategory) {
         errors.push('Template must have at least one category with a valid scoring rule.')
     }
 
@@ -373,18 +392,42 @@ export function applyTemplate(
             color
         )
 
-        for (const sg of template.subgroups) {
-            const subgroupId = randomUUID()
+        for (const grp of template.groups) {
+            const groupId = randomUUID()
             db.prepare(
-                `INSERT INTO subgroups (id, collection_id, name, display_order, min_points, max_points)
-                 VALUES (?, ?, ?, ?, ?, ?)`
-            ).run(subgroupId, collectionId, sg.name, sg.display_order, sg.min_points ?? null, sg.max_points ?? null)
+                `INSERT INTO groups (id, collection_id, name, display_order, min_points, max_points, bonus_rate)
+                 VALUES (?, ?, ?, ?, ?, ?, ?)`
+            ).run(
+                groupId,
+                collectionId,
+                grp.name,
+                grp.display_order,
+                grp.min_points ?? null,
+                grp.max_points ?? null,
+                grp.bonus_rate ?? null
+            )
 
-            for (const cat of sg.categories) {
+            for (const sg of grp.subgroups) {
+                const subgroupId = randomUUID()
                 db.prepare(
-                    `INSERT INTO categories (id, subgroup_id, name, rule, display_order)
-                     VALUES (?, ?, ?, ?, ?)`
-                ).run(randomUUID(), subgroupId, cat.name, JSON.stringify(cat.rule), cat.display_order)
+                    `INSERT INTO subgroups (id, collection_id, group_id, name, display_order, min_points, max_points)
+                     VALUES (?, ?, ?, ?, ?, ?, ?)`
+                ).run(
+                    subgroupId,
+                    collectionId,
+                    groupId,
+                    sg.name,
+                    sg.display_order,
+                    sg.min_points ?? null,
+                    sg.max_points ?? null
+                )
+
+                for (const cat of sg.categories) {
+                    db.prepare(
+                        `INSERT INTO categories (id, subgroup_id, name, rule, display_order)
+                         VALUES (?, ?, ?, ?, ?)`
+                    ).run(randomUUID(), subgroupId, cat.name, JSON.stringify(cat.rule), cat.display_order)
+                }
             }
         }
 
@@ -418,34 +461,54 @@ export async function exportCollectionAsTemplate(
         | undefined
     if (!collection) return { ok: false, error: 'Collection not found.' }
 
-    const subgroupRows = db
-        .prepare('SELECT * FROM subgroups WHERE collection_id = ? ORDER BY display_order')
+    const groupRows = db
+        .prepare('SELECT * FROM groups WHERE collection_id = ? ORDER BY display_order')
         .all(collectionId) as {
             id: string
             name: string
             display_order: number
             min_points: number | null
             max_points: number | null
+            bonus_rate: number | null
         }[]
 
     const template: TemplateFile = {
         schemaVersion: 1,
         name: collection.name,
-        subgroups: subgroupRows.map((sg) => {
-            const categoryRows = db
-                .prepare('SELECT * FROM categories WHERE subgroup_id = ? ORDER BY display_order')
-                .all(sg.id) as { name: string; display_order: number; rule: string }[]
+        groups: groupRows.map((grp) => {
+            const subgroupRows = db
+                .prepare('SELECT * FROM subgroups WHERE group_id = ? ORDER BY display_order')
+                .all(grp.id) as {
+                    id: string
+                    name: string
+                    display_order: number
+                    min_points: number | null
+                    max_points: number | null
+                }[]
 
             return {
-                name: sg.name,
-                display_order: sg.display_order,
-                min_points: sg.min_points,
-                max_points: sg.max_points,
-                categories: categoryRows.map((cat) => ({
-                    name: cat.name,
-                    display_order: cat.display_order,
-                    rule: JSON.parse(cat.rule),
-                })),
+                name: grp.name,
+                display_order: grp.display_order,
+                min_points: grp.min_points,
+                max_points: grp.max_points,
+                bonus_rate: grp.bonus_rate,
+                subgroups: subgroupRows.map((sg) => {
+                    const categoryRows = db
+                        .prepare('SELECT * FROM categories WHERE subgroup_id = ? ORDER BY display_order')
+                        .all(sg.id) as { name: string; display_order: number; rule: string }[]
+
+                    return {
+                        name: sg.name,
+                        display_order: sg.display_order,
+                        min_points: sg.min_points,
+                        max_points: sg.max_points,
+                        categories: categoryRows.map((cat) => ({
+                            name: cat.name,
+                            display_order: cat.display_order,
+                            rule: JSON.parse(cat.rule),
+                        })),
+                    }
+                }),
             }
         }),
     }

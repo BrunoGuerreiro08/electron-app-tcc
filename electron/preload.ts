@@ -9,11 +9,19 @@ contextBridge.exposeInMainWorld('api', {
         rename: (id: string, name: string) => ipcRenderer.invoke('collections:rename', id, name),
         delete: (id: string) => ipcRenderer.invoke('collections:delete', id),
     },
+    groups: {
+        listByCollection: (collectionId: string) =>
+            ipcRenderer.invoke('groups:listByCollection', collectionId),
+        create: (collectionId: string, name: string, displayOrder?: number) =>
+            ipcRenderer.invoke('groups:create', collectionId, name, displayOrder),
+        update: (id: string, updates: unknown) => ipcRenderer.invoke('groups:update', id, updates),
+        delete: (id: string) => ipcRenderer.invoke('groups:delete', id),
+    },
     subgroups: {
         listByCollection: (collectionId: string) =>
             ipcRenderer.invoke('subgroups:listByCollection', collectionId),
-        create: (collectionId: string, name: string, displayOrder?: number) =>
-            ipcRenderer.invoke('subgroups:create', collectionId, name, displayOrder),
+        create: (collectionId: string, groupId: string, name: string, displayOrder?: number) =>
+            ipcRenderer.invoke('subgroups:create', collectionId, groupId, name, displayOrder),
         update: (id: string, updates: unknown) =>
             ipcRenderer.invoke('subgroups:update', id, updates),
         delete: (id: string) => ipcRenderer.invoke('subgroups:delete', id),

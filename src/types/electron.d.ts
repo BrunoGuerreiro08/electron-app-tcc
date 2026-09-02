@@ -10,9 +10,15 @@ declare global {
                 rename: (id: string, name: string) => Promise<void>
                 delete: (id: string) => Promise<void>
             }
-            subgroups: {
-                listByCollection: (collectionId: string) => Promise<any[]>
+            groups: {
+                listByCollection: (collectionId: string) => Promise<import('./entities').Group[]>
                 create: (collectionId: string, name: string, displayOrder?: number) => Promise<string>
+                update: (id: string, updates: unknown) => Promise<void>
+                delete: (id: string) => Promise<void>
+            }
+            subgroups: {
+                listByCollection: (collectionId: string) => Promise<import('./entities').Subgroup[]>
+                create: (collectionId: string, groupId: string, name: string, displayOrder?: number) => Promise<string>
                 update: (id: string, updates: unknown) => Promise<void>
                 delete: (id: string) => Promise<void>
             }

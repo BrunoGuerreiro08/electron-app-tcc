@@ -3,6 +3,7 @@ import path from 'node:path'
 import { fileURLToPath } from 'node:url'
 import { detectOrphans } from './fileHandler'
 import { registerCollectionHandlers } from './ipc/collections'
+import { registerGroupHandlers } from './ipc/groups'
 import { registerSubgroupHandlers } from './ipc/subgroups'
 import { registerCategoryHandlers } from './ipc/categories'
 import { registerDocumentHandlers } from './ipc/documents'
@@ -63,6 +64,7 @@ app.whenReady().then(() => {
     // via restoreActiveSession() below, or on session:set at login time).
     registerPreferencesHandlers()
     registerCollectionHandlers()
+    registerGroupHandlers()
     registerSubgroupHandlers()
     registerCategoryHandlers()
     registerDocumentHandlers()
