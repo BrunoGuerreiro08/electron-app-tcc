@@ -5,6 +5,7 @@ import type { Document } from '@/types/entities'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
+import { Input } from '@/components/ui/input'
 import {
     AlertDialog,
     AlertDialogAction,
@@ -17,7 +18,7 @@ import {
     AlertDialogTrigger,
 } from '@/components/ui/alert-dialog'
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs'
-import { Plus, Trash2, Link2, Pencil, FolderInput, X } from 'lucide-react'
+import { Plus, Trash2, Link2, Pencil, FolderInput, X, Search } from 'lucide-react'
 import { TagsEditor } from './tagsEditor'
 import { LinkCategoriesDialog } from './linkCategoriesDialog'
 import { fileRepository } from '@/repository/fileRepository'
@@ -31,6 +32,7 @@ export function DocumentLibraryScreen() {
     const { t } = useTranslation('documents')
     const [documents, setDocuments] = useState<Document[]>([])
     const [filter, setFilter] = useState<'all' | 'unfiled'>('all')
+    const [searchQuery, setSearchQuery] = useState('')
     const [linkedCounts, setLinkedCounts] = useState<Record<string, number>>({})
     const [loading, setLoading] = useState(true)
 
@@ -118,6 +120,18 @@ export function DocumentLibraryScreen() {
         refresh()
     }
 
+    // Filter documents matching multiple fields (title, issuer, date, notes)
+    const filteredDocuments = documents.filter((doc) => {
+        if (!searchQuery.trim()) return true
+        const q = searchQuery.toLowerCase()
+        return (
+            doc.title.toLowerCase().includes(q) ||
+            (doc.issuer && doc.issuer.toLowerCase().includes(q)) ||
+            (doc.issued_at && doc.issued_at.toLowerCase().includes(q)) ||
+            (doc.notes && doc.notes.toLowerCase().includes(q))
+        )
+    })
+
     return (
         <div className="space-y-6 p-6">
             <div className="flex items-center justify-between">
@@ -162,12 +176,26 @@ export function DocumentLibraryScreen() {
                 </>
             )}
 
-            <Tabs value={filter} onValueChange={(v) => setFilter(v as 'all' | 'unfiled')}>
-                <TabsList>
-                    <TabsTrigger value="all">{t('library.tabs.all')}</TabsTrigger>
-                    <TabsTrigger value="unfiled">{t('library.tabs.unfiled')}</TabsTrigger>
-                </TabsList>
-            </Tabs>
+            <div className="flex items-center justify-between gap-4">
+                <Tabs value={filter} onValueChange={(v) => setFilter(v as 'all' | 'unfiled')}>
+                    <TabsList>
+                        <TabsTrigger value="all">{t('library.tabs.all')}</TabsTrigger>
+                        <TabsTrigger value="unfiled">{t('library.tabs.unfiled')}</TabsTrigger>
+                    </TabsList>
+                </Tabs>
+
+                {/* Search input field */}
+                <div className="relative w-72">
+                    <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
+                    <Input
+                        type="search"
+                        placeholder={t('library.searchPlaceholder', 'Search by title, issuer...')}
+                        className="pl-9 h-9"
+                        value={searchQuery}
+                        onChange={(e) => setSearchQuery(e.target.value)}
+                    />
+                </div>
+            </div>
 
             {loading ? (
                 <p className="text-sm text-muted-foreground">{t('library.loading')}</p>
@@ -175,9 +203,13 @@ export function DocumentLibraryScreen() {
                 <p className="text-sm text-muted-foreground">
                     {filter === 'unfiled' ? t('library.emptyUnfiled') : t('library.emptyAll')}
                 </p>
+            ) : filteredDocuments.length === 0 ? (
+                <p className="text-sm text-muted-foreground py-4 text-center">
+                    {t('library.noSearchResults', 'No documents match your search.')}
+                </p>
             ) : (
                 <div className="space-y-2">
-                    {documents.map((doc) => (
+                    {filteredDocuments.map((doc) => (
                         <Card key={doc.id}>
                             <CardContent className="flex items-center justify-between gap-4 py-3">
                                 <div className="min-w-0 flex-1">
@@ -199,7 +231,7 @@ export function DocumentLibraryScreen() {
                                         )}
                                     </div>
                                     <p className="text-xs text-muted-foreground">
-                                        {[doc.issuer, doc.issued_at, doc.hours ? `${doc.hours}h` : null]
+                                        {[doc.issuer, doc.issued_at, doc.hours ? `${doc.hours}h` : null, doc.notes]
                                             .filter(Boolean)
                                             .join(' · ')}
                                     </p>
