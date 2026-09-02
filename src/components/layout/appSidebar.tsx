@@ -82,6 +82,15 @@ export function AppSidebar() {
     const [newDialogOpen, setNewDialogOpen] = useState(false)
     const [newName, setNewName] = useState('')
 
+    // In icon-rail mode there's no room to show a CollapsibleTrigger's
+    // submenu, so a click just silently toggles state nobody can see.
+    // Expanding the sidebar first makes that click actually do something
+    // — Radix's own open-toggle still fires alongside this (asChild
+    // composes handlers), so the submenu opens too in the same click.
+    const handleCollapsedNavClick = () => {
+        if (isCollapsed) toggleSidebar()
+    }
+
     useEffect(() => {
         load()
     }, [load])
@@ -243,6 +252,7 @@ export function AppSidebar() {
                                         <SidebarMenuButton
                                             tooltip={t('nav.collections')}
                                             isActive={location.pathname.startsWith("/collections")}
+                                            onClick={handleCollapsedNavClick}
                                         >
                                             <Library className="h-4 w-4 shrink-0" />
                                             <span>{t('nav.collections')}</span>
@@ -260,7 +270,7 @@ export function AppSidebar() {
                                                             asChild
                                                             isActive={location.pathname === path}
                                                         >
-                                                            <NavLink to={path}>
+                                                            <NavLink to={path} className="block truncate" title={c.name}>
                                                                 {c.name}
                                                             </NavLink>
                                                         </SidebarMenuSubButton>
