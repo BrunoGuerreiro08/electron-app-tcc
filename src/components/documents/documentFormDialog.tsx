@@ -5,6 +5,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Button } from '@/components/ui/button'
+import { useTranslation } from 'react-i18next'
 
 interface DocumentFormDialogProps {
     open: boolean
@@ -20,6 +21,7 @@ export function DocumentFormDialog({
     onSaved,
     document,
 }: DocumentFormDialogProps) {
+    const { t } = useTranslation('documents')
     const isEdit = !!document
     const [title, setTitle] = useState('')
     const [issuer, setIssuer] = useState('')
@@ -69,26 +71,26 @@ export function DocumentFormDialog({
         <Dialog open={open} onOpenChange={onOpenChange}>
             <DialogContent>
                 <DialogHeader>
-                    <DialogTitle>{isEdit ? 'Edit document' : 'New document'}</DialogTitle>
+                    <DialogTitle>{isEdit ? t('form.editTitle') : t('form.newTitle')}</DialogTitle>
                 </DialogHeader>
                 <div className="space-y-3">
                     <div className="space-y-2">
-                        <Label>Title</Label>
+                        <Label>{t('form.fields.title')}</Label>
                         <Input value={title} onChange={(e) => setTitle(e.target.value)} autoFocus />
                     </div>
                     <div className="grid grid-cols-2 gap-3">
                         <div className="space-y-2">
-                            <Label>Issuer</Label>
+                            <Label>{t('form.fields.issuer')}</Label>
                             <Input value={issuer} onChange={(e) => setIssuer(e.target.value)} />
                         </div>
                         <div className="space-y-2">
-                            <Label>Date issued</Label>
+                            <Label>{t('form.fields.dateIssued')}</Label>
                             <Input type="date" value={issuedAt} onChange={(e) => setIssuedAt(e.target.value)} />
                         </div>
                     </div>
                     <div className="grid grid-cols-2 gap-3">
                         <div className="space-y-2">
-                            <Label>Quantity</Label>
+                            <Label>{t('form.fields.quantity')}</Label>
                             <Input
                                 type="number"
                                 min={1}
@@ -97,11 +99,11 @@ export function DocumentFormDialog({
                                 onChange={(e) => setQuantity(e.target.value)}
                             />
                             <p className="text-xs text-muted-foreground">
-                                e.g. 2 if this one document covers 2 contributions.
+                                {t('form.fields.quantityHint')}
                             </p>
                         </div>
                         <div className="space-y-2">
-                            <Label>Hours (if applicable)</Label>
+                            <Label>{t('form.fields.hours')}</Label>
                             <Input
                                 type="number"
                                 min={0}
@@ -112,19 +114,19 @@ export function DocumentFormDialog({
                         </div>
                     </div>
                     <div className="space-y-2">
-                        <Label>Notes</Label>
+                        <Label>{t('form.fields.notes')}</Label>
                         <Input value={notes} onChange={(e) => setNotes(e.target.value)} />
                     </div>
                     {!isEdit && (
                         <p className="text-xs text-muted-foreground">
-                            You can attach a file after creating the document.
+                            {t('form.attachHint')}
                         </p>
                     )}
                     {error && <p className="text-sm text-destructive">{error}</p>}
                 </div>
                 <DialogFooter>
                     <Button onClick={handleSave} disabled={!title.trim()}>
-                        {isEdit ? 'Save' : 'Create'}
+                        {isEdit ? t('form.actions.save') : t('form.actions.create')}
                     </Button>
                 </DialogFooter>
             </DialogContent>

@@ -8,7 +8,7 @@ import enCommon from './locales/en/common.json'
 import enCollections from './locales/en/collections.json'
 import enCategories from './locales/en/categories.json'
 import enHome from './locales/en/home.json'
-// import enCertificates from './locales/en/certificates.json'
+import enDocuments from './locales/en/documents.json'
 import enReports from './locales/en/reports.json'
 // import enSettings from './locales/en/settings.json'
 
@@ -18,7 +18,7 @@ import ptCommon from './locales/pt-BR/common.json'
 import ptCollections from './locales/pt-BR/collections.json'
 import ptCategories from './locales/pt-BR/categories.json'
 import ptHome from './locales/pt-BR/home.json'
-// import ptCertificates from './locales/pt-BR/certificates.json'
+import ptDocuments from './locales/pt-BR/documents.json'
 import ptReports from './locales/pt-BR/reports.json'
 // import ptSettings from './locales/pt-BR/settings.json'
 
@@ -32,7 +32,7 @@ export const resources = {
         collections: enCollections,
         categories: enCategories,
         home: enHome,
-        // certificates: enCertificates,
+        documents: enDocuments,
         reports: enReports,
         // settings: enSettings,
     },
@@ -42,7 +42,7 @@ export const resources = {
         collections: ptCollections,
         categories: ptCategories,
         home: ptHome,
-        // certificates: ptCertificates,
+        documents: ptDocuments,
         reports: ptReports,
         // settings: ptSettings,
     },

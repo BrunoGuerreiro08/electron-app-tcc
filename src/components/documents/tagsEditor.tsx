@@ -6,6 +6,7 @@ import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { Input } from '@/components/ui/input'
 import { Tag as TagIcon, Plus, X } from 'lucide-react'
+import { useTranslation } from 'react-i18next'
 
 interface TagsEditorProps {
     documentId: string
@@ -13,6 +14,7 @@ interface TagsEditorProps {
 }
 
 export function TagsEditor({ documentId, onChanged }: TagsEditorProps) {
+    const { t } = useTranslation('documents')
     const [allTags, setAllTags] = useState<Tag[]>([])
     const [documentTags, setDocumentTags] = useState<Tag[]>([])
     const [newTagName, setNewTagName] = useState('')
@@ -56,13 +58,13 @@ export function TagsEditor({ documentId, onChanged }: TagsEditorProps) {
             <PopoverTrigger asChild>
                 <Button variant="ghost" size="sm" className="h-6 gap-1 px-2 text-xs text-muted-foreground">
                     <TagIcon className="h-3 w-3" />
-                    Tags
+                    {t('tags.button')}
                 </Button>
             </PopoverTrigger>
             <PopoverContent className="w-64 space-y-3">
                 <div className="flex flex-wrap gap-1">
                     {documentTags.length === 0 && (
-                        <p className="text-xs text-muted-foreground">No tags yet.</p>
+                        <p className="text-xs text-muted-foreground">{t('tags.empty')}</p>
                     )}
                     {documentTags.map((t) => (
                         <Badge key={t.id} variant="secondary" className="gap-1">
@@ -92,7 +94,7 @@ export function TagsEditor({ documentId, onChanged }: TagsEditorProps) {
                     <Input
                         value={newTagName}
                         onChange={(e) => setNewTagName(e.target.value)}
-                        placeholder="New tag"
+                        placeholder={t('tags.placeholder')}
                         className="h-7 text-xs"
                         onKeyDown={(e) => e.key === 'Enter' && createTag()}
                     />

@@ -14,6 +14,7 @@ import { Badge } from '@/components/ui/badge'
 import { documentRepository } from '@/repository/documentRepository'
 import type { ScannedFile } from '@/types/entities'
 import { AlertTriangle, CheckCircle2 } from 'lucide-react'
+import { useTranslation } from 'react-i18next'
 
 type Step = 'review' | 'importing' | 'done'
 
@@ -22,10 +23,6 @@ interface ReviewRow extends ScannedFile {
     selected: boolean
 }
 
-/**
- * "annual-leadership-summit_2024.pdf" -> "annual leadership summit 2024"
- * Just a starting point — every title stays editable in the review table.
- */
 function titleFromFilename(name: string): string {
     const withoutExt = name.replace(/\.[^/.]+$/, '')
     return withoutExt.replace(/[_-]+/g, ' ').replace(/\s+/g, ' ').trim()
@@ -35,19 +32,15 @@ interface Props {
     open: boolean
     onOpenChange: (open: boolean) => void
     files: ScannedFile[]
-    /** Called after import completes — parent should refresh the library AND re-check for dropped files. */
     onImported: () => void
 }
 
 export function NewFilesDialog({ open, onOpenChange, files, onImported }: Props) {
+    const { t } = useTranslation('documents')
     const [step, setStep] = useState<Step>('review')
     const [rows, setRows] = useState<ReviewRow[]>([])
     const [summary, setSummary] = useState<{ imported: number; failed: number } | null>(null)
 
-    // Rebuild the editable row state fresh each time the dialog opens —
-    // `files` reflects whatever the parent last scanned, and a stale
-    // review table from a previous open would show files that may no
-    // longer be there.
     useEffect(() => {
         if (open) {
             setStep('review')
@@ -89,10 +82,9 @@ export function NewFilesDialog({ open, onOpenChange, files, onImported }: Props)
         <Dialog open={open} onOpenChange={onOpenChange}>
             <DialogContent className="sm:max-w-2xl">
                 <DialogHeader>
-                    <DialogTitle>New files found</DialogTitle>
+                    <DialogTitle>{t('newFiles.title')}</DialogTitle>
                     <DialogDescription>
-                        These files were dropped into your document storage folder. Review the
-                        titles, then import the ones you want registered.
+                        {t('newFiles.description')}
                     </DialogDescription>
                 </DialogHeader>
 
@@ -100,9 +92,10 @@ export function NewFilesDialog({ open, onOpenChange, files, onImported }: Props)
                     {step === 'review' && (
                         <div className="flex flex-1 flex-col space-y-3 overflow-hidden">
                             <div className="flex items-center justify-between text-sm text-muted-foreground">
-                                <span>{rows.length} file{rows.length === 1 ? '' : 's'} found</span>
+                                <span>{t('newFiles.status.found', { count: rows.length })}</span>
                                 <span className="shrink-0">
-                                    {validCount} ready{invalidCount > 0 && `, ${invalidCount} flagged`}
+                                    {t('newFiles.status.ready', { count: validCount })}
+                                    {invalidCount > 0 && `, ${t('newFiles.status.flagged', { count: invalidCount })}`}
                                 </span>
                             </div>
 
@@ -143,7 +136,7 @@ export function NewFilesDialog({ open, onOpenChange, files, onImported }: Props)
 
                     {step === 'importing' && (
                         <p className="flex flex-1 items-center justify-center text-center text-sm text-muted-foreground">
-                            Importing {selectedRows.length} file{selectedRows.length === 1 ? '' : 's'}…
+                            {t('newFiles.importing', { count: selectedRows.length })}
                         </p>
                     )}
 
@@ -151,16 +144,15 @@ export function NewFilesDialog({ open, onOpenChange, files, onImported }: Props)
                         <div className="flex flex-1 flex-col items-center justify-center gap-2 text-center">
                             <CheckCircle2 className="h-8 w-8 text-muted-foreground" />
                             <p className="text-sm">
-                                Imported {summary.imported} document{summary.imported === 1 ? '' : 's'}.
+                                {t('newFiles.done.imported', { count: summary.imported })}
                             </p>
                             {summary.failed > 0 && (
                                 <p className="text-sm text-destructive">
-                                    {summary.failed} failed — try attaching{' '}
-                                    {summary.failed === 1 ? 'it' : 'them'} manually from the library.
+                                    {t('newFiles.done.failed', { count: summary.failed })}
                                 </p>
                             )}
                             <p className="text-xs text-muted-foreground">
-                                New documents are unfiled — link them to a category whenever you're ready.
+                                {t('newFiles.done.hint')}
                             </p>
                         </div>
                     )}
@@ -169,10 +161,10 @@ export function NewFilesDialog({ open, onOpenChange, files, onImported }: Props)
                 <DialogFooter>
                     {step === 'review' && (
                         <Button onClick={handleImport} disabled={selectedRows.length === 0}>
-                            Import {selectedRows.length} file{selectedRows.length === 1 ? '' : 's'}
+                            {t('newFiles.actions.import', { count: selectedRows.length })}
                         </Button>
                     )}
-                    {step === 'done' && <Button onClick={() => onOpenChange(false)}>Done</Button>}
+                    {step === 'done' && <Button onClick={() => onOpenChange(false)}>{t('newFiles.actions.done')}</Button>}
                 </DialogFooter>
             </DialogContent>
         </Dialog>

@@ -3,6 +3,9 @@ import { useCategoryOptions } from '@/hooks/useCategoryOptions'
 import { documentCategoryLinkRepository } from '@/repository/documentCategoryLinkRepository'
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog'
 import { Checkbox } from '@/components/ui/checkbox'
+import { Input } from '@/components/ui/input'
+import { useTranslation } from 'react-i18next'
+import { Search } from 'lucide-react'
 
 interface LinkCategoriesDialogProps {
     documentId: string
@@ -17,11 +20,16 @@ export function LinkCategoriesDialog({
     onOpenChange,
     onChanged,
 }: LinkCategoriesDialogProps) {
+    const { t } = useTranslation('documents')
     const { options, loading } = useCategoryOptions()
     const [linkedIds, setLinkedIds] = useState<Set<string>>(new Set())
+    const [searchQuery, setSearchQuery] = useState('')
 
     useEffect(() => {
-        if (!open) return
+        if (!open) {
+            setSearchQuery('') // Reset search when closing
+            return
+        }
         documentCategoryLinkRepository.listByDocument(documentId).then((cats) => {
             setLinkedIds(new Set(cats.map((c) => c.id)))
         })
@@ -42,7 +50,19 @@ export function LinkCategoriesDialog({
         onChanged?.()
     }
 
-    const grouped = options.reduce<Record<string, typeof options>>((acc, opt) => {
+    // Filter options based on the search input
+    const filteredOptions = options.filter((opt) => {
+        if (!searchQuery.trim()) return true
+        const q = searchQuery.toLowerCase()
+        return (
+            opt.categoryName.toLowerCase().includes(q) ||
+            opt.subgroupName.toLowerCase().includes(q) ||
+            opt.collectionName.toLowerCase().includes(q)
+        )
+    })
+
+    // Group the filtered options
+    const grouped = filteredOptions.reduce<Record<string, typeof options>>((acc, opt) => {
         acc[opt.collectionName] = acc[opt.collectionName] ?? []
         acc[opt.collectionName].push(opt)
         return acc
@@ -50,18 +70,36 @@ export function LinkCategoriesDialog({
 
     return (
         <Dialog open={open} onOpenChange={onOpenChange}>
-            <DialogContent>
+            {/* Added sm:max-w-2xl for wider modal */}
+            <DialogContent className="sm:max-w-2xl">
                 <DialogHeader>
-                    <DialogTitle>Link to categories</DialogTitle>
+                    <DialogTitle>{t('linkCategories.title')}</DialogTitle>
                 </DialogHeader>
+
+                <div className="relative">
+                    <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
+                    <Input
+                        type="search"
+                        placeholder={t('linkCategories.searchPlaceholder', 'Search categories...')}
+                        className="pl-9"
+                        value={searchQuery}
+                        onChange={(e) => setSearchQuery(e.target.value)}
+                        disabled={loading || options.length === 0}
+                    />
+                </div>
+
                 {loading ? (
-                    <p className="text-sm text-muted-foreground">Loading…</p>
+                    <p className="text-sm text-muted-foreground">{t('linkCategories.loading')}</p>
                 ) : options.length === 0 ? (
                     <p className="text-sm text-muted-foreground">
-                        No categories yet — create a collection and category first.
+                        {t('linkCategories.empty')}
+                    </p>
+                ) : filteredOptions.length === 0 ? (
+                    <p className="text-sm text-muted-foreground py-4 text-center">
+                        {t('linkCategories.noResults', 'No categories match your search.')}
                     </p>
                 ) : (
-                    <div className="max-h-80 space-y-4 overflow-y-auto">
+                    <div className="max-h-[60vh] space-y-4 overflow-y-auto pr-2">
                         {Object.entries(grouped).map(([collectionName, cats]) => (
                             <div key={collectionName}>
                                 <p className="mb-1 text-xs font-medium text-muted-foreground">{collectionName}</p>
@@ -69,7 +107,7 @@ export function LinkCategoriesDialog({
                                     {cats.map((opt) => (
                                         <label
                                             key={opt.categoryId}
-                                            className="flex items-center gap-2 rounded-md px-2 py-1.5 text-sm hover:bg-muted/50"
+                                            className="flex items-center gap-2 rounded-md px-2 py-1.5 text-sm hover:bg-muted/50 cursor-pointer"
                                         >
                                             <Checkbox
                                                 checked={linkedIds.has(opt.categoryId)}
@@ -86,6 +124,6 @@ export function LinkCategoriesDialog({
                     </div>
                 )}
             </DialogContent>
-        </Dialog>
+        </Dialog >
     )
 }

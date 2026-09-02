@@ -25,20 +25,15 @@ import { Paperclip, ExternalLink, XCircle } from 'lucide-react'
 import { DocumentFormDialog } from './documentFormDialog'
 import { NewFilesDialog } from './newFilesDialog'
 import type { ScannedFile } from '@/types/entities'
+import { useTranslation } from 'react-i18next'
 
 export function DocumentLibraryScreen() {
+    const { t } = useTranslation('documents')
     const [documents, setDocuments] = useState<Document[]>([])
     const [filter, setFilter] = useState<'all' | 'unfiled'>('all')
     const [linkedCounts, setLinkedCounts] = useState<Record<string, number>>({})
     const [loading, setLoading] = useState(true)
 
-    // const [createOpen, setCreateOpen] = useState(false)
-    // const [title, setTitle] = useState('')
-    // const [issuer, setIssuer] = useState('')
-    // const [issuedAt, setIssuedAt] = useState('')
-    // const [quantity, setQuantity] = useState('1')
-    // const [hours, setHours] = useState('')
-    // const [notes, setNotes] = useState('')
     const [documentDialog, setDocumentDialog] = useState<
         { mode: 'create' } | { mode: 'edit'; document: Document } | null
     >(null)
@@ -71,9 +66,6 @@ export function DocumentLibraryScreen() {
         refresh()
     }, [filter])
 
-    // Runs once when the library screen is opened, per the "rescan on
-    // open" design — not on every filter change, since switching between
-    // All/Unfiled shouldn't re-trigger a filesystem scan.
     const checkForDroppedFiles = async () => {
         const files = await fileRepository.detectDroppedFiles()
         setDroppedFiles(files)
@@ -86,16 +78,15 @@ export function DocumentLibraryScreen() {
 
     const handleImported = () => {
         refresh()
-        checkForDroppedFiles() // some dropped files may remain (invalid ones, or ones left unchecked)
+        checkForDroppedFiles()
     }
 
     const [fileError, setFileError] = useState<string | null>(null)
 
     const handleAttach = async (documentId: string) => {
         setFileError(null)
-
         const picked = await fileRepository.pick()
-        if (!picked) return // cancelled
+        if (!picked) return
         if (!picked.ok) {
             setFileError(picked.error)
             return
@@ -106,7 +97,6 @@ export function DocumentLibraryScreen() {
             setFileError(attached.error)
             return
         }
-
         refresh()
     }
 
@@ -132,15 +122,15 @@ export function DocumentLibraryScreen() {
         <div className="space-y-6 p-6">
             <div className="flex items-center justify-between">
                 <div>
-                    <h1 className="text-2xl font-semibold">Document library</h1>
+                    <h1 className="text-2xl font-semibold">{t('library.title')}</h1>
                     <p className="text-sm text-muted-foreground">
-                        Log documents any time, then link them to categories whenever you're ready.
+                        {t('library.description')}
                     </p>
                 </div>
 
                 <Button size="sm" onClick={() => setDocumentDialog({ mode: 'create' })}>
                     <Plus className="h-4 w-4" />
-                    New document
+                    {t('library.newDocument')}
                 </Button>
             </div>
 
@@ -151,8 +141,7 @@ export function DocumentLibraryScreen() {
                 >
                     <FolderInput className="h-4 w-4 shrink-0 text-muted-foreground" />
                     <span className="flex-1">
-                        {droppedFiles.length} new file{droppedFiles.length === 1 ? '' : 's'} found in your
-                        document folder — click to review and import.
+                        {t('library.droppedFiles', { count: droppedFiles.length })}
                     </span>
                     <span
                         role="button"
@@ -170,22 +159,21 @@ export function DocumentLibraryScreen() {
             {fileError && (
                 <>
                     <p className="text-sm text-destructive">{fileError}</p>
-                    {console.log(fileError)}
                 </>
             )}
 
             <Tabs value={filter} onValueChange={(v) => setFilter(v as 'all' | 'unfiled')}>
                 <TabsList>
-                    <TabsTrigger value="all">All</TabsTrigger>
-                    <TabsTrigger value="unfiled">Unfiled</TabsTrigger>
+                    <TabsTrigger value="all">{t('library.tabs.all')}</TabsTrigger>
+                    <TabsTrigger value="unfiled">{t('library.tabs.unfiled')}</TabsTrigger>
                 </TabsList>
             </Tabs>
 
             {loading ? (
-                <p className="text-sm text-muted-foreground">Loading…</p>
+                <p className="text-sm text-muted-foreground">{t('library.loading')}</p>
             ) : documents.length === 0 ? (
                 <p className="text-sm text-muted-foreground">
-                    {filter === 'unfiled' ? 'Everything is linked to a category.' : 'No documents yet.'}
+                    {filter === 'unfiled' ? t('library.emptyUnfiled') : t('library.emptyAll')}
                 </p>
             ) : (
                 <div className="space-y-2">
@@ -202,11 +190,11 @@ export function DocumentLibraryScreen() {
                                         )}
                                         {linkedCounts[doc.id] > 0 ? (
                                             <Badge variant="secondary" className="text-xs">
-                                                {linkedCounts[doc.id]} categor{linkedCounts[doc.id] === 1 ? 'y' : 'ies'}
+                                                {t('library.badges.category', { count: linkedCounts[doc.id] })}
                                             </Badge>
                                         ) : (
                                             <Badge variant="outline" className="text-xs text-muted-foreground">
-                                                Unfiled
+                                                {t('library.badges.unfiled')}
                                             </Badge>
                                         )}
                                     </div>
@@ -236,14 +224,14 @@ export function DocumentLibraryScreen() {
                                                 onClick={() => handleOpenFile(doc.id)}
                                             >
                                                 <ExternalLink className="h-3 w-3" />
-                                                Open
+                                                {t('library.actions.open')}
                                             </Button>
                                             <Button
                                                 variant="ghost"
                                                 size="icon"
                                                 className="h-7 w-7 text-muted-foreground"
                                                 onClick={() => handleRemoveFile(doc.id)}
-                                                title="Remove file"
+                                                title={t('library.actions.removeFile')}
                                             >
                                                 <XCircle className="h-3.5 w-3.5" />
                                             </Button>
@@ -256,7 +244,7 @@ export function DocumentLibraryScreen() {
                                             onClick={() => handleAttach(doc.id)}
                                         >
                                             <Paperclip className="h-3 w-3" />
-                                            Attach
+                                            {t('library.actions.attach')}
                                         </Button>
                                     )}
                                     <Button
@@ -266,7 +254,7 @@ export function DocumentLibraryScreen() {
                                         onClick={() => setLinkDialogDoc(doc.id)}
                                     >
                                         <Link2 className="h-3 w-3" />
-                                        Link
+                                        {t('library.actions.link')}
                                     </Button>
                                     <AlertDialog>
                                         <AlertDialogTrigger asChild>
@@ -276,17 +264,15 @@ export function DocumentLibraryScreen() {
                                         </AlertDialogTrigger>
                                         <AlertDialogContent>
                                             <AlertDialogHeader>
-                                                <AlertDialogTitle>Delete "{doc.title}"?</AlertDialogTitle>
+                                                <AlertDialogTitle>{t('library.delete.title', { title: doc.title })}</AlertDialogTitle>
                                                 <AlertDialogDescription>
-                                                    This removes the document, its tags, and unlinks it from{' '}
-                                                    {linkedCounts[doc.id] ?? 0} categor{linkedCounts[doc.id] === 1 ? 'y' : 'ies'}.
-                                                    This can't be undone.
+                                                    {t('library.delete.description', { count: linkedCounts[doc.id] ?? 0 })}
                                                 </AlertDialogDescription>
                                             </AlertDialogHeader>
                                             <AlertDialogFooter>
-                                                <AlertDialogCancel>Cancel</AlertDialogCancel>
+                                                <AlertDialogCancel>{t('library.delete.cancel')}</AlertDialogCancel>
                                                 <AlertDialogAction onClick={() => handleDelete(doc.id)}>
-                                                    Delete
+                                                    {t('library.delete.confirm')}
                                                 </AlertDialogAction>
                                             </AlertDialogFooter>
                                         </AlertDialogContent>

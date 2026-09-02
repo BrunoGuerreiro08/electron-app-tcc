@@ -1,0 +1,88 @@
+{
+    "form": {
+        "editTitle": "Edit document",
+        "newTitle": "New document",
+        "fields": {
+            "title": "Title",
+            "issuer": "Issuer",
+            "dateIssued": "Date issued",
+            "quantity": "Quantity",
+            "quantityHint": "e.g. 2 if this one document covers 2 contributions.",
+            "hours": "Hours (if applicable)",
+            "notes": "Notes"
+        },
+        "attachHint": "You can attach a file after creating the document.",
+        "actions": {
+            "save": "Save",
+            "create": "Create"
+        }
+    },
+    "library": {
+        "title": "Document library",
+        "description": "Log documents any time, then link them to categories whenever you're ready.",
+        "newDocument": "New document",
+        "droppedFiles_one": "{{count}} new file found in your document folder — click to review and import.",
+        "droppedFiles_other": "{{count}} new files found in your document folder — click to review and import.",
+        "tabs": {
+            "all": "All",
+            "unfiled": "Unfiled"
+        },
+        "loading": "Loading…",
+        "emptyUnfiled": "Everything is linked to a category.",
+        "emptyAll": "No documents yet.",
+        "badges": {
+            "category_one": "{{count}} category",
+            "category_other": "{{count}} categories",
+            "unfiled": "Unfiled"
+        },
+        "actions": {
+            "open": "Open",
+            "removeFile": "Remove file",
+            "attach": "Attach",
+            "link": "Link"
+        },
+        "delete": {
+            "title": "Delete \"{{title}}\"?",
+            "description_one": "This removes the document, its tags, and unlinks it from {{count}} category. This can't be undone.",
+            "description_other": "This removes the document, its tags, and unlinks it from {{count}} categories. This can't be undone.",
+            "cancel": "Cancel",
+            "confirm": "Delete"
+        }
+    },
+    "linkCategories": {
+        "title": "Link to categories",
+        "loading": "Loading…",
+        "empty": "No categories yet — create a collection and category first.",
+        "searchPlaceholder": "Search categories...",
+        "noResults": "No categories match your search."
+    },
+    "newFiles": {
+        "title": "New files found",
+        "description": "These files were dropped into your document storage folder. Review the titles, then import the ones you want registered.",
+        "status": {
+            "found_one": "{{count}} file found",
+            "found_other": "{{count}} files found",
+            "ready": "{{count}} ready",
+            "flagged": "{{count}} flagged"
+        },
+        "importing_one": "Importing {{count}} file…",
+        "importing_other": "Importing {{count}} files…",
+        "done": {
+            "imported_one": "Imported {{count}} document.",
+            "imported_other": "Imported {{count}} documents.",
+            "failed_one": "{{count}} failed — try attaching it manually from the library.",
+            "failed_other": "{{count}} failed — try attaching them manually from the library.",
+            "hint": "New documents are unfiled — link them to a category whenever you're ready."
+        },
+        "actions": {
+            "import_one": "Import {{count}} file",
+            "import_other": "Import {{count}} files",
+            "done": "Done"
+        }
+    },
+    "tags": {
+        "button": "Tags",
+        "empty": "No tags yet.",
+        "placeholder": "New tag"
+    }
+}

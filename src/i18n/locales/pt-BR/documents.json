@@ -1,0 +1,88 @@
+{
+    "form": {
+        "editTitle": "Editar documento",
+        "newTitle": "Novo documento",
+        "fields": {
+            "title": "Título",
+            "issuer": "Emissor",
+            "dateIssued": "Data de emissão",
+            "quantity": "Quantidade",
+            "quantityHint": "ex: 2 se este único documento cobrir 2 contribuições.",
+            "hours": "Horas (se aplicável)",
+            "notes": "Observações"
+        },
+        "attachHint": "Você pode anexar um arquivo após criar o documento.",
+        "actions": {
+            "save": "Salvar",
+            "create": "Criar"
+        }
+    },
+    "library": {
+        "title": "Biblioteca de documentos",
+        "description": "Registre documentos a qualquer momento e vincule-os a categorias quando estiver pronto.",
+        "newDocument": "Novo documento",
+        "droppedFiles_one": "{{count}} novo arquivo encontrado na sua pasta de documentos — clique para revisar e importar.",
+        "droppedFiles_other": "{{count}} novos arquivos encontrados na sua pasta de documentos — clique para revisar e importar.",
+        "tabs": {
+            "all": "Todos",
+            "unfiled": "Não arquivados"
+        },
+        "loading": "Carregando…",
+        "emptyUnfiled": "Tudo está vinculado a uma categoria.",
+        "emptyAll": "Nenhum documento ainda.",
+        "badges": {
+            "category_one": "{{count}} categoria",
+            "category_other": "{{count}} categorias",
+            "unfiled": "Não arquivado"
+        },
+        "actions": {
+            "open": "Abrir",
+            "removeFile": "Remover arquivo",
+            "attach": "Anexar",
+            "link": "Vincular"
+        },
+        "delete": {
+            "title": "Excluir \"{{title}}\"?",
+            "description_one": "Isso remove o documento, suas tags e o desvincula de {{count}} categoria. Essa ação não pode ser desfeita.",
+            "description_other": "Isso remove o documento, suas tags e o desvincula de {{count}} categorias. Essa ação não pode ser desfeita.",
+            "cancel": "Cancelar",
+            "confirm": "Excluir"
+        }
+    },
+    "linkCategories": {
+        "title": "Vincular a categorias",
+        "loading": "Carregando…",
+        "empty": "Nenhuma categoria ainda — crie uma coleção e uma categoria primeiro.",
+        "searchPlaceholder": "Pesquisar categorias...",
+        "noResults": "Nenhuma categoria corresponde à sua pesquisa."
+    },
+    "newFiles": {
+        "title": "Novos arquivos encontrados",
+        "description": "Estes arquivos foram soltos na sua pasta de armazenamento de documentos. Revise os títulos e importe os que deseja registrar.",
+        "status": {
+            "found_one": "{{count}} arquivo encontrado",
+            "found_other": "{{count}} arquivos encontrados",
+            "ready": "{{count}} pronto",
+            "flagged": "{{count}} sinalizado"
+        },
+        "importing_one": "Importando {{count}} arquivo…",
+        "importing_other": "Importando {{count}} arquivos…",
+        "done": {
+            "imported_one": "Importado {{count}} documento.",
+            "imported_other": "Importados {{count}} documentos.",
+            "failed_one": "{{count}} falhou — tente anexá-lo manualmente pela biblioteca.",
+            "failed_other": "{{count}} falharam — tente anexá-los manualmente pela biblioteca.",
+            "hint": "Novos documentos não são arquivados — vincule-os a uma categoria quando estiver pronto."
+        },
+        "actions": {
+            "import_one": "Importar {{count}} arquivo",
+            "import_other": "Importar {{count}} arquivos",
+            "done": "Concluído"
+        }
+    },
+    "tags": {
+        "button": "Tags",
+        "empty": "Nenhuma tag ainda.",
+        "placeholder": "Nova tag"
+    }
+}
