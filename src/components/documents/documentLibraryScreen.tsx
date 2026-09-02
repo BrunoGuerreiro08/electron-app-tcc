@@ -6,6 +6,7 @@ import { Button } from '@/components/ui/button'
 import { Card, CardContent } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { Input } from '@/components/ui/input'
+import { Checkbox } from '@/components/ui/checkbox'
 import {
     AlertDialog,
     AlertDialogAction,
@@ -18,9 +19,11 @@ import {
     AlertDialogTrigger,
 } from '@/components/ui/alert-dialog'
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs'
-import { Plus, Trash2, Link2, Pencil, FolderInput, X, Search } from 'lucide-react'
+import { Plus, Trash2, Link2, Pencil, FolderInput, X, Search, Tag, Folder } from 'lucide-react'
 import { TagsEditor } from './tagsEditor'
 import { LinkCategoriesDialog } from './linkCategoriesDialog'
+import { BulkTagsDialog } from './bulkTagsDialog'
+import { BulkLinkCategoriesDialog } from './bulkLinkCategoriesDialog'
 import { fileRepository } from '@/repository/fileRepository'
 import { Paperclip, ExternalLink, XCircle } from 'lucide-react'
 import { DocumentFormDialog } from './documentFormDialog'
@@ -33,6 +36,7 @@ export function DocumentLibraryScreen() {
     const [documents, setDocuments] = useState<Document[]>([])
     const [filter, setFilter] = useState<'all' | 'unfiled'>('all')
     const [searchQuery, setSearchQuery] = useState('')
+    const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set())
     const [linkedCounts, setLinkedCounts] = useState<Record<string, number>>({})
     const [loading, setLoading] = useState(true)
 
@@ -41,6 +45,9 @@ export function DocumentLibraryScreen() {
     >(null)
 
     const [linkDialogDoc, setLinkDialogDoc] = useState<string | null>(null)
+    const [bulkTagsOpen, setBulkTagsOpen] = useState(false)
+    const [bulkCategoriesOpen, setBulkCategoriesOpen] = useState(false)
+
     const [droppedFiles, setDroppedFiles] = useState<ScannedFile[]>([])
     const [reviewDialogOpen, setReviewDialogOpen] = useState(false)
     const [bannerDismissed, setBannerDismissed] = useState(false)
@@ -52,6 +59,7 @@ export function DocumentLibraryScreen() {
                 ? await documentRepository.listUnlinked()
                 : await documentRepository.list()
         setDocuments(docs)
+        setSelectedIds(new Set()) // Reset selection on refresh
 
         const counts: Record<string, number> = {}
         await Promise.all(
@@ -120,7 +128,6 @@ export function DocumentLibraryScreen() {
         refresh()
     }
 
-    // Filter documents matching multiple fields (title, issuer, date, notes)
     const filteredDocuments = documents.filter((doc) => {
         if (!searchQuery.trim()) return true
         const q = searchQuery.toLowerCase()
@@ -132,8 +139,25 @@ export function DocumentLibraryScreen() {
         )
     })
 
+    const toggleSelectAll = (checked: boolean) => {
+        if (checked) {
+            setSelectedIds(new Set(filteredDocuments.map((d) => d.id)))
+        } else {
+            setSelectedIds(new Set())
+        }
+    }
+
+    const toggleSelectOne = (id: string, checked: boolean) => {
+        const next = new Set(selectedIds)
+        if (checked) next.add(id)
+        else next.delete(id)
+        setSelectedIds(next)
+    }
+
+    const allFilteredSelected = filteredDocuments.length > 0 && filteredDocuments.every((d) => selectedIds.has(d.id))
+
     return (
-        <div className="space-y-6 p-6">
+        <div className="space-y-6 p-6 pb-20">
             <div className="flex items-center justify-between">
                 <div>
                     <h1 className="text-2xl font-semibold">{t('library.title')}</h1>
@@ -170,11 +194,7 @@ export function DocumentLibraryScreen() {
                     </span>
                 </button>
             )}
-            {fileError && (
-                <>
-                    <p className="text-sm text-destructive">{fileError}</p>
-                </>
-            )}
+            {fileError && <p className="text-sm text-destructive">{fileError}</p>}
 
             <div className="flex items-center justify-between gap-4">
                 <Tabs value={filter} onValueChange={(v) => setFilter(v as 'all' | 'unfiled')}>
@@ -184,7 +204,6 @@ export function DocumentLibraryScreen() {
                     </TabsList>
                 </Tabs>
 
-                {/* Search input field */}
                 <div className="relative w-72">
                     <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
                     <Input
@@ -209,32 +228,46 @@ export function DocumentLibraryScreen() {
                 </p>
             ) : (
                 <div className="space-y-2">
+                    <div className="flex items-center gap-2 px-3 py-1 text-xs text-muted-foreground">
+                        <Checkbox
+                            checked={allFilteredSelected}
+                            onCheckedChange={(checked) => toggleSelectAll(checked === true)}
+                        />
+                        <span>Select all</span>
+                    </div>
+
                     {filteredDocuments.map((doc) => (
-                        <Card key={doc.id}>
+                        <Card key={doc.id} className={selectedIds.has(doc.id) ? 'border-primary' : ''}>
                             <CardContent className="flex items-center justify-between gap-4 py-3">
-                                <div className="min-w-0 flex-1">
-                                    <div className="flex items-center gap-2">
-                                        <p className="truncate text-sm font-medium">{doc.title}</p>
-                                        {doc.quantity > 1 && (
-                                            <Badge variant="outline" className="text-xs">
-                                                x{doc.quantity}
-                                            </Badge>
-                                        )}
-                                        {linkedCounts[doc.id] > 0 ? (
-                                            <Badge variant="secondary" className="text-xs">
-                                                {t('library.badges.category', { count: linkedCounts[doc.id] })}
-                                            </Badge>
-                                        ) : (
-                                            <Badge variant="outline" className="text-xs text-muted-foreground">
-                                                {t('library.badges.unfiled')}
-                                            </Badge>
-                                        )}
+                                <div className="flex items-center gap-3 min-w-0 flex-1">
+                                    <Checkbox
+                                        checked={selectedIds.has(doc.id)}
+                                        onCheckedChange={(checked) => toggleSelectOne(doc.id, checked === true)}
+                                    />
+                                    <div className="min-w-0 flex-1">
+                                        <div className="flex items-center gap-2">
+                                            <p className="truncate text-sm font-medium">{doc.title}</p>
+                                            {doc.quantity > 1 && (
+                                                <Badge variant="outline" className="text-xs">
+                                                    x{doc.quantity}
+                                                </Badge>
+                                            )}
+                                            {linkedCounts[doc.id] > 0 ? (
+                                                <Badge variant="secondary" className="text-xs">
+                                                    {t('library.badges.category', { count: linkedCounts[doc.id] })}
+                                                </Badge>
+                                            ) : (
+                                                <Badge variant="outline" className="text-xs text-muted-foreground">
+                                                    {t('library.badges.unfiled')}
+                                                </Badge>
+                                            )}
+                                        </div>
+                                        <p className="text-xs text-muted-foreground">
+                                            {[doc.issuer, doc.issued_at, doc.hours ? `${doc.hours}h` : null, doc.notes]
+                                                .filter(Boolean)
+                                                .join(' · ')}
+                                        </p>
                                     </div>
-                                    <p className="text-xs text-muted-foreground">
-                                        {[doc.issuer, doc.issued_at, doc.hours ? `${doc.hours}h` : null, doc.notes]
-                                            .filter(Boolean)
-                                            .join(' · ')}
-                                    </p>
                                 </div>
 
                                 <div className="flex shrink-0 items-center gap-1">
@@ -316,6 +349,25 @@ export function DocumentLibraryScreen() {
                 </div>
             )}
 
+            {/* Floating Bulk Action Bar */}
+            {selectedIds.size > 0 && (
+                <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-50 flex items-center gap-3 rounded-lg border bg-background px-4 py-3 shadow-lg">
+                    <span className="text-sm font-medium">{t('bulk.selected', { count: selectedIds.size })}</span>
+                    <div className="h-4 w-px bg-border" />
+                    <Button size="sm" variant="outline" className="gap-1.5" onClick={() => setBulkTagsOpen(true)}>
+                        <Tag className="h-3.5 w-3.5" />
+                        {t('bulk.tags')}
+                    </Button>
+                    <Button size="sm" variant="outline" className="gap-1.5" onClick={() => setBulkCategoriesOpen(true)}>
+                        <Folder className="h-3.5 w-3.5" />
+                        {t('bulk.categories')}
+                    </Button>
+                    <Button size="sm" variant="ghost" onClick={() => setSelectedIds(new Set())}>
+                        {t('bulk.clear')}
+                    </Button>
+                </div>
+            )}
+
             {linkDialogDoc && (
                 <LinkCategoriesDialog
                     documentId={linkDialogDoc}
@@ -324,6 +376,18 @@ export function DocumentLibraryScreen() {
                     onChanged={refresh}
                 />
             )}
+            <BulkTagsDialog
+                selectedIds={Array.from(selectedIds)}
+                open={bulkTagsOpen}
+                onOpenChange={setBulkTagsOpen}
+                onChanged={refresh}
+            />
+            <BulkLinkCategoriesDialog
+                selectedIds={Array.from(selectedIds)}
+                open={bulkCategoriesOpen}
+                onOpenChange={setBulkCategoriesOpen}
+                onChanged={refresh}
+            />
             <NewFilesDialog
                 open={reviewDialogOpen}
                 onOpenChange={setReviewDialogOpen}

@@ -17,6 +17,14 @@
             "create": "Criar"
         }
     },
+    "bulk": {
+        "selected": "{{count}} selecionados",
+        "clear": "Limpar",
+        "tags": "Atribuir tags",
+        "categories": "Vincular a categorias",
+        "tagsTitle": "Atribuir tags aos documentos selecionados",
+        "categoriesTitle": "Vincular documentos selecionados a categorias"
+    },
     "library": {
         "title": "Document library",
         "description": "Log documents any time, then link them to categories whenever you're ready.",
