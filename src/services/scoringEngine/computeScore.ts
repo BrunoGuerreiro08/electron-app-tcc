@@ -101,16 +101,25 @@ export const computeSubgroupCompletion = computeCompletionState
 
 export function computeSubgroupScore(input: SubgroupInput): SubgroupScoreResult {
     const categories = input.categories.map(computeCategoryScore)
-    const total = categories.reduce((sum, c) => sum + c.total, 0)
+    const rawTotal = categories.reduce((sum, c) => sum + c.total, 0)
     const minPoints = input.minPoints ?? null
     const maxPoints = input.maxPoints ?? null
+    // The bug this fixes: maxPoints used to only affect `completion`
+    // (a label) while the numeric total stayed unclamped and fed
+    // straight into the parent Group's sum — silently over-crediting
+    // exactly the way Subgrupo I3's 12-point cap was supposed to
+    // prevent. completion is still derived from rawTotal (not this
+    // clamped total), or 'exceeded' would become unreachable once a
+    // value can never exceed its own clamp.
+    const total = maxPoints != null ? Math.min(rawTotal, maxPoints) : rawTotal
 
     return {
         subgroupId: input.id,
+        rawTotal,
         total,
         minPoints,
         maxPoints,
-        completion: computeCompletionState(total, minPoints, maxPoints),
+        completion: computeCompletionState(rawTotal, minPoints, maxPoints),
         categories,
     }
 }
@@ -118,24 +127,27 @@ export function computeSubgroupScore(input: SubgroupInput): SubgroupScoreResult 
 /**
  * Sums its subgroups' totals (each already individually capped by its
  * own maxPoints, e.g. Subgrupo I3's 12-point cap) into the group's own
- * total, then checks that combined total against the GROUP's own
- * threshold — this is what makes a group-spanning minimum (e.g. Grupo
- * I's 32 points across I1+I2+I3) representable at all, which a 2-level
- * SubGroup-only hierarchy couldn't do.
+ * total, then clamps THAT by the group's own maxPoints (e.g. a Factor
+ * capped at 15/35/20 overall) before it can propagate to the
+ * collection total — this is what makes a group-spanning minimum (e.g.
+ * Grupo I's 32 points across I1+I2+I3) representable at all, which a
+ * 2-level SubGroup-only hierarchy couldn't do.
  */
 export function computeGroupScore(input: GroupInput): GroupScoreResult {
     const subgroups = input.subgroups.map(computeSubgroupScore)
-    const total = subgroups.reduce((sum, s) => sum + s.total, 0)
+    const rawTotal = subgroups.reduce((sum, s) => sum + s.total, 0)
     const minPoints = input.minPoints ?? null
     const maxPoints = input.maxPoints ?? null
     const bonusRate = input.bonusRate ?? null
+    const total = maxPoints != null ? Math.min(rawTotal, maxPoints) : rawTotal
 
     return {
         groupId: input.id,
+        rawTotal,
         total,
         minPoints,
         maxPoints,
-        completion: computeCompletionState(total, minPoints, maxPoints),
+        completion: computeCompletionState(rawTotal, minPoints, maxPoints),
         bonus: computeSubgroupBonus(total, minPoints, bonusRate),
         subgroups,
     }

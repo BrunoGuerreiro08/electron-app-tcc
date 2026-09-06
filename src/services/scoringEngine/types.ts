@@ -59,6 +59,9 @@ export type SubgroupCompletionState = CompletionState
 
 export interface SubgroupScoreResult {
     subgroupId: string
+    /** Score before maxPoints is applied */
+    rawTotal: number
+    /** Score after maxPoints is applied (equals rawTotal when maxPoints is null) */
     total: number
     minPoints: number | null
     maxPoints: number | null
@@ -68,20 +71,25 @@ export interface SubgroupScoreResult {
 
 export interface GroupScoreResult {
     groupId: string
+    /** Score before maxPoints is applied */
+    rawTotal: number
+    /** Score after maxPoints is applied (equals rawTotal when maxPoints is null) */
     total: number
     minPoints: number | null
     maxPoints: number | null
     completion: CompletionState
     /**
      * Points earned above minPoints, revalued at the group's bonusRate,
-     * kept as a SEPARATE figure — never added into `total`. Mirrors a
-     * source spreadsheet that displays "Total Grupo I" and "Excedente"
-     * as two distinct numbers. null means bonusRate/minPoints weren't
-     * configured — "not applicable here", not "0 bonus". This lives on
-     * Group, not SubGroup — a group-spanning bonus needs to sit above
-     * the subgroups it spans. See computeSubgroupBonus in
-     * subgroupBonus.ts (name kept — the function itself is level-
-     * agnostic, it just takes total/min/rate).
+     * kept as a SEPARATE figure — never added into `total`. Computed
+     * from the CLAMPED `total`, not `rawTotal` — the bonus applies to
+     * points actually credited, not to an excess that was already
+     * capped away. Mirrors a source spreadsheet that displays "Total
+     * Grupo I" and "Excedente" as two distinct numbers. null means
+     * bonusRate/minPoints weren't configured — "not applicable here",
+     * not "0 bonus". This lives on Group, not SubGroup — a group-
+     * spanning bonus needs to sit above the subgroups it spans. See
+     * computeSubgroupBonus in subgroupBonus.ts (name kept — the
+     * function itself is level-agnostic, it just takes total/min/rate).
      */
     bonus: number | null
     subgroups: SubgroupScoreResult[]
