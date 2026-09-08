@@ -3,9 +3,45 @@ import path from 'node:path'
 import { randomUUID } from 'node:crypto'
 import { app, dialog, type BrowserWindow } from 'electron'
 import { getDb, getActiveUserId } from './db'
-import { Rule } from '../src/services/scoringEngine'
 
 // --- Schema ---------------------------------------------------------
+//
+// Mirrors the REAL src/services/scoringEngine/types.ts (confirmed —
+// this replaces the earlier entities.md-guessed shape). One detail that
+// matters for validation: CappedRule.inner is FlatRule | HoursRule
+// ONLY — capped rules can't nest inside each other.
+export interface FlatRule {
+    type: 'flat'
+    pointsPerUnit: number
+}
+
+export interface HoursRule {
+    type: 'hours'
+    pointsPerUnit: number
+    unitSize: number
+}
+
+export interface CappedRule {
+    type: 'capped'
+    inner: FlatRule | HoursRule
+    cap: number
+}
+
+/**
+ * Caps EACH document's own contribution individually, before summing —
+ * distinct from CappedRule's aggregate-sum cap. See the matching
+ * comment in src/services/scoringEngine/types.ts for the full
+ * reasoning; kept in sync manually here for the same main/renderer
+ * boundary reason as the rest of this file's local Rule shape.
+ */
+export interface CappedPerDocumentRule {
+    type: 'cappedPerDocument'
+    inner: FlatRule | HoursRule
+    capPerDocument: number
+}
+
+export type Rule = FlatRule | HoursRule | CappedRule | CappedPerDocumentRule
+
 export interface TemplateCategory {
     name: string
     display_order: number
@@ -136,6 +172,17 @@ function validateRule(rule: unknown, fieldPath: string, errors: string[]): rule 
         }
         // Deliberately validateFlatOrHours, not a recursive validateRule
         // call — capped rules can't wrap another capped rule.
+        if (!validateFlatOrHours(r.inner, `${fieldPath}.inner`, errors)) {
+            return false
+        }
+        return true
+    }
+
+    if (r.type === 'cappedPerDocument') {
+        if (typeof r.capPerDocument !== 'number' || r.capPerDocument <= 0) {
+            errors.push(`${fieldPath}: cappedPerDocument rule needs a numeric capPerDocument greater than zero.`)
+            return false
+        }
         if (!validateFlatOrHours(r.inner, `${fieldPath}.inner`, errors)) {
             return false
         }

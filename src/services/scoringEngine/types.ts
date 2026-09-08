@@ -17,7 +17,30 @@ export interface CappedRule {
     cap: number
 }
 
-export type Rule = FlatRule | HoursRule | CappedRule
+/**
+ * Caps EACH document's own contribution individually, before summing —
+ * distinct from CappedRule, which caps the category's AGGREGATE sum
+ * across all documents. Field deliberately named capPerDocument, not
+ * cap, so the two concepts can never be confused at the type level:
+ * `capped(flat(2), cap: 10)` means "10 documents at most, combined,
+ * count toward 10 points total"; `cappedPerDocument(hours(0.5), 3)`
+ * means "each document maxes at 3 points, but log as many as you
+ * want — nothing stops the sum from growing across documents."
+ *
+ * Matches a source spreadsheet pattern where an hours-based item (e.g.
+ * "0.5 points per hour of attendance") has each individual event's
+ * points clamped (=IF(hours*rate>=3,3,hours*rate)) before being summed
+ * with other events of the same type — someone can't inflate one
+ * event's hours to dominate the category, but logging more qualifying
+ * events keeps adding up normally.
+ */
+export interface CappedPerDocumentRule {
+    type: 'cappedPerDocument'
+    inner: FlatRule | HoursRule
+    capPerDocument: number
+}
+
+export type Rule = FlatRule | HoursRule | CappedRule | CappedPerDocumentRule
 
 // ---- Minimal document shape the engine actually needs ----
 // Deliberately narrow — decouples the engine from the full storage entity.

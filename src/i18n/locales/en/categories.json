@@ -9,7 +9,8 @@
         "types": {
             "flat": "Flat — N points per document",
             "hours": "Hours — points per N hours declared",
-            "capped": "Capped — either type, with a maximum"
+            "capped": "Capped — either type, with a maximum",
+            "cappedPerDocument": "Capped per document — either type, with a per-document maximum"
         },
         "pointsPerDocument": "Points per document",
         "pointsAwarded": "Points awarded",
@@ -20,6 +21,9 @@
             "hours": "Hours"
         },
         "maxTotalPoints": "Maximum total points",
+        "maxTotalPointsHint": "Applies to the sum across all documents combined.",
+        "maxPerDocumentPoints": "Maximum points per document",
+        "maxPerDocumentHint": "Each document is capped individually — logging more documents still adds up.",
         "errors": {
             "ruleRequired": "A rule is required.",
             "unknownType": "Unknown rule type: \"{{type}}\".",
@@ -38,6 +42,12 @@
                 "invalidInnerType": "The inner rule must be of type \"flat\" or \"hours\".",
                 "capNotFinite": "The maximum must be a finite number.",
                 "capNotPositive": "The maximum must be greater than zero."
+            },
+            "cappedPerDocument": {
+                "missingInner": "A capped-per-document rule must reference a valid inner rule.",
+                "invalidInnerType": "The inner rule must be of type \"flat\" or \"hours\".",
+                "capPerDocumentNotFinite": "The maximum per document must be a finite number.",
+                "capPerDocumentNotPositive": "The maximum per document must be greater than zero."
             }
         }
     },
@@ -46,6 +56,7 @@
         "flatPoints_other": "{{count}} pts per document",
         "hoursPoints_one": "{{count}} pt per {{unitSize}}h",
         "hoursPoints_other": "{{count}} pts per {{unitSize}}h",
-        "cappedAt": "{{inner}}, capped at {{cap}}"
+        "cappedAt": "{{inner}}, capped at {{cap}}",
+        "cappedPerDocumentAt": "{{inner}}, capped at {{cap}} per document"
     }
 }

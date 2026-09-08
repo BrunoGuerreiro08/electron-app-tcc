@@ -9,7 +9,8 @@
         "types": {
             "flat": "Fixa — N pontos por documento",
             "hours": "Horas — pontos a cada N horas declaradas",
-            "capped": "Limitada — qualquer tipo, com um teto"
+            "capped": "Limitada — qualquer tipo, com um teto",
+            "cappedPerDocument": "Limitado por documento — qualquer tipo, com um teto por documento"
         },
         "pointsPerDocument": "Pontos por documento",
         "pointsAwarded": "Pontos concedidos",
@@ -20,6 +21,9 @@
             "hours": "Horas"
         },
         "maxTotalPoints": "Pontuação máxima total",
+        "maxTotalPointsHint": "Aplicado a soma de todos os documentos combinados.",
+        "maxPerDocumentPoints": "Pontuação máxima por documento.",
+        "maxPerDocumentHint": "Cada documento é limitado individualmente — registrar mais documentos ainda soma.",
         "errors": {
             "ruleRequired": "Uma regra é obrigatória.",
             "unknownType": "Tipo de regra desconhecido: \"{{type}}\".",

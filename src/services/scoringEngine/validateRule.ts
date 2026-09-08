@@ -1,4 +1,12 @@
-import type { CappedRule, FlatRule, HoursRule, Rule, ValidationError, ValidationResult } from './types'
+import type {
+    CappedPerDocumentRule,
+    CappedRule,
+    FlatRule,
+    HoursRule,
+    Rule,
+    ValidationError,
+    ValidationResult,
+} from './types'
 
 function validateFlat(rule: FlatRule): ValidationError[] {
     const errors: ValidationError[] = []
@@ -47,6 +55,28 @@ function validateCapped(rule: CappedRule): ValidationError[] {
     return errors
 }
 
+function validateCappedPerDocument(rule: CappedPerDocumentRule): ValidationError[] {
+    const errors: ValidationError[] = []
+
+    if (!rule.inner) {
+        errors.push({ key: 'cappedPerDocument.missingInner' })
+    } else if (rule.inner.type === 'flat') {
+        errors.push(...validateFlat(rule.inner))
+    } else if (rule.inner.type === 'hours') {
+        errors.push(...validateHours(rule.inner))
+    } else {
+        errors.push({ key: 'cappedPerDocument.invalidInnerType' })
+    }
+
+    if (typeof rule.capPerDocument !== 'number' || !Number.isFinite(rule.capPerDocument)) {
+        errors.push({ key: 'cappedPerDocument.capPerDocumentNotFinite' })
+    } else if (rule.capPerDocument <= 0) {
+        errors.push({ key: 'cappedPerDocument.capPerDocumentNotPositive' })
+    }
+
+    return errors
+}
+
 /**
  * Validates a rule object against its expected schema (NFR-04-03).
  * Must be called before a rule is written to storage — a malformed
@@ -56,7 +86,8 @@ function validateCapped(rule: CappedRule): ValidationError[] {
  * Returns structured error keys (not display text) so this stays a pure,
  * framework-agnostic function per NFR-04-06. Callers are responsible for
  * translating `key`/`params` into a user-facing message — see
- * `categories.json`'s `rule.errors.*` keys for the matching translations.
+ * `categories.json`'s `rule.errors.*` keys for the matching translations
+ * (a matching `cappedPerDocument.*` set needs adding there too).
  */
 export function validateRule(rule: Rule | null | undefined): ValidationResult {
     if (!rule || typeof rule !== 'object') {
@@ -74,6 +105,9 @@ export function validateRule(rule: Rule | null | undefined): ValidationResult {
             break
         case 'capped':
             errors = validateCapped(rule)
+            break
+        case 'cappedPerDocument':
+            errors = validateCappedPerDocument(rule)
             break
         default:
             errors = [{ key: 'unknownType', params: { type: (rule as { type: string }).type } }]
