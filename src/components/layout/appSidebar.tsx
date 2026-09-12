@@ -366,14 +366,14 @@ export function AppSidebar() {
                 <ServerStatusIndicator variant={state === "collapsed" ? "icon" : "full"} />
                 <SidebarMenu>
                     <SidebarMenuItem>
-                        <SidebarMenuButton onClick={cycleTheme} tooltip="Change Theme">
+                        <SidebarMenuButton onClick={cycleTheme} tooltip={t('theme.tooltip')}>
                             {theme === 'light' && <Sun className="h-4 w-4 shrink-0" />}
                             {theme === 'dark' && <Moon className="h-4 w-4 shrink-0" />}
                             {theme === 'system' && <Monitor className="h-4 w-4 shrink-0" />}
                             <span>
-                                {theme === 'light' && 'Light Mode'}
-                                {theme === 'dark' && 'Dark Mode'}
-                                {theme === 'system' && 'System Theme'}
+                                {theme === 'light' && t('theme.light')}
+                                {theme === 'dark' && t('theme.dark')}
+                                {theme === 'system' && t('theme.system')}
                             </span>
                         </SidebarMenuButton>
                     </SidebarMenuItem>

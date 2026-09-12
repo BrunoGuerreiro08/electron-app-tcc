@@ -48,6 +48,7 @@ contextBridge.exposeInMainWorld('api', {
     tags: {
         list: () => ipcRenderer.invoke('tags:list'),
         create: (name: string, color?: string) => ipcRenderer.invoke('tags:create', name, color),
+        update: (id: string, name: string, color: string) => ipcRenderer.invoke('tags:update', id, name, color),
         delete: (id: string) => ipcRenderer.invoke('tags:delete', id),
         listForDocument: (documentId: string) =>
             ipcRenderer.invoke('tags:listForDocument', documentId),

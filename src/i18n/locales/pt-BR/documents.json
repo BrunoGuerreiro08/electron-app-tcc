@@ -26,11 +26,11 @@
         "categoriesTitle": "Vincular documentos selecionados a categorias"
     },
     "library": {
-        "title": "Document library",
-        "description": "Log documents any time, then link them to categories whenever you're ready.",
-        "newDocument": "New document",
-        "searchPlaceholder": "Search by title, issuer...",
-        "noSearchResults": "No documents match your search.",
+        "title": "Biblioteca de Documentos",
+        "description": "Adicione documentos a qualquer hora, vincule-os a categorias quando estiver pronto.",
+        "newDocument": "Novo documento",
+        "searchPlaceholder": "Busque por título, emissor...",
+        "noSearchResults": "Nenhum documento corresponde a busca.",
         "droppedFiles_one": "{{count}} novo arquivo encontrado na sua pasta de documentos — clique para revisar e importar.",
         "droppedFiles_other": "{{count}} novos arquivos encontrados na sua pasta de documentos — clique para revisar e importar.",
         "tabs": {
@@ -40,6 +40,7 @@
         "loading": "Carregando…",
         "emptyUnfiled": "Tudo está vinculado a uma categoria.",
         "emptyAll": "Nenhum documento ainda.",
+        "tagsFilter": "Adicione uma tag para filtrar...",
         "badges": {
             "category_one": "{{count}} categoria",
             "category_other": "{{count}} categorias",
@@ -49,7 +50,9 @@
             "open": "Abrir",
             "removeFile": "Remover arquivo",
             "attach": "Anexar",
-            "link": "Vincular"
+            "link": "Vincular",
+            "selectAll": "Selecionar todos",
+            "manageTags": "Gerenciar tags"
         },
         "delete": {
             "title": "Excluir \"{{title}}\"?",
@@ -92,7 +95,11 @@
     },
     "tags": {
         "button": "Tags",
+        "deleteConfirmTitle": "Deletar Tag",
+        "deleteConfirm": "Tem certeza que deseja deletar permanentemente esta tag? Ela será removida de todos os documentos.",
         "empty": "Nenhuma tag ainda.",
+        "manageTitle": "Gerenciar tags",
+        "manageDescription": "Renomeie ou delete permanentemente as tags da sua coleção.",
         "placeholder": "Nova tag"
     }
 }

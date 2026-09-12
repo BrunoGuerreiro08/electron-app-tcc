@@ -43,6 +43,7 @@ declare global {
             tags: {
                 list: () => Promise<any[]>
                 create: (name: string, color?: string) => Promise<string>
+                update: (id: string, name: string, color?: string) => Promise<void>,
                 delete: (id: string) => Promise<void>
                 listForDocument: (documentId: string) => Promise<any[]>
                 attachToDocument: (documentId: string, tagId: string) => Promise<void>

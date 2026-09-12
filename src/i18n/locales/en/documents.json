@@ -40,6 +40,7 @@
         "loading": "Loading…",
         "emptyUnfiled": "Everything is linked to a category.",
         "emptyAll": "No documents yet.",
+        "tagsFilter": "Add tag to filter...",
         "badges": {
             "category_one": "{{count}} category",
             "category_other": "{{count}} categories",
@@ -49,7 +50,9 @@
             "open": "Open",
             "removeFile": "Remove file",
             "attach": "Attach",
-            "link": "Link"
+            "link": "Link",
+            "selectAll": "Select all",
+            "manageTags": "Manage tags"
         },
         "delete": {
             "title": "Delete \"{{title}}\"?",
@@ -92,7 +95,11 @@
     },
     "tags": {
         "button": "Tags",
+        "deleteConfirmTitle": "Delete Tag",
+        "deleteConfirm": "Are you sure you want to permanently delete this tag? It will be removed from all documents.",
         "empty": "No tags yet.",
+        "manageTitle": "Manage tags",
+        "manageDescription": "Rename or permanently delete tags from your library.",
         "placeholder": "New tag"
     }
 }

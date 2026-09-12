@@ -9,12 +9,17 @@ export function registerTagHandlers() {
 
     ipcMain.handle('tags:create', (_event, name: string, color?: string) => {
         const id = randomUUID()
+        const finalColor = color || '#' + Math.floor(Math.random() * 16777215).toString(16).padStart(6, '0')
         getDb().prepare('INSERT INTO tags (id, name, color) VALUES (?, ?, ?)').run(
             id,
             name,
-            color ?? null
+            finalColor
         )
         return id
+    })
+
+    ipcMain.handle('tags:update', (_event, id: string, name: string, color: string) => {
+        getDb().prepare('UPDATE tags SET name = ?, color = ? WHERE id = ?').run(name, color, id)
     })
 
     ipcMain.handle('tags:delete', (_event, id: string) => {
