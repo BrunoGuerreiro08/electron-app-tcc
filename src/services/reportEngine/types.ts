@@ -26,9 +26,23 @@ export interface ReportSubgroupItem {
     name: string
     minPoints: number | null
     maxPoints: number | null
+    rawTotal: number // NEW
     total: number
     completion: SubgroupCompletionState
     categories: ReportCategoryItem[]
+}
+
+
+export interface ReportGroupItem {
+    id: string
+    name: string
+    minPoints: number | null
+    maxPoints: number | null
+    rawTotal: number
+    total: number
+    completion: SubgroupCompletionState // reuse whatever completion-state type ReportSubgroupItem.completion already uses
+    bonus: number | null
+    subgroups: ReportSubgroupItem[]
 }
 
 export interface ReportData {
@@ -38,5 +52,5 @@ export interface ReportData {
     userEmail: string
     generatedAt: string
     totalScore: number
-    subgroups: ReportSubgroupItem[]
+    groups: ReportGroupItem[]
 }
