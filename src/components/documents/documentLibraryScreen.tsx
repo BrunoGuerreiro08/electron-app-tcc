@@ -32,7 +32,8 @@ import { ManageTagsDialog } from './manageTagsDialog'
 import type { ScannedFile } from '@/types/entities'
 import { useTranslation } from 'react-i18next'
 import { tagRepository } from '@/repository/tagRepository'
-import { getContrastYIQ } from '@/lib/utils'
+import { getContrastYIQ } from '@/lib/generateRandomColor'
+
 
 export function DocumentLibraryScreen() {
     const { t } = useTranslation('documents')
