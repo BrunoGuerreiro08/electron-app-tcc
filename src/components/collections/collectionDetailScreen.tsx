@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 import { useTranslation, Trans } from 'react-i18next'
 import { useCollectionDetail } from '@/hooks/useCollectionDetail'
+import type { CategoryWithDocuments } from '@/hooks/useCollectionDetail'
 import { collectionRepository } from '@/repository/collectionRepository'
 import { groupRepository } from '@/repository/groupRepository'
 import { subgroupRepository } from '@/repository/subgroupRepository'
@@ -11,6 +12,7 @@ import type { Rule } from '@/services/scoringEngine/types'
 import type { Category, Collection, Group, Subgroup } from '@/types/entities'
 import { EditGroupDialog } from './editGroupDialog'
 import { EditSubgroupDialog } from './editSubgroupDialog'
+import { BulkLinkDialog } from './bulkLinkDialog'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Badge } from '@/components/ui/badge'
@@ -39,8 +41,9 @@ import {
     AlertDialogTitle,
     AlertDialogTrigger,
 } from '@/components/ui/alert-dialog'
-import { Plus, Trash2, Pencil, Check, X, Printer, FileOutput } from 'lucide-react'
+import { Plus, Trash2, Pencil, Check, X, Printer, FileOutput, Link2 } from 'lucide-react'
 import { CategoryFormDialog } from './categoryFormDialog'
+import { DeleteCollectionDialog } from './deleteCollectionDialog'
 
 const COMPLETION_STYLES: Record<string, string> = {
     incomplete: 'bg-amber-100 text-amber-800 dark:bg-amber-950 dark:text-amber-300',
@@ -48,10 +51,6 @@ const COMPLETION_STYLES: Record<string, string> = {
     exceeded: 'bg-blue-100 text-blue-800 dark:bg-blue-950 dark:text-blue-300',
 }
 
-// NOTE: takes `t` explicitly rather than calling useTranslation() itself — this is a
-// plain helper, not a component/hook, so it can't use hooks. Same shape as the
-// validateRule() caveat flagged earlier: logic that produces user-facing text but
-// lives outside the component tree needs the translator passed in.
 function ruleSummary(rule: Rule, t: (key: string, opts?: Record<string, unknown>) => string): string {
     if (rule.type === 'flat') {
         return t('categories:summary.flatPoints', { count: rule.pointsPerUnit })
@@ -83,6 +82,7 @@ export function CollectionDetailScreen() {
     const [newGroupName, setNewGroupName] = useState('')
     const [groupDialogOpen, setGroupDialogOpen] = useState(false)
     const [editingGroup, setEditingGroup] = useState<Group | null>(null)
+    const [bulkLinkCategory, setBulkLinkCategory] = useState<CategoryWithDocuments | null>(null)
 
     const [newSubgroupName, setNewSubgroupName] = useState('')
     const [subgroupDialogGroupId, setSubgroupDialogGroupId] = useState<string | null>(null)
@@ -97,6 +97,8 @@ export function CollectionDetailScreen() {
 
     const [exportingTemplate, setExportingTemplate] = useState(false)
     const [templateExportError, setTemplateExportError] = useState<string | null>(null)
+
+    const [deleteDialogOpen, setDeleteDialogOpen] = useState(false)
 
     const navigate = useNavigate()
 
@@ -221,6 +223,14 @@ export function CollectionDetailScreen() {
                                 onClick={() => setEditingName(true)}
                             >
                                 <Pencil className="h-3.5 w-3.5" />
+                            </Button>
+                            <Button
+                                size="icon"
+                                variant="ghost"
+                                className="h-7 w-7 text-destructive opacity-0 transition-opacity group-hover:opacity-100"
+                                onClick={() => setDeleteDialogOpen(true)}
+                            >
+                                <Trash2 className="h-3.5 w-3.5" />
                             </Button>
                         </div>
                     )}
@@ -522,6 +532,15 @@ export function CollectionDetailScreen() {
                                                                                             variant="ghost"
                                                                                             size="icon"
                                                                                             className="h-6 w-6"
+                                                                                            onClick={() => setBulkLinkCategory(cat)}
+                                                                                            title="Link documents to other categories"
+                                                                                        >
+                                                                                            <Link2 className="h-3 w-3" />
+                                                                                        </Button>
+                                                                                        <Button
+                                                                                            variant="ghost"
+                                                                                            size="icon"
+                                                                                            className="h-6 w-6"
                                                                                             onClick={() => setCategoryDialog({ mode: 'edit', category: cat })}
                                                                                         >
                                                                                             <Pencil className="h-3 w-3" />
@@ -604,12 +623,27 @@ export function CollectionDetailScreen() {
                 </Accordion>
             )}
 
+            <BulkLinkDialog
+                open={bulkLinkCategory !== null}
+                onOpenChange={(open) => !open && setBulkLinkCategory(null)}
+                sourceCategoryId={bulkLinkCategory?.id ?? ''}
+                sourceCategoryName={bulkLinkCategory?.name ?? ''}
+                documents={bulkLinkCategory?.documents ?? []}
+                onLinked={refresh}
+            />
             <CategoryFormDialog
                 open={categoryDialog !== null}
                 onOpenChange={(open) => !open && setCategoryDialog(null)}
                 onSaved={refresh}
                 subgroupId={categoryDialog?.mode === 'create' ? categoryDialog.subgroupId : undefined}
                 category={categoryDialog?.mode === 'edit' ? categoryDialog.category : undefined}
+            />
+            <DeleteCollectionDialog
+                open={deleteDialogOpen}
+                onOpenChange={setDeleteDialogOpen}
+                collectionId={collectionId!}
+                collectionName={collection?.name ?? ''}
+                onDeleted={() => navigate('/')}
             />
             <EditGroupDialog
                 group={editingGroup}
