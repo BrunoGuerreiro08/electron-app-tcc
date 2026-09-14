@@ -59,17 +59,19 @@ import { usePreferencesStore } from '@/store/preferenceStore'
 import { useTranslation } from 'react-i18next'
 
 export function AppSidebar() {
-    const { t } = useTranslation()
+    const { t, i18n } = useTranslation()
     const { theme, setTheme } = useTheme()
     const { state, toggleSidebar } = useSidebar()
     const logout = useAuthStore((state) => state.logout)
     const isCollapsed = state === "collapsed"
     const location = useLocation()
 
-    const language = usePreferencesStore((s) => s.language)
     const setLanguage = usePreferencesStore((s) => s.setLanguage)
 
-    const cycleLanguage = () => setLanguage(language === 'en' ? 'pt-BR' : 'en')
+    const cycleLanguage = () => {
+        const isPt = i18n.language?.toLowerCase().startsWith('pt')
+        setLanguage(isPt ? 'en' : 'pt-BR')
+    }
 
     const cycleTheme = () => {
         if (theme === 'light') setTheme('dark')
@@ -380,7 +382,9 @@ export function AppSidebar() {
 
                     <SidebarMenuItem>
                         <SidebarMenuButton onClick={cycleLanguage} tooltip={t('language.tooltip')}>
-                            <span>{t(`language.${language === 'en' ? 'en' : 'ptBR'}`)}</span>
+                            <span>
+                                {t(`language.${i18n.language?.toLowerCase().startsWith('pt') ? 'ptBR' : 'en'}`)}
+                            </span>
                         </SidebarMenuButton>
                     </SidebarMenuItem>
 
