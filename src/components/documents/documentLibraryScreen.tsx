@@ -169,11 +169,11 @@ export function DocumentLibraryScreen() {
     const filteredDocuments = documents.filter((doc) => {
         const docTags = documentTags[doc.id] || []
 
-        const hasExcludedTag = docTags.some((tag) => selectedExcludeTags.has(tag.id))
+        const hasExcludedTag = docTags.some((tag) => selectedExcludeTags.has(tag.name))
         if (hasExcludedTag) return false
 
         if (selectedIncludeTags.size > 0) {
-            const matchesInclude = docTags.some((tag) => selectedIncludeTags.has(tag.id))
+            const matchesInclude = docTags.some((tag) => selectedIncludeTags.has(tag.name))
             if (!matchesInclude) return false
         }
 
@@ -350,7 +350,6 @@ export function DocumentLibraryScreen() {
                         {activeFilterTags.length > 0 && (
                             <div className="flex flex-wrap gap-2 mt-1">
                                 {activeFilterTags.map((tag) => {
-                                    const isIncluded = selectedIncludeTags.has(tag)
                                     const isExcluded = selectedExcludeTags.has(tag)
 
                                     return (
@@ -364,14 +363,22 @@ export function DocumentLibraryScreen() {
                                             <button
                                                 onClick={() => handleToggleFilterTagState(tag)}
                                                 className="flex items-center gap-1.5 hover:opacity-75 focus:outline-none"
+                                                title={isExcluded ? "Click to include" : "Click to exclude"}
                                             >
-                                                {isIncluded ? <TagSymbol className="h-3 w-3" /> : <EyeOff className="h-3 w-3" />}
+                                                {isExcluded ? (
+                                                    <EyeOff className="h-3 w-3" />
+                                                ) : (
+                                                    <TagSymbol className="h-3 w-3" />
+                                                )}
                                                 {tag}
                                             </button>
+
                                             <div className="w-px h-3 bg-border mx-1" />
+
                                             <button
                                                 onClick={() => handleRemoveFilterTag(tag)}
-                                                className="hover:bg-background/50 rounded-sm p-0.5 focus:outline-none"
+                                                className="hover:bg-background/50 rounded-sm p-0.5 focus:outline-none text-muted-foreground hover:text-foreground"
+                                                title="Remove filter"
                                             >
                                                 <X className="h-3 w-3" />
                                             </button>

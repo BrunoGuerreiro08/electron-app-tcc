@@ -50,6 +50,7 @@
         "flatPoints_other": "{{count}} pts por documento",
         "hoursPoints_one": "{{count}} pt a cada {{unitSize}}h",
         "hoursPoints_other": "{{count}} pts a cada {{unitSize}}h",
-        "cappedAt": "{{inner}}, limitado a {{cap}}"
+        "cappedAt": "{{inner}}, limitado a {{cap}}",
+        "cappedPerDocumentAt": "{{inner}}, limitado a {{cap}} por documento"
     }
 }

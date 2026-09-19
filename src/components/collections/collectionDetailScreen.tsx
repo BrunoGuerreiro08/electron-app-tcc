@@ -518,7 +518,7 @@ export function CollectionDetailScreen() {
                                                                                     <div className="flex items-center gap-1">
                                                                                         <span className="text-sm">
                                                                                             {t('collections:categoryCard.scoreSimple', {
-                                                                                                total: catScore?.total ?? 0,
+                                                                                                total: catScore?.total.toFixed(2) ?? 0,
                                                                                             })}
                                                                                             {catScore?.capped && (
                                                                                                 <span className="ml-1 text-xs text-muted-foreground">
