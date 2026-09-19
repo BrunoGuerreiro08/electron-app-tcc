@@ -9,6 +9,7 @@ export interface Session {
     token: string
     issuedAt: number
     expiresAt: number
+    isGuest?: boolean
 }
 
 export type AuthStep = 'email' | 'code' | 'onboarding'

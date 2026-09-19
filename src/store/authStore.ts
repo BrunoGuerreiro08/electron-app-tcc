@@ -15,6 +15,7 @@ interface AuthState {
     requestCode: (email: string) => Promise<void>
     verifyCode: (code: string) => Promise<void>
     completeProfile: (name: string) => Promise<void>
+    loginAsGuest: () => Promise<void>
     reset: () => void
     logout: () => Promise<void>
 }
@@ -75,6 +76,29 @@ export const useAuthStore = create<AuthState>((set, get) => ({
             const updatedSession: Session = { ...pendingSession, user }
             await window.api.session.set(updatedSession)
             set({ session: updatedSession, pendingSession: null, loading: false })
+        } catch (err) {
+            set({ error: (err as Error).message, loading: false })
+        }
+    },
+
+    loginAsGuest: async () => {
+        set({ loading: true, error: null })
+        try {
+            const now = Date.now()
+            const guestSession: Session = {
+                token: 'guest_local_token',
+                issuedAt: now,
+                expiresAt: now + 1000 * 60 * 60 * 24 * 365,
+                isGuest: true,
+                user: {
+                    id: 'guest',
+                    email: 'guest@local',
+                    name: 'Guest User',
+                }
+            }
+
+            await window.api.session.set(guestSession)
+            set({ session: guestSession, step: 'email', loading: false })
         } catch (err) {
             set({ error: (err as Error).message, loading: false })
         }

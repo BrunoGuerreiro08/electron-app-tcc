@@ -7,7 +7,7 @@ import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card'
 import { InputOTP, InputOTPGroup, InputOTPSlot } from '@/components/ui/input-otp'
-import { Sun, Moon, Monitor } from 'lucide-react'
+import { Sun, Moon, Monitor, User } from 'lucide-react'
 import { useServerStatusStore } from '@/store/serverStatusStore'
 import { ServerStatusIndicator } from '@/components/layout/serverStatusIndicator'
 import i18n from '@/i18n'
@@ -15,8 +15,10 @@ import i18n from '@/i18n'
 export function LoginScreen() {
   const { t } = useTranslation('auth')
   const serverStatus = useServerStatusStore((s) => s.status)
-  const { step, email, loading, error, requestCode, verifyCode, completeProfile, reset } =
+
+  const { step, email, loading, error, requestCode, verifyCode, completeProfile, reset, loginAsGuest } =
     useAuthStore()
+
   const { theme, setTheme } = useTheme()
   const [emailInput, setEmailInput] = useState('')
   const [codeInput, setCodeInput] = useState('')
@@ -28,7 +30,6 @@ export function LoginScreen() {
     else setTheme('light')
   }
 
-  // theme is 'light' | 'dark' | 'system' — look up its translated label for the tooltip
   const themeLabelKey =
     theme === 'light' ? 'login.brand.themeLight' : theme === 'dark' ? 'login.brand.themeDark' : 'login.brand.themeSystem'
 
@@ -38,10 +39,8 @@ export function LoginScreen() {
       <Button
         variant="ghost"
         size="icon"
-
         onClick={cycleTheme}
         className="group absolute top-4 right-4 h-9 w-9 rounded-md md:top-6 md:right-6 hover:bg-muted"
-
         title={t('login.brand.themeTooltip', { theme: t(themeLabelKey) })}
       >
         {theme === 'light' && <Sun className="h-4 w-4 transition-transform duration-300 group-hover:rotate-45" />}
@@ -49,12 +48,14 @@ export function LoginScreen() {
         {theme === 'system' && <Monitor className="h-4 w-4 transition-transform duration-300 group-hover:scale-105" />}
         <span className="sr-only">{t('login.brand.toggleTheme')}</span>
       </Button>
+
       <button
         className="fixed bottom-4 left-4 text-xs underline"
         onClick={() => i18n.changeLanguage(i18n.language === 'en' ? 'pt-BR' : 'en')}
       >
         {i18n.language}
       </button>
+
       <div className="flex w-full max-w-sm flex-col gap-6">
         <a href="#" className="flex items-center gap-2 self-center font-medium">
           <div className="flex size-6 items-center justify-center rounded-md bg-primary text-primary-foreground">
@@ -91,15 +92,37 @@ export function LoginScreen() {
                     autoFocus
                   />
                 </div>
-                {/* NOTE: `error` currently comes straight from useAuthStore as a raw string,
-                    not a translation key — see caveat below the code block. */}
                 {error && <p className="text-sm text-destructive">{error}</p>}
+
                 <Button
                   type="submit"
                   className="w-full"
                   disabled={loading || !emailInput || serverStatus === 'offline'}
                 >
                   {loading ? t('login.emailStep.submitLoading') : t('login.emailStep.submitIdle')}
+                </Button>
+
+                {/* ADDED: Visual divider and Guest Mode button */}
+                <div className="relative my-4">
+                  <div className="absolute inset-0 flex items-center">
+                    <span className="w-full border-t" />
+                  </div>
+                  <div className="relative flex justify-center text-xs uppercase">
+                    <span className="bg-card px-2 text-muted-foreground">
+                      {t('login.emailStep.orDivider', 'Or')}
+                    </span>
+                  </div>
+                </div>
+
+                <Button
+                  type="button"
+                  variant="outline"
+                  className="w-full gap-2"
+                  disabled={loading}
+                  onClick={() => loginAsGuest && loginAsGuest()}
+                >
+                  <User className="h-4 w-4" />
+                  {t('login.emailStep.guestMode', 'Continue as Guest')}
                 </Button>
               </form>
             )}
@@ -162,7 +185,6 @@ export function LoginScreen() {
                 </Button>
               </form>
             )}
-
           </CardContent>
         </Card>
         <ServerStatusIndicator />
