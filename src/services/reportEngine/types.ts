@@ -26,7 +26,7 @@ export interface ReportSubgroupItem {
     name: string
     minPoints: number | null
     maxPoints: number | null
-    rawTotal: number // NEW
+    rawTotal: number
     total: number
     completion: SubgroupCompletionState
     categories: ReportCategoryItem[]
@@ -40,7 +40,7 @@ export interface ReportGroupItem {
     maxPoints: number | null
     rawTotal: number
     total: number
-    completion: SubgroupCompletionState // reuse whatever completion-state type ReportSubgroupItem.completion already uses
+    completion: SubgroupCompletionState
     bonus: number | null
     subgroups: ReportSubgroupItem[]
 }
