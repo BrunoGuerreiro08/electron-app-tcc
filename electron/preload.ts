@@ -114,4 +114,10 @@ contextBridge.exposeInMainWorld('api', {
             ipcRenderer.invoke('templates:exportCollection', collectionId),
         deleteImported: (fileName: string) => ipcRenderer.invoke('templates:deleteImported', fileName),
     },
+    reviews: {
+        list: () => ipcRenderer.invoke('reviews:list'),
+        get: (id: string) => ipcRenderer.invoke('reviews:get', id),
+        save: (input: unknown) => ipcRenderer.invoke('reviews:save', input),
+        remove: (id: string) => ipcRenderer.invoke('reviews:remove', id),
+    },
 })

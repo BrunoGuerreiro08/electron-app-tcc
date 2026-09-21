@@ -109,6 +109,8 @@ export function buildReportData(
             name: group.name,
             minPoints: group.minPoints,
             maxPoints: group.maxPoints,
+            // Config, not a result: needed so exports can reproduce the template's bonus_rate.
+            bonusRate: group.bonusRate,
             rawTotal: scoreGroup?.rawTotal ?? 0,
             total: scoreGroup?.total ?? 0,
             completion: scoreGroup?.completion ?? null,

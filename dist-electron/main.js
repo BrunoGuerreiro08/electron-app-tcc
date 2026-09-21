@@ -13,7 +13,7 @@ var _validator, _encryptionKey, _encryptionAlgorithm, _options, _defaultValues, 
 import electron, { app as app$1, dialog, shell as shell$1, ipcMain as ipcMain$1, BrowserWindow, globalShortcut } from "electron";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
-import fs from "node:fs";
+import fs, { promises } from "node:fs";
 import crypto, { randomUUID } from "node:crypto";
 import process$1 from "node:process";
 import { promisify, isDeepStrictEqual } from "node:util";
@@ -16901,6 +16901,24 @@ function validateCapped(rule) {
   }
   return errors2;
 }
+function validateCappedPerDocument(rule) {
+  const errors2 = [];
+  if (!rule.inner) {
+    errors2.push({ key: "cappedPerDocument.missingInner" });
+  } else if (rule.inner.type === "flat") {
+    errors2.push(...validateFlat(rule.inner));
+  } else if (rule.inner.type === "hours") {
+    errors2.push(...validateHours(rule.inner));
+  } else {
+    errors2.push({ key: "cappedPerDocument.invalidInnerType" });
+  }
+  if (typeof rule.capPerDocument !== "number" || !Number.isFinite(rule.capPerDocument)) {
+    errors2.push({ key: "cappedPerDocument.capPerDocumentNotFinite" });
+  } else if (rule.capPerDocument <= 0) {
+    errors2.push({ key: "cappedPerDocument.capPerDocumentNotPositive" });
+  }
+  return errors2;
+}
 function validateRule$1(rule) {
   if (!rule || typeof rule !== "object") {
     return { valid: false, errors: [{ key: "ruleRequired" }] };
@@ -16915,6 +16933,9 @@ function validateRule$1(rule) {
       break;
     case "capped":
       errors2 = validateCapped(rule);
+      break;
+    case "cappedPerDocument":
+      errors2 = validateCappedPerDocument(rule);
       break;
     default:
       errors2 = [{ key: "unknownType", params: { type: rule.type } }];
@@ -17034,12 +17055,16 @@ function registerTagHandlers() {
   });
   ipcMain$1.handle("tags:create", (_event, name, color) => {
     const id2 = randomUUID();
+    const finalColor = color || "#" + Math.floor(Math.random() * 16777215).toString(16).padStart(6, "0");
     getDb().prepare("INSERT INTO tags (id, name, color) VALUES (?, ?, ?)").run(
       id2,
       name,
-      color ?? null
+      finalColor
     );
     return id2;
+  });
+  ipcMain$1.handle("tags:update", (_event, id2, name, color) => {
+    getDb().prepare("UPDATE tags SET name = ?, color = ? WHERE id = ?").run(name, color, id2);
   });
   ipcMain$1.handle("tags:delete", (_event, id2) => {
     getDb().prepare("DELETE FROM tags WHERE id = ?").run(id2);
@@ -36628,6 +36653,67 @@ function registerReportHandlers() {
     }
   );
 }
+const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+const MAX_BYTES = 12 * 1024 * 1024;
+const reviewsDir = () => path.join(app$1.getPath("userData"), "reviews");
+const fileFor = (id2) => path.join(reviewsDir(), `${id2}.json`);
+function assertId(id2) {
+  if (typeof id2 !== "string" || !UUID_RE.test(id2)) throw new Error("Invalid review id");
+}
+async function writeAtomic(file, content) {
+  const tmp = `${file}.tmp`;
+  await promises.writeFile(tmp, content, "utf8");
+  await promises.rename(tmp, file);
+}
+function registerReviewHandlers() {
+  ipcMain$1.handle("reviews:list", async () => {
+    await promises.mkdir(reviewsDir(), { recursive: true });
+    const names2 = (await promises.readdir(reviewsDir())).filter((n) => n.endsWith(".json"));
+    const items2 = [];
+    for (const n of names2) {
+      try {
+        const parsed = JSON.parse(await promises.readFile(path.join(reviewsDir(), n), "utf8"));
+        items2.push({
+          id: parsed.id,
+          importedAt: parsed.importedAt,
+          sourceFileName: parsed.sourceFileName,
+          summary: parsed.summary
+        });
+      } catch (err) {
+        console.error(`[reviews] skipping unreadable file ${n}:`, err);
+      }
+    }
+    return items2.sort((a, b) => b.importedAt.localeCompare(a.importedAt));
+  });
+  ipcMain$1.handle("reviews:get", async (_e, id2) => {
+    assertId(id2);
+    return JSON.parse(await promises.readFile(fileFor(id2), "utf8"));
+  });
+  ipcMain$1.handle(
+    "reviews:save",
+    async (_e, input) => {
+      const serialized = JSON.stringify((input == null ? void 0 : input.data) ?? null);
+      if (serialized.length > MAX_BYTES) throw new Error("Review too large");
+      if (typeof (input == null ? void 0 : input.data) !== "object" || input.data === null) throw new Error("Invalid review data");
+      const record = {
+        id: randomUUID(),
+        importedAt: (/* @__PURE__ */ new Date()).toISOString(),
+        // Display metadata only (the file on disk is named by the UUID). Strip both
+        // Windows and POSIX separators regardless of the current OS.
+        sourceFileName: (String(input.sourceFileName ?? "").split(/[\\/]/).pop() || "export.json").slice(0, 255),
+        summary: input.summary,
+        data: input.data
+      };
+      await promises.mkdir(reviewsDir(), { recursive: true });
+      await writeAtomic(fileFor(record.id), JSON.stringify(record));
+      return { id: record.id, importedAt: record.importedAt, sourceFileName: record.sourceFileName, summary: record.summary };
+    }
+  );
+  ipcMain$1.handle("reviews:remove", async (_e, id2) => {
+    assertId(id2);
+    await promises.rm(fileFor(id2), { force: true });
+  });
+}
 function registerPreferencesHandlers() {
   ipcMain$1.handle("preferences:get", () => {
     return getPreferences();
@@ -36694,6 +36780,16 @@ function validateRule(rule, fieldPath, errors2) {
   if (r.type === "capped") {
     if (typeof r.cap !== "number" || r.cap <= 0) {
       errors2.push(`${fieldPath}: capped rule needs a numeric cap greater than zero.`);
+      return false;
+    }
+    if (!validateFlatOrHours(r.inner, `${fieldPath}.inner`, errors2)) {
+      return false;
+    }
+    return true;
+  }
+  if (r.type === "cappedPerDocument") {
+    if (typeof r.capPerDocument !== "number" || r.capPerDocument <= 0) {
+      errors2.push(`${fieldPath}: cappedPerDocument rule needs a numeric capPerDocument greater than zero.`);
       return false;
     }
     if (!validateFlatOrHours(r.inner, `${fieldPath}.inner`, errors2)) {
@@ -37023,6 +37119,7 @@ app$1.whenReady().then(() => {
   registerFileHandlers();
   registerReportHandlers();
   registerTemplateHandlers();
+  registerReviewHandlers();
   const session = restoreActiveSession();
   if (session) detectOrphans();
   createWindow();

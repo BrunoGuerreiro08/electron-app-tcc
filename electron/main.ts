@@ -13,6 +13,7 @@ import { registerSessionHandlers, restoreActiveSession } from './ipc/session'
 import { registerSettingsHandlers } from './ipc/settings'
 import { registerFileHandlers } from './ipc/files'
 import { registerReportHandlers } from './ipc/reports'
+import { registerReviewHandlers } from './ipc/reviews'
 import { registerPreferencesHandlers } from './ipc/preferences'
 import { registerTemplateHandlers } from './ipc/templates'
 
@@ -75,6 +76,7 @@ app.whenReady().then(() => {
     registerFileHandlers()
     registerReportHandlers()
     registerTemplateHandlers()
+    registerReviewHandlers()
 
     // If a user was already logged in on this device, reopen their db/store
     // before the renderer loads so collections:list etc. work immediately

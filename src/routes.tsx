@@ -3,6 +3,8 @@ import { HomeScreen } from '@/components/home/homeScreen'
 import { CollectionDetailScreen } from '@/components/collections/collectionDetailScreen'
 import { DocumentLibraryScreen } from '@/components/documents/documentLibraryScreen'
 import { ExportScreen } from './components/reports/exportScreen'
+import { ReviewsScreen } from '@/components/reviews/reviewScreen'
+import { ReviewDetailScreen } from '@/components/reviews/reviewDetailsScreen'
 
 function ComingSoon({ label }: { label: string }) {
     return (
@@ -19,7 +21,10 @@ export function AppRoutes() {
             <Route path="/documents" element={<DocumentLibraryScreen />} />
             <Route path="/collections/:collectionId" element={<CollectionDetailScreen />} />
             <Route path="/collections/:collectionId/report" element={<ExportScreen />} />
+
             <Route path="/export" element={<ExportScreen />} />
+            <Route path="/reviews" element={<ReviewsScreen />} />
+            <Route path="/reviews/:reviewId" element={<ReviewDetailScreen />} />
 
             <Route path="/settings" element={<ComingSoon label="Settings Hub" />} />
             <Route path="/settings/:section" element={<ComingSoon label="Settings Detail View" />} />

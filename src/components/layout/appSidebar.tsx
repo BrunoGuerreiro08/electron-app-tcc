@@ -18,7 +18,8 @@ import {
     User,
     Library,
     Home,
-    Plus
+    Plus,
+    Eye
 } from "lucide-react"
 import {
     Sidebar,
@@ -169,6 +170,19 @@ export function AppSidebar() {
                                     <NavLink to="/dashboard" className="flex items-center gap-3">
                                         <Hash className="h-4 w-4 shrink-0" />
                                         <span>{t('nav.dashboard')}</span>
+                                    </NavLink>
+                                </SidebarMenuButton>
+                            </SidebarMenuItem>
+
+                            <SidebarMenuItem>
+                                <SidebarMenuButton
+                                    asChild
+                                    tooltip={t('nav.review')}
+                                    isActive={location.pathname === "/reviews"}
+                                >
+                                    <NavLink to="/reviews" className="flex items-center gap-3">
+                                        <Eye className="h-4 w-4 shrink-0" />
+                                        <span>{t('nav.review')}</span>
                                     </NavLink>
                                 </SidebarMenuButton>
                             </SidebarMenuItem>

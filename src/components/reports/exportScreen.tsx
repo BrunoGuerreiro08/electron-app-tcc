@@ -5,11 +5,21 @@ import { useCollectionDetail } from '@/hooks/useCollectionDetail'
 import { useAuthStore } from '@/store/authStore'
 import { buildReportData } from '@/services/reportEngine/reportDataMapper'
 import { generateReportHtml } from '@/services/reportEngine/generateReportHtml'
+import { exportReportData, type DataExportFormat } from '@/services/reportEngine/exporters'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Badge } from '@/components/ui/badge'
-import { Printer, Download, FileText, CheckCircle, AlertCircle, ArrowLeft } from 'lucide-react'
+import {
+    Printer,
+    Download,
+    FileText,
+    FileJson,
+    FileSpreadsheet,
+    CheckCircle,
+    AlertCircle,
+    ArrowLeft,
+} from 'lucide-react'
 import { useTranslation } from 'react-i18next'
 
 export function ExportScreen() {
@@ -30,7 +40,10 @@ export function ExportScreen() {
     }, [urlCollectionId])
 
     const { groups, score, loading } = useCollectionDetail(selectedCollectionId)
-    const [isExporting, setIsExporting] = useState(false)
+    // Single "busy" slot shared by every format so two exports can never run at once (NFR-09-07).
+    const [exporting, setExporting] = useState<'pdf' | DataExportFormat | null>(null)
+    const [exportError, setExportError] = useState<string | null>(null)
+    const isExporting = exporting !== null
 
     useEffect(() => {
         loadCollections()
@@ -87,7 +100,8 @@ export function ExportScreen() {
         if (!reportData) return
 
         try {
-            setIsExporting(true)
+            setExporting('pdf')
+            setExportError(null)
             const htmlContent = generateReportHtml(reportData)
 
             const attachmentPaths: string[] = []
@@ -111,8 +125,25 @@ export function ExportScreen() {
             })
         } catch (err) {
             console.error('Export failed:', err)
+            setExportError(t('reports:errors.exportFailed', 'Não foi possível gerar o arquivo. Tente novamente.'))
         } finally {
-            setIsExporting(false)
+            setExporting(null)
+        }
+    }
+
+    // JSON / XLSX / CSV all use the same reportData snapshot as the preview and the PDF.
+    const handleExportData = async (format: DataExportFormat) => {
+        if (!reportData) return
+
+        try {
+            setExporting(format)
+            setExportError(null)
+            await exportReportData(format, reportData)
+        } catch (err) {
+            console.error(`Export (${format}) failed:`, err)
+            setExportError(t('reports:errors.exportFailed', 'Não foi possível gerar o arquivo. Tente novamente.'))
+        } finally {
+            setExporting(null)
         }
     }
 
@@ -142,12 +173,47 @@ export function ExportScreen() {
                 </div>
 
                 {reportData && (
-                    <Button onClick={handleExportDossier} disabled={isExporting} className="gap-2">
-                        <Download className="h-4 w-4" />
-                        {isExporting ? t('actions.generatingDossier') : t('actions.exportDossier')}
-                    </Button>
+                    <div className="flex flex-wrap items-center gap-2">
+                        <Button onClick={handleExportDossier} disabled={isExporting} className="gap-2">
+                            <Download className="h-4 w-4" />
+                            {exporting === 'pdf' ? t('actions.generatingDossier') : t('actions.exportDossier')}
+                        </Button>
+                        <Button
+                            variant="outline"
+                            onClick={() => handleExportData('xlsx')}
+                            disabled={isExporting}
+                            className="gap-2"
+                        >
+                            <FileSpreadsheet className="h-4 w-4" />
+                            {t('actions.exportXlsx', 'Excel (.xlsx)')}
+                        </Button>
+                        <Button
+                            variant="outline"
+                            onClick={() => handleExportData('csv')}
+                            disabled={isExporting}
+                            className="gap-2"
+                        >
+                            <FileText className="h-4 w-4" />
+                            {t('actions.exportCsv', 'CSV')}
+                        </Button>
+                        <Button
+                            variant="outline"
+                            onClick={() => handleExportData('json')}
+                            disabled={isExporting}
+                            className="gap-2"
+                        >
+                            <FileJson className="h-4 w-4" />
+                            {t('actions.exportJson', 'JSON')}
+                        </Button>
+                    </div>
                 )}
             </div>
+
+            {exportError && (
+                <p role="alert" className="text-sm text-destructive">
+                    {exportError}
+                </p>
+            )}
 
             {/* Collection Selector */}
             <Card>

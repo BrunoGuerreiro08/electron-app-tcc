@@ -4,6 +4,21 @@
   "version": "0.0.0",
   "type": "module",
   "main": "dist-electron/main.js",
+  "build": {
+    "appId": "com.utfpr.docent",
+    "win": {
+      "target": "nsis"
+    },
+    "mac": {
+      "target": "dmg"
+    },
+    "linux": {
+      "target": [
+        "AppImage",
+        "deb"
+      ]
+    }
+  },
   "scripts": {
     "dev": "node scripts/build-preload.mjs && vite",
     "build": "node scripts/build-preload.mjs && tsc && vite build && electron-builder",
@@ -21,6 +36,7 @@
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
     "electron-store": "^11.0.2",
+    "exceljs": "^4.4.0",
     "i18next": "^26.3.6",
     "input-otp": "^1.4.2",
     "lucide-react": "^1.25.0",

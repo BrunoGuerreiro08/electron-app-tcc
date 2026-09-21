@@ -103,6 +103,12 @@ declare global {
                 ) => Promise<{ ok: true; filePath: string } | { ok: false; error: string } | null>
                 deleteImported: (fileName: string) => Promise<void>
             }
+            reviews: {
+                list(): Promise<ReviewListItem[]>
+                get(id: string): Promise<StoredReview>
+                save(input: SaveReviewInput): Promise<ReviewListItem>
+                remove(id: string): Promise<void>
+            }
         }
     }
 }
