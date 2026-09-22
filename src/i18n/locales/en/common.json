@@ -18,9 +18,9 @@
         "backToCollection": "Back to Collection",
         "exportDossier": "Export Dossier (.pdf)",
         "generatingDossier": "Generating Dossier…",
-        "exportXlsx": "PLACEHOLDER",
-        "exportCsv": "PLACEHOLDER",
-        "exportJson": "PLACEHOLDER"
+        "exportXlsx": "Excel (.xlsx)",
+        "exportCsv": "CSV",
+        "exportJson": "JSON"
     },
     "nav": {
         "menu": "Menu",

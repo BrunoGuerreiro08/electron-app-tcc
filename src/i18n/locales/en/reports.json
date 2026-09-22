@@ -16,13 +16,13 @@
         "issuedAt": "Issued",
         "noGoal": "No goal",
         "capped": "(Capped)",
-        "bonus": "PLACEHOLDER",
+        "bonus": "bonus points",
         "noDocuments": "No associated documents",
         "pointsSuffix": "{{count}} pts",
         "totalScore": "Total: {{score}} pts",
         "exportConsolidated": "Export Dossier (.pdf)"
     },
     "errors": {
-        "exportFailed": "PLACEHOLDER"
+        "exportFailed": "Unable to generate the file. Try again."
     }
 }

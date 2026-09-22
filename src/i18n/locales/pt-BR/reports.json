@@ -16,13 +16,13 @@
         "issuedAt": "Emissão",
         "noGoal": "Sem meta",
         "capped": "(Teto)",
-        "bonus": "PLACEHOLDER",
+        "bonus": "pts bônus",
         "noDocuments": "Sem documentos associados",
         "pointsSuffix": "{{count}} pts",
         "totalScore": "Total: {{score}} pts",
         "exportConsolidated": "Exportar Dossiê (.pdf)"
     },
     "errors": {
-        "exportFailed": "PLACEHOLDER"
+        "exportFailed": "Não foi possível gerar o arquivo. Tente novamente."
     }
 }
