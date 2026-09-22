@@ -1,0 +1,82 @@
+{
+    "title": "Reviews",
+    "description": "Collections received from other users for verification. These are read-only copies.",
+    "loading": "Loading…",
+    "actions": {
+        "import": "Import collection (.json)",
+        "importing": "Importing…",
+        "importAnyway": "Import anyway",
+        "confirmImport": "Import",
+        "cancel": "Cancel",
+        "open": "Open",
+        "delete": "Delete imported copy",
+        "confirmDelete": "Delete copy?",
+        "backToList": "Back to reviews"
+    },
+    "badge": {
+        "readOnly": "Read-only"
+    },
+    "banner": {
+        "title": "Copy received for review",
+        "body": "The data and scores below were sent by the exporter and cannot be modified here. Attached files are not included in the export."
+    },
+    "empty": {
+        "title": "No reviews imported",
+        "description": "Import a .json file exported by another user to review their collection."
+    },
+    "confirm": {
+        "title": "Confirm import",
+        "duplicate": "This version was already imported on",
+        "note": "The imported copy is read-only and will not be mixed with your own collections."
+    },
+    "filters": {
+        "hideEmpty": "Hide categories without documents"
+    },
+    "stats": {
+        "withoutFile": "without attachment"
+    },
+    "doc": {
+        "hasFile": "Has attachment (file not included)",
+        "noFile": "No attachment"
+    },
+    "fields": {
+        "collection": "Collection",
+        "sender": "Sent by",
+        "senderUnknown": "Unknown sender",
+        "exportedAt": "Exported on",
+        "importedAt": "Imported on",
+        "content": "Content",
+        "groups": "groups",
+        "documents": "documents",
+        "min": "min.",
+        "max": "max.",
+        "bonus": "surplus",
+        "earned": "earned",
+        "counted": "counted",
+        "capped": "cap reached; raw",
+        "rule": "Rule"
+    },
+    "errors": {
+        "title": "Could not import this file",
+        "notFound": "Could not open this review. It may have been deleted.",
+        "tooLarge": "The file exceeds 10 MB — it does not appear to be a collection export.",
+        "notJson": "The file is not a valid JSON.",
+        "saveFailed": "Could not save the review. Please try again."
+    },
+    "verify": {
+        "ok": {
+            "title": "Scores verified",
+            "body": "Recalculation with this app's scoring engine matches the sent values ({{n}} values checked). This confirms calculations are consistent with file data, not that documents are authentic."
+        },
+        "error": {
+            "title": "Could not verify scores"
+        },
+        "mismatch": {
+            "title": "{{n}} discrepancy(ies) between sent values and recalculation",
+            "body": "May indicate the file was modified, is inconsistent, or that the sender uses a version with different scoring rules. Confirm with sender before approving."
+        },
+        "sent": "sent",
+        "recomputed": "recomputed",
+        "more": "and {{n}} more — all marked in the review."
+    }
+}

@@ -17,7 +17,10 @@
         "logout": "Log out",
         "backToCollection": "Back to Collection",
         "exportDossier": "Export Dossier (.pdf)",
-        "generatingDossier": "Generating Dossier…"
+        "generatingDossier": "Generating Dossier…",
+        "exportXlsx": "PLACEHOLDER",
+        "exportCsv": "PLACEHOLDER",
+        "exportJson": "PLACEHOLDER"
     },
     "nav": {
         "menu": "Menu",

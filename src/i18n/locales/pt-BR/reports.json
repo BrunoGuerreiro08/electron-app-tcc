@@ -16,9 +16,13 @@
         "issuedAt": "Emissão",
         "noGoal": "Sem meta",
         "capped": "(Teto)",
+        "bonus": "PLACEHOLDER",
         "noDocuments": "Sem documentos associados",
         "pointsSuffix": "{{count}} pts",
         "totalScore": "Total: {{score}} pts",
         "exportConsolidated": "Exportar Dossiê (.pdf)"
+    },
+    "errors": {
+        "exportFailed": "PLACEHOLDER"
     }
 }

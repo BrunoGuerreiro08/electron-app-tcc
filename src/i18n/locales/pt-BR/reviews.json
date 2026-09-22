@@ -1,0 +1,82 @@
+{
+    "title": "Revisões",
+    "description": "Coleções recebidas de outros usuários para conferência. São cópias somente leitura.",
+    "loading": "Carregando…",
+    "actions": {
+        "import": "Importar coleção (.json)",
+        "importing": "Importando…",
+        "importAnyway": "Importar mesmo assim",
+        "confirmImport": "Importar",
+        "cancel": "Cancelar",
+        "open": "Abrir",
+        "delete": "Excluir cópia importada",
+        "confirmDelete": "Excluir cópia?",
+        "backToList": "Voltar para as revisões"
+    },
+    "badge": {
+        "readOnly": "Somente leitura"
+    },
+    "banner": {
+        "title": "Cópia recebida para conferência",
+        "body": "Os dados e as pontuações abaixo são os enviados por quem exportou e não podem ser alterados aqui. Os arquivos anexados não vêm junto com a exportação."
+    },
+    "empty": {
+        "title": "Nenhuma revisão importada",
+        "description": "Importe um arquivo .json exportado por outro usuário para conferir a coleção dele."
+    },
+    "confirm": {
+        "title": "Confirme a importação",
+        "duplicate": "Esta versão já foi importada em",
+        "note": "A cópia importada é somente leitura e não é misturada com as suas coleções."
+    },
+    "filters": {
+        "hideEmpty": "Ocultar categorias sem documentos"
+    },
+    "stats": {
+        "withoutFile": "sem anexo"
+    },
+    "doc": {
+        "hasFile": "Possui anexo (arquivo não incluído)",
+        "noFile": "Sem anexo"
+    },
+    "fields": {
+        "collection": "Coleção",
+        "sender": "Enviada por",
+        "senderUnknown": "Remetente não informado",
+        "exportedAt": "Exportada em",
+        "importedAt": "Importada em",
+        "content": "Conteúdo",
+        "groups": "grupos",
+        "documents": "documentos",
+        "min": "mín.",
+        "max": "máx.",
+        "bonus": "excedente",
+        "earned": "obtido",
+        "counted": "contabilizado",
+        "capped": "teto atingido; bruto",
+        "rule": "Regra"
+    },
+    "errors": {
+        "title": "Não foi possível importar este arquivo",
+        "notFound": "Não foi possível abrir esta revisão. Ela pode ter sido excluída.",
+        "tooLarge": "O arquivo é maior que 10 MB — não parece ser uma exportação de coleção.",
+        "notJson": "O arquivo não é um JSON válido.",
+        "saveFailed": "Não foi possível salvar a revisão. Tente novamente."
+    },
+    "verify": {
+        "ok": {
+            "title": "Pontuações conferidas",
+            "body": "O recálculo com o motor de pontuação deste aplicativo coincide com os valores enviados ({{n}} valores conferidos). Isso confirma que as contas estão consistentes com os dados do arquivo, não que os documentos sejam autênticos."
+        },
+        "error": {
+            "title": "Não foi possível conferir as pontuações"
+        },
+        "mismatch": {
+            "title": "{{n}} diferença(s) entre os valores enviados e o recálculo",
+            "body": "Pode indicar que o arquivo foi alterado, que ele é inconsistente, ou que quem enviou usa uma versão do aplicativo com regras de pontuação diferentes. Confirme com quem enviou antes de aprovar."
+        },
+        "sent": "enviado",
+        "recomputed": "recalculado",
+        "more": "e mais {{n}} — todas ficam marcadas na revisão."
+    }
+}

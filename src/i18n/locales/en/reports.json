@@ -16,9 +16,13 @@
         "issuedAt": "Issued",
         "noGoal": "No goal",
         "capped": "(Capped)",
+        "bonus": "PLACEHOLDER",
         "noDocuments": "No associated documents",
         "pointsSuffix": "{{count}} pts",
         "totalScore": "Total: {{score}} pts",
         "exportConsolidated": "Export Dossier (.pdf)"
+    },
+    "errors": {
+        "exportFailed": "PLACEHOLDER"
     }
 }

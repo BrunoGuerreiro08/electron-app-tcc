@@ -42,6 +42,12 @@
                 "invalidInnerType": "A regra interna deve ser do tipo \"fixa\" ou \"horas\".",
                 "capNotFinite": "O teto deve ser um número finito.",
                 "capNotPositive": "O teto deve ser maior que zero."
+            },
+            "cappedPerDocument": {
+                "missingInner": "Uma regra limitada por documento deve referenciar uma regra interna válida.",
+                "invalidInnerType": "A regra interna deve ser do tipo \"fixa\" ou \"horas\".",
+                "capPerDocumentNotFinite": "O teto por documento deve ser um número finito.",
+                "capPerDocumentNotPositive": "O teto por documento deve ser maior que zero."
             }
         }
     },

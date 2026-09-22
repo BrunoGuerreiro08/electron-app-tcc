@@ -10,7 +10,7 @@ import enCategories from './locales/en/categories.json'
 import enHome from './locales/en/home.json'
 import enDocuments from './locales/en/documents.json'
 import enReports from './locales/en/reports.json'
-// import enSettings from './locales/en/settings.json'
+import enReviews from './locales/en/reviews.json'
 
 // Portuguese (Brazil)
 import ptAuth from './locales/pt-BR/auth.json'
@@ -20,7 +20,7 @@ import ptCategories from './locales/pt-BR/categories.json'
 import ptHome from './locales/pt-BR/home.json'
 import ptDocuments from './locales/pt-BR/documents.json'
 import ptReports from './locales/pt-BR/reports.json'
-// import ptSettings from './locales/pt-BR/settings.json'
+import ptReviews from './locales/pt-BR/reviews.json'
 
 export const SUPPORTED_LANGUAGES = ['en', 'pt-BR'] as const
 export type SupportedLanguage = (typeof SUPPORTED_LANGUAGES)[number]
@@ -34,7 +34,7 @@ export const resources = {
         home: enHome,
         documents: enDocuments,
         reports: enReports,
-        // settings: enSettings,
+        settings: enReviews,
     },
     'pt-BR': {
         auth: ptAuth,
@@ -44,7 +44,7 @@ export const resources = {
         home: ptHome,
         documents: ptDocuments,
         reports: ptReports,
-        // settings: ptSettings,
+        settings: ptReviews,
     },
 } as const
 
