@@ -3,6 +3,10 @@
         "grandTotal": "Grand total: <strong>{{total}}</strong> points",
         "exportButton": "Export dossier"
     },
+    "groupCreateDialog": {
+        "title": "New group",
+        "namePlaceholder": "e.g. Teaching"
+    },
     "subgroupCreateDialog": {
         "title": "New sub-group",
         "namePlaceholder": "e.g. Teaching"

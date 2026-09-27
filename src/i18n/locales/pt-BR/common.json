@@ -35,7 +35,8 @@
     "newCollection": "Nova coleção",
     "help": "Ajuda",
     "documentation": "Documentação",
-    "support": "Suporte"
+    "support": "Suporte",
+    "review": "Revisões"
   },
   "sidebar": {
     "toggleTooltip": "Alternar Barra Lateral (Ctrl+B)",

@@ -34,7 +34,7 @@ export const resources = {
         home: enHome,
         documents: enDocuments,
         reports: enReports,
-        settings: enReviews,
+        reviews: enReviews,
     },
     'pt-BR': {
         auth: ptAuth,
@@ -44,7 +44,7 @@ export const resources = {
         home: ptHome,
         documents: ptDocuments,
         reports: ptReports,
-        settings: ptReviews,
+        reviews: ptReviews,
     },
 } as const
 

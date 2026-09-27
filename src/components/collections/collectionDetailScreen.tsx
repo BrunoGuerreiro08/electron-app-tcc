@@ -272,18 +272,17 @@ export function CollectionDetailScreen() {
                         <DialogTrigger asChild>
                             <Button size="sm">
                                 <Plus className="h-4 w-4" />
-                                {/* NOTE: hardcoded, same i18n caveat as elsewhere —
-                                    suggest collections:groupCreateDialog.* mirroring
-                                    subgroupCreateDialog's existing key shape. */}
-                                Add group
+                                {t('collections:groupCreateDialog.title')}
                             </Button>
                         </DialogTrigger>
                         <DialogContent>
                             <DialogHeader>
-                                <DialogTitle>Add group</DialogTitle>
+                                <DialogTitle>
+                                    {t('collections:groupCreateDialog.title')}
+                                </DialogTitle>
                             </DialogHeader>
                             <Input
-                                placeholder="Group name"
+                                placeholder={t('collections:groupCreateDialog.namePlaceholder')}
                                 value={newGroupName}
                                 onChange={(e) => setNewGroupName(e.target.value)}
                                 autoFocus

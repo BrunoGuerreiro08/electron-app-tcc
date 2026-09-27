@@ -3,6 +3,10 @@
         "grandTotal": "Total geral: <strong>{{total}}</strong> pontos",
         "exportButton": "Exportar dossiê"
     },
+    "groupCreateDialog": {
+        "title": "Novo grupo",
+        "namePlaceholder": "ex. Ensino"
+    },
     "subgroupCreateDialog": {
         "title": "Novo subgrupo",
         "namePlaceholder": "ex. Ensino"
