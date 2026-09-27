@@ -86,6 +86,8 @@ export function CollectionDetailScreen() {
 
     const [newSubgroupName, setNewSubgroupName] = useState('')
     const [subgroupDialogGroupId, setSubgroupDialogGroupId] = useState<string | null>(null)
+    const [creatingSubgroup, setCreatingSubgroup] = useState(false)
+    const [subgroupError, setSubgroupError] = useState<string | null>(null)
 
     const [categoryDialog, setCategoryDialog] = useState<
         | { mode: 'create'; subgroupId: string }
@@ -147,10 +149,21 @@ export function CollectionDetailScreen() {
 
     const handleCreateSubgroup = async () => {
         if (!newSubgroupName.trim() || !subgroupDialogGroupId) return
-        await subgroupRepository.create(collectionId!, subgroupDialogGroupId, newSubgroupName.trim())
-        setNewSubgroupName('')
-        setSubgroupDialogGroupId(null)
-        refresh()
+        setSubgroupError(null)
+        setCreatingSubgroup(true)
+        try {
+            await subgroupRepository.create(collectionId!, subgroupDialogGroupId, newSubgroupName.trim())
+            setNewSubgroupName('')
+            setSubgroupDialogGroupId(null)
+            refresh()
+        } catch (err) {
+            console.error('Failed to create subgroup:', err)
+            setSubgroupError(
+                err instanceof Error ? err.message : 'Não foi possível criar o subgrupo. Tente novamente.'
+            )
+        } finally {
+            setCreatingSubgroup(false)
+        }
     }
 
     const handleDeleteSubgroup = async (id: string) => {
@@ -301,14 +314,14 @@ export function CollectionDetailScreen() {
             {templateExportError && (
                 <p className="text-sm text-destructive">{templateExportError}</p>
             )}
-
-            {/* Subgroup creation is scoped to a specific group (the "+" inside
-                each group's accordion content sets subgroupDialogGroupId), but
-                rendered once here rather than once per group — avoids N nearly-
-                identical Dialog instances mounted simultaneously. */}
             <Dialog
                 open={subgroupDialogGroupId !== null}
-                onOpenChange={(open) => !open && setSubgroupDialogGroupId(null)}
+                onOpenChange={(open) => {
+                    if (!open) {
+                        setSubgroupDialogGroupId(null)
+                        setSubgroupError(null)
+                    }
+                }}
             >
                 <DialogContent>
                     <DialogHeader>
@@ -321,9 +334,17 @@ export function CollectionDetailScreen() {
                         autoFocus
                         onKeyDown={(e) => e.key === 'Enter' && handleCreateSubgroup()}
                     />
+                    {subgroupError && (
+                        <p role="alert" className="text-sm text-destructive">
+                            {subgroupError}
+                        </p>
+                    )}
                     <DialogFooter>
-                        <Button onClick={handleCreateSubgroup} disabled={!newSubgroupName.trim()}>
-                            {t('common:actions.create')}
+                        <Button
+                            onClick={handleCreateSubgroup}
+                            disabled={!newSubgroupName.trim() || creatingSubgroup}
+                        >
+                            {creatingSubgroup ? t('common:states.loading') : t('common:actions.create')}
                         </Button>
                     </DialogFooter>
                 </DialogContent>

@@ -110,3 +110,46 @@ export function MismatchTag({ items }: { items?: ScoreDiscrepancy[] }) {
         </span>
     )
 }
+
+/**
+ * Whether the received collection still exactly matches the structure of the
+ * template it was created from — recomputed here, not read off a label the
+ * sender's file claims (see verifyTemplateOrigin: a hand-edited file that
+ * flips the claim without touching the structure is still caught).
+ */
+export function TemplateOriginNotice({ origin }: { origin: import('@/services/collectionImport/verifyTemplateOrigin').TemplateOriginResult }) {
+    const { t } = useTranslation('reviews')
+    if (origin.status === 'none') return null
+
+    if (origin.status === 'unmodified') {
+        return (
+            <p className="text-xs text-muted-foreground flex items-center gap-1.5">
+                <CheckCircle className="h-3.5 w-3.5 text-emerald-600" />
+                {t('template.unmodified', 'Estrutura idêntica ao modelo "{{name}}", sem alterações.', {
+                    name: origin.templateName,
+                })}
+            </p>
+        )
+    }
+    if (origin.status === 'modified') {
+        return (
+            <p className="text-xs text-muted-foreground flex items-center gap-1.5">
+                <AlertCircle className="h-3.5 w-3.5 text-muted-foreground" />
+                {t('template.modified', 'Baseada no modelo "{{name}}", com alterações na estrutura.', {
+                    name: origin.templateName,
+                })}
+            </p>
+        )
+    }
+    // claim_disputed: the label and the recomputation disagree — worth a slightly louder flag
+    return (
+        <p className="text-xs text-amber-600 flex items-center gap-1.5">
+            <AlertCircle className="h-3.5 w-3.5" />
+            {t(
+                'template.disputed',
+                'O arquivo diz uma coisa sobre o modelo "{{name}}", mas o recálculo da estrutura discorda — confira com quem enviou.',
+                { name: origin.templateName }
+            )}
+        </p>
+    )
+}

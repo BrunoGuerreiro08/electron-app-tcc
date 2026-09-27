@@ -1,3 +1,6 @@
+import type { ReviewListItem, SaveReviewInput, StoredReview } from '@/types/review'
+import type { DossierOutputKind, DossierPlan, DossierRunResult } from '@/services/dossierExport/types'
+
 export { }
 
 declare global {
@@ -108,6 +111,27 @@ declare global {
                 get(id: string): Promise<StoredReview>
                 save(input: SaveReviewInput): Promise<ReviewListItem>
                 remove(id: string): Promise<void>
+            }
+            /*Not sure what this replaces*/
+            exportFiles: {
+                saveText(args: {
+                    content: string
+                    suggestedFilename: string
+                    extension: string
+                    readOnly?: boolean
+                }): Promise<{ path: string } | null>
+            }
+            dossier: {
+                chooseDestination(args: {
+                    outputKind: DossierOutputKind
+                    collectionName: string
+                }): Promise<string | null>
+                run(args: {
+                    plan: DossierPlan
+                    outputKind: DossierOutputKind
+                    destinationPath: string
+                    readOnly?: boolean
+                }): Promise<DossierRunResult>
             }
         }
     }

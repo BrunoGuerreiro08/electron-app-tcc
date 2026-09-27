@@ -151,6 +151,17 @@ export function validateCollectionExport(raw: unknown): ValidationResult {
     const exportedAt = readText(c, raw.exported_at, 'exported_at')
     if (exportedAt && Number.isNaN(Date.parse(exportedAt))) c.add('exported_at', 'não é uma data válida')
 
+    let templateOrigin: ReviewSnapshot['template_origin'] = null
+    if (raw.template_origin !== null && raw.template_origin !== undefined) {
+        const to = readObject(c, raw.template_origin, 'template_origin')
+        templateOrigin = {
+            template_name: readText(c, to.template_name, 'template_origin.template_name'),
+            template_fingerprint: readText(c, to.template_fingerprint, 'template_origin.template_fingerprint'),
+            unmodified: to.unmodified === true,
+        }
+        if (typeof to.unmodified !== 'boolean') c.add('template_origin.unmodified', 'deve ser verdadeiro ou falso')
+    }
+
     let exportedBy: ReviewSnapshot['exported_by'] = null
     if (raw.exported_by !== null && raw.exported_by !== undefined) {
         const by = readObject(c, raw.exported_by, 'exported_by')
@@ -251,6 +262,7 @@ export function validateCollectionExport(raw: unknown): ValidationResult {
             description,
             exported_at: exportedAt,
             exported_by: exportedBy,
+            template_origin: templateOrigin,
             total_score: totalScore,
             groups,
         },

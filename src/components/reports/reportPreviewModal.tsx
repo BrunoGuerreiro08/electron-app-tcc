@@ -25,7 +25,7 @@ export const ReportPreviewModal: React.FC<ReportPreviewModalProps> = ({
 }) => {
     const [isExporting, setIsExporting] = useState(false)
     const { t } = useTranslation(['common', 'reports'])
-    // Collect all unique attached file paths across categories
+
     const getAllAttachmentPaths = (): string[] => {
         const paths: string[] = []
         reportData.groups.forEach((s) => {

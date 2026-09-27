@@ -6,6 +6,8 @@ import { useAuthStore } from '@/store/authStore'
 import { buildReportData } from '@/services/reportEngine/reportDataMapper'
 import { generateReportHtml } from '@/services/reportEngine/generateReportHtml'
 import { exportReportData, type DataExportFormat } from '@/services/reportEngine/exporters'
+import { exportDossier } from '@/services/dossierExport'
+import type { DossierMode } from '@/services/dossierExport/types'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
@@ -16,6 +18,8 @@ import {
     FileText,
     FileJson,
     FileSpreadsheet,
+    FolderArchive,
+    Files,
     CheckCircle,
     AlertCircle,
     ArrowLeft,
@@ -41,7 +45,8 @@ export function ExportScreen() {
 
     const { groups, score, loading } = useCollectionDetail(selectedCollectionId)
     // Single "busy" slot shared by every format so two exports can never run at once (NFR-09-07).
-    const [exporting, setExporting] = useState<'pdf' | DataExportFormat | null>(null)
+    const [exporting, setExporting] = useState<'pdf' | DataExportFormat | DossierMode | null>(null)
+    const [dossierNotice, setDossierNotice] = useState<string | null>(null)
     const [exportError, setExportError] = useState<string | null>(null)
     const isExporting = exporting !== null
 
@@ -131,6 +136,49 @@ export function ExportScreen() {
         }
     }
 
+    // Documents grouped/stitched by category, or kept individual — see dossierExport.
+    // Runs against the SAME local ReportData (still carrying real file paths) as
+    // everything else on this screen; never available for an imported/reviewed
+    // collection, which has no file paths at all.
+    const handleExportDocumentsBundle = async (mode: DossierMode) => {
+        if (!reportData) return
+        try {
+            setExporting(mode)
+            setExportError(null)
+            setDossierNotice(null)
+            const outcome = await exportDossier(reportData, mode, 'zip')
+            if (outcome.cancelled) return
+
+            const { plan, result } = outcome
+            const parts = [
+                t('reports:dossier.written', {
+                    defaultValue: '{{n}} arquivo(s) gerado(s)',
+                    n: result?.entriesWritten ?? 0,
+                }),
+            ]
+            if (plan && plan.skipped.length > 0)
+                parts.push(
+                    t('reports:dossier.skipped', {
+                        defaultValue: '{{n}} documento(s) sem arquivo, ignorado(s)',
+                        n: plan.skipped.length,
+                    })
+                )
+            if (result && result.failures.length > 0)
+                parts.push(
+                    t('reports:dossier.failed', {
+                        defaultValue: '{{n}} arquivo(s) não encontrado(s) no disco',
+                        n: result.failures.length,
+                    })
+                )
+            setDossierNotice(parts.join(' · '))
+        } catch (err) {
+            console.error(`Dossier export (${mode}) failed:`, err)
+            setExportError(t('reports:errors.exportFailed', 'Não foi possível gerar o arquivo. Tente novamente.'))
+        } finally {
+            setExporting(null)
+        }
+    }
+
     // JSON / XLSX / CSV all use the same reportData snapshot as the preview and the PDF.
     const handleExportData = async (format: DataExportFormat) => {
         if (!reportData) return
@@ -205,9 +253,43 @@ export function ExportScreen() {
                             <FileJson className="h-4 w-4" />
                             {t('actions.exportJson', 'JSON')}
                         </Button>
+                        <Button
+                            variant="outline"
+                            onClick={() => handleExportDocumentsBundle('stitched')}
+                            disabled={isExporting}
+                            className="gap-2"
+                            title={t(
+                                'reports:dossier.stitchedHint',
+                                'Uma pasta por grupo/subgrupo; um PDF por categoria, com todos os documentos daquela categoria unidos'
+                            )}
+                        >
+                            <FolderArchive className="h-4 w-4" />
+                            {exporting === 'stitched'
+                                ? t('actions.generatingDossier', 'Gerando…')
+                                : t('actions.exportDossierStitched', 'Documentos por categoria (unidos)')}
+                        </Button>
+                        <Button
+                            variant="outline"
+                            onClick={() => handleExportDocumentsBundle('individual')}
+                            disabled={isExporting}
+                            className="gap-2"
+                            title={t(
+                                'reports:dossier.individualHint',
+                                'Uma pasta por grupo/subgrupo/categoria; cada documento como um arquivo separado'
+                            )}
+                        >
+                            <Files className="h-4 w-4" />
+                            {exporting === 'individual'
+                                ? t('actions.generatingDossier', 'Gerando…')
+                                : t('actions.exportDossierIndividual', 'Documentos individuais')}
+                        </Button>
                     </div>
                 )}
             </div>
+
+            {dossierNotice && (
+                <p className="text-sm text-muted-foreground">{dossierNotice}</p>
+            )}
 
             {exportError && (
                 <p role="alert" className="text-sm text-destructive">

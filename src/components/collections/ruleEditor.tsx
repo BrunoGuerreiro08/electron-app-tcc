@@ -30,43 +30,17 @@ interface InnerRuleEditorProps {
     onChange: (inner: FlatRule | HoursRule) => void
 }
 
-/**
- * Shared by both `capped` and `cappedPerDocument` below — they wrap the
- * exact same FlatRule | HoursRule shape, so this is the one place that
- * edits it. Taking `inner` as a plain typed parameter (rather than
- * reaching through `value.inner` inside each closure, as the original
- * `capped`-only version did) lets TypeScript narrow `inner.type ===
- * 'hours'` correctly on its own — no `as any` casts needed.
- */
 function InnerRuleEditor({ inner, onChange }: InnerRuleEditorProps) {
     const { t } = useTranslation('categories')
 
     return (
-        <>
-            <div className="space-y-2">
-                <Label>{t('rule.innerRuleTypeLabel')}</Label>
-                <Select
-                    value={inner.type}
-                    onValueChange={(v) =>
-                        onChange(
-                            v === 'flat'
-                                ? { type: 'flat', pointsPerUnit: 1 }
-                                : { type: 'hours', pointsPerUnit: 1, unitSize: 1 }
-                        )
-                    }
-                >
-                    <SelectTrigger>
-                        <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                        <SelectItem value="flat">{t('rule.innerType.flat')}</SelectItem>
-                        <SelectItem value="hours">{t('rule.innerType.hours')}</SelectItem>
-                    </SelectContent>
-                </Select>
-            </div>
+        <div className="w-full min-w-0 space-y-3">
+            <Label className="text-xs font-medium text-muted-foreground block">
+                {t('rule.innerRuleTypeLabel')}
+            </Label>
 
             {inner.type === 'flat' && (
-                <div className="space-y-2">
+                <div className="space-y-2 w-full min-w-0">
                     <Label>{t('rule.pointsPerDocument')}</Label>
                     <Input
                         type="number"
@@ -79,8 +53,8 @@ function InnerRuleEditor({ inner, onChange }: InnerRuleEditorProps) {
             )}
 
             {inner.type === 'hours' && (
-                <div className="grid grid-cols-2 gap-3">
-                    <div className="space-y-2">
+                <div className="grid grid-cols-2 gap-3 w-full min-w-0">
+                    <div className="space-y-2 min-w-0">
                         <Label>{t('rule.pointsAwarded')}</Label>
                         <Input
                             type="number"
@@ -90,7 +64,7 @@ function InnerRuleEditor({ inner, onChange }: InnerRuleEditorProps) {
                             onChange={(e) => onChange({ ...inner, pointsPerUnit: Number(e.target.value) })}
                         />
                     </div>
-                    <div className="space-y-2">
+                    <div className="space-y-2 min-w-0">
                         <Label>{t('rule.perNHours')}</Label>
                         <Input
                             type="number"
@@ -102,7 +76,7 @@ function InnerRuleEditor({ inner, onChange }: InnerRuleEditorProps) {
                     </div>
                 </div>
             )}
-        </>
+        </div>
     )
 }
 
@@ -115,24 +89,25 @@ export function RuleEditor({ value, onChange }: RuleEditorProps) {
     }, [value, t])
 
     const handleTypeChange = (type: Rule['type']) => {
-        // NFR-04-05: switching rule type clears params that no longer apply
         onChange(defaultRuleFor(type))
     }
 
     const RULE_TYPES: Rule['type'][] = ['flat', 'hours', 'capped', 'cappedPerDocument']
 
     return (
-        <div className="space-y-4">
-            <div className="space-y-2">
-                <Label>{t('rule.typeLabel')}</Label>
-                <Select value={value.type} onValueChange={(v) => handleTypeChange(v as Rule['type'])}>
-                    <SelectTrigger>
-                        <SelectValue />
+        <div className="w-full min-w-0 space-y-4">
+            <div className="flex flex-col gap-1.5 w-full min-w-0">
+                <Label className="text-xs font-medium text-muted-foreground">
+                    {t('rule.typeLabel')}
+                </Label>
+                <Select value={value.type} onValueChange={handleTypeChange}>
+                    <SelectTrigger className="w-full min-w-0">
+                        <SelectValue placeholder={t('rule.typePlaceholder')} />
                     </SelectTrigger>
                     <SelectContent>
-                        {RULE_TYPES.map((rt) => (
-                            <SelectItem key={rt} value={rt}>
-                                {t(`rule.types.${rt}`)}
+                        {RULE_TYPES.map((type) => (
+                            <SelectItem key={type} value={type}>
+                                {t(`rule.types.${type}`)}
                             </SelectItem>
                         ))}
                     </SelectContent>
@@ -140,7 +115,7 @@ export function RuleEditor({ value, onChange }: RuleEditorProps) {
             </div>
 
             {value.type === 'flat' && (
-                <div className="space-y-2">
+                <div className="space-y-2 w-full min-w-0">
                     <Label>{t('rule.pointsPerDocument')}</Label>
                     <Input
                         type="number"
@@ -155,8 +130,8 @@ export function RuleEditor({ value, onChange }: RuleEditorProps) {
             )}
 
             {value.type === 'hours' && (
-                <div className="grid grid-cols-2 gap-3">
-                    <div className="space-y-2">
+                <div className="grid grid-cols-2 gap-3 w-full min-w-0">
+                    <div className="space-y-2 min-w-0">
                         <Label>{t('rule.pointsAwarded')}</Label>
                         <Input
                             type="number"
@@ -168,7 +143,7 @@ export function RuleEditor({ value, onChange }: RuleEditorProps) {
                             }
                         />
                     </div>
-                    <div className="space-y-2">
+                    <div className="space-y-2 min-w-0">
                         <Label>{t('rule.perNHours')}</Label>
                         <Input
                             type="number"
@@ -182,9 +157,9 @@ export function RuleEditor({ value, onChange }: RuleEditorProps) {
             )}
 
             {value.type === 'capped' && (
-                <div className="space-y-4 rounded-md border p-3">
+                <div className="space-y-4 rounded-md border p-3 w-full min-w-0">
                     <InnerRuleEditor inner={value.inner} onChange={(inner) => onChange({ ...value, inner })} />
-                    <div className="space-y-2">
+                    <div className="space-y-2 w-full min-w-0">
                         <Label>{t('rule.maxTotalPoints')}</Label>
                         <Input
                             type="number"
@@ -199,9 +174,9 @@ export function RuleEditor({ value, onChange }: RuleEditorProps) {
             )}
 
             {value.type === 'cappedPerDocument' && (
-                <div className="space-y-4 rounded-md border p-3">
+                <div className="space-y-4 rounded-md border p-3 w-full min-w-0">
                     <InnerRuleEditor inner={value.inner} onChange={(inner) => onChange({ ...value, inner })} />
-                    <div className="space-y-2">
+                    <div className="space-y-2 w-full min-w-0">
                         <Label>{t('rule.maxPerDocumentPoints')}</Label>
                         <Input
                             type="number"
@@ -216,11 +191,11 @@ export function RuleEditor({ value, onChange }: RuleEditorProps) {
             )}
 
             {errors.length > 0 && (
-                <ul className="space-y-1 text-xs text-destructive">
-                    {errors.map((err) => (
-                        <li key={err}>{err}</li>
+                <div className="text-destructive text-xs space-y-1 w-full min-w-0">
+                    {errors.map((err, i) => (
+                        <p key={i}>{err}</p>
                     ))}
-                </ul>
+                </div>
             )}
         </div>
     )

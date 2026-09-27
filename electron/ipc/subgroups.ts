@@ -11,11 +11,11 @@ export function registerSubgroupHandlers() {
 
     ipcMain.handle(
         'subgroups:create',
-        (_event, collectionId: string, name: string, displayOrder = 0) => {
+        (_event, collectionId: string, groupId: string, name: string, displayOrder = 0) => {
             const id = randomUUID()
             getDb().prepare(
-                'INSERT INTO subgroups (id, collection_id, name, display_order) VALUES (?, ?, ?, ?)'
-            ).run(id, collectionId, name, displayOrder)
+                'INSERT INTO subgroups (id, collection_id, group_id, name, display_order) VALUES (?, ?, ?, ?, ?)'
+            ).run(id, collectionId, groupId, name, displayOrder)
             return id
         }
     )

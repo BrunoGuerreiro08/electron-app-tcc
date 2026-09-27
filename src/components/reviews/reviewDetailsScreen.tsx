@@ -7,7 +7,8 @@ import { Badge } from '@/components/ui/badge'
 import { reviewRepository } from '@/repository/reviewRepository'
 import { completionLabel, describeRule } from '@/services/reportEngine/exporters/shared'
 import { keyOf, verifySnapshotScores, type ScoreDiscrepancy } from '@/services/collectionImport/verifyScores'
-import { MismatchTag, VerificationNotice } from './verificationNotice'
+import { verifyTemplateOrigin } from '@/services/collectionImport/verifyTemplateOrigin'
+import { MismatchTag, TemplateOriginNotice, VerificationNotice } from './verificationNotice'
 import type { StoredReview } from '@/types/review'
 
 const fmtDateTime = (iso: string) => new Date(iso).toLocaleString('pt-BR')
@@ -71,6 +72,7 @@ export function ReviewView({ review, onBack }: { review: StoredReview; onBack?: 
     // Re-run THIS app's engine over the received data and compare with what was sent.
     // Done on view (not stored) so it always reflects the current engine.
     const verification = useMemo(() => verifySnapshotScores(data), [data])
+    const templateOrigin = useMemo(() => verifyTemplateOrigin(data), [data])
     const flagged = useMemo(() => {
         const map = new Map<string, ScoreDiscrepancy[]>()
         if (verification.status === 'mismatch')
@@ -153,6 +155,7 @@ export function ReviewView({ review, onBack }: { review: StoredReview; onBack?: 
             </div>
 
             <VerificationNotice verification={verification} />
+            <TemplateOriginNotice origin={templateOrigin} />
 
             <div className="space-y-6">
                 {data.groups.map((group, gi) => (

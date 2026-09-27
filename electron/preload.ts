@@ -120,4 +120,8 @@ contextBridge.exposeInMainWorld('api', {
         save: (input: unknown) => ipcRenderer.invoke('reviews:save', input),
         remove: (id: string) => ipcRenderer.invoke('reviews:remove', id),
     },
+    dossier: {
+        chooseDestination: (args: unknown) => ipcRenderer.invoke('dossier:chooseDestination', args),
+        run: (args: unknown) => ipcRenderer.invoke('dossier:run', args),
+    },
 })

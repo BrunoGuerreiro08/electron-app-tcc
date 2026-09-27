@@ -1,5 +1,7 @@
 import type { ReportData } from '../types'
 import type { Rule } from '@/services/scoringEngine/types'
+import { computeStructureFingerprint } from '@/services/templateMatch/structureFingerprint'
+import { structureFromReportData } from '@/services/templateMatch/adapters'
 import { clean, fileNameOf } from './shared'
 
 /**
@@ -18,6 +20,14 @@ export interface CollectionExportJson {
     exported_at: string
     /** Who produced this snapshot. Lets a reviewer see whose data they're reading. */
     exported_by: { name: string; email: string | null } | null
+    /**
+     * Present only when this collection was created from a template (UC11) and
+     * hasn't had its structure edited since. `unmodified` is the SENDER's own
+     * app's claim, computed the same way a reviewer can recompute it — see
+     * verifyTemplateOrigin in collectionImport, which does exactly that on
+     * import instead of trusting this field blindly.
+     */
+    template_origin: { template_name: string; template_fingerprint: string; unmodified: boolean } | null
     total_score: number
     groups: Array<{
         name: string
@@ -61,6 +71,14 @@ export interface BuildJsonOptions {
     description?: string | null
     /** Include the sender's name/e-mail (default true). Set false for anonymous sharing. */
     includeSender?: boolean
+    /**
+     * Pass when the collection was instantiated from a template (its name and
+     * the fingerprint computed from the template's structure AT APPLY TIME —
+     * see UC11/UC12). Requires a new COLLECTION.source_template_name /
+     * source_template_fingerprint pair, set when the template is applied;
+     * not implemented here, since that write path wasn't provided.
+     */
+    templateOrigin?: { templateName: string; templateFingerprint: string } | null
 }
 
 export function buildExportJson(
@@ -81,6 +99,15 @@ export function buildExportJson(
                     // The mapper uses the literal 'N/A' when there is no e-mail.
                     email: report.userEmail && report.userEmail !== 'N/A' ? report.userEmail : null,
                 },
+        template_origin: options.templateOrigin
+            ? {
+                template_name: options.templateOrigin.templateName,
+                template_fingerprint: options.templateOrigin.templateFingerprint,
+                unmodified:
+                    computeStructureFingerprint(structureFromReportData(report)) ===
+                    options.templateOrigin.templateFingerprint,
+            }
+            : null,
         total_score: clean(report.totalScore),
         groups: report.groups.map((g, gi) => ({
             name: g.name,
