@@ -4,7 +4,7 @@ import { useCollectionsStore } from '@/store/collectionsStore'
 import { useCollectionDetail } from '@/hooks/useCollectionDetail'
 import { useAuthStore } from '@/store/authStore'
 import { buildReportData } from '@/services/reportEngine/reportDataMapper'
-import { generateReportHtml } from '@/services/reportEngine/generateReportHtml'
+// import { generateReportHtml } from '@/services/reportEngine/generateReportHtml'
 import { exportReportData, type DataExportFormat } from '@/services/reportEngine/exporters'
 import { exportDossier } from '@/services/dossierExport'
 import type { DossierMode } from '@/services/dossierExport/types'
@@ -101,40 +101,40 @@ export function ExportScreen() {
             )
             : null
 
-    const handleExportDossier = async () => {
-        if (!reportData) return
+    // const handleExportDossier = async () => {
+    //     if (!reportData) return
 
-        try {
-            setExporting('pdf')
-            setExportError(null)
-            const htmlContent = generateReportHtml(reportData)
+    //     try {
+    //         setExporting('pdf')
+    //         setExportError(null)
+    //         const htmlContent = generateReportHtml(reportData)
 
-            const attachmentPaths: string[] = []
-            reportData.groups.forEach((g) => {
-                g.subgroups.forEach((s) => {
-                    s.categories.forEach((c) => {
-                        c.documents.forEach((d) => {
-                            if (d.filePath) attachmentPaths.push(d.filePath)
-                        })
-                    })
-                })
-            })
+    //         const attachmentPaths: string[] = []
+    //         reportData.groups.forEach((g) => {
+    //             g.subgroups.forEach((s) => {
+    //                 s.categories.forEach((c) => {
+    //                     c.documents.forEach((d) => {
+    //                         if (d.filePath) attachmentPaths.push(d.filePath)
+    //                     })
+    //                 })
+    //             })
+    //         })
 
-            const uniquePaths = Array.from(new Set(attachmentPaths))
-            const suggestedFilename = `${reportData.collectionName.replace(/[^a-zA-Z0-9_-]/g, '_')}_Dossier.pdf`
+    //         const uniquePaths = Array.from(new Set(attachmentPaths))
+    //         const suggestedFilename = `${reportData.collectionName.replace(/[^a-zA-Z0-9_-]/g, '_')}_Dossier.pdf`
 
-            await window.api.reports.exportDossier({
-                reportHtml: htmlContent,
-                attachmentPaths: uniquePaths,
-                suggestedFilename,
-            })
-        } catch (err) {
-            console.error('Export failed:', err)
-            setExportError(t('reports:errors.exportFailed'))
-        } finally {
-            setExporting(null)
-        }
-    }
+    //         await window.api.reports.exportDossier({
+    //             reportHtml: htmlContent,
+    //             attachmentPaths: uniquePaths,
+    //             suggestedFilename,
+    //         })
+    //     } catch (err) {
+    //         console.error('Export failed:', err)
+    //         setExportError(t('reports:errors.exportFailed'))
+    //     } finally {
+    //         setExporting(null)
+    //     }
+    // }
 
     // Documents grouped/stitched by category, or kept individual — see dossierExport.
     // Runs against the SAME local ReportData (still carrying real file paths) as
@@ -222,9 +222,14 @@ export function ExportScreen() {
 
                 {reportData && (
                     <div className="flex flex-wrap items-center gap-2">
-                        <Button onClick={handleExportDossier} disabled={isExporting} className="gap-2">
+                        <Button
+                            variant="outline"
+                            onClick={() => handleExportData('pdf')}
+                            disabled={isExporting}
+                            className="gap-2"
+                        >
                             <Download className="h-4 w-4" />
-                            {exporting === 'pdf' ? t('actions.generatingDossier') : t('actions.exportDossier')}
+                            {exporting === 'pdf' ? t('actions.generatingDossier') : t('actions.exportPdf', 'PDF')}
                         </Button>
                         <Button
                             variant="outline"

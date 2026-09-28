@@ -1,8 +1,20 @@
 export type DossierMode = 'stitched' | 'individual'
 export type DossierOutputKind = 'zip' | 'folder'
 
+/**
+ * A PDF or image to merge, from a real file on disk. `absolutePath`-based —
+ * every source the renderer's buildDossierPlan produces is real files the
+ * user owns.
+ *
+ * Named DossierSourceFile directly (not part of a union with an in-memory
+ * bytes variant) — that variant existed only to feed reports:exportDossier's
+ * printed-report PDF into mergeToPdf. Now that exportDossier is retired (the
+ * screen offers PDF/JSON/XLSX/CSV plus the stitched/individual document
+ * dossiers, and nothing else), nothing constructs an in-memory source
+ * anymore, so the union was reverted to keep this type honest about what
+ * actually exists.
+ */
 export interface DossierSourceFile {
-    /** Absolute path on THIS machine — only ever sent to the local main process, never serialized outward. */
     absolutePath: string
     kind: 'pdf' | 'image'
 }

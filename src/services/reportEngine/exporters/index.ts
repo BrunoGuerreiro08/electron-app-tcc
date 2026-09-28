@@ -2,10 +2,11 @@ import type { ReportData } from '../types'
 import { buildCsv, type CsvOptions } from './exportCsv'
 import { serializeExportJson } from './exportJson'
 import { buildXlsx } from './exportXlsx'
+import { buildReportHtml } from './exportPdf'
 import { downloadBlob } from './download'
 import { safeFilename, todayStamp } from './shared'
 
-export type DataExportFormat = 'json' | 'xlsx' | 'csv'
+export type DataExportFormat = 'pdf' | 'json' | 'xlsx' | 'csv'
 
 export interface ExportOptions {
     csv?: CsvOptions
@@ -13,10 +14,11 @@ export interface ExportOptions {
     description?: string | null
     templateOrigin?: { templateName: string; templateFingerprint: string } | null
     /**
-     * JSON exports go through a native "Save as" dialog and get marked
-     * read-only on disk (default true) instead of a browser-style download —
-     * see electron/ipc/exportFiles.ts. Set false to keep the old download
-     * behavior (e.g. for an automated/background export with no dialog).
+     * PDF and JSON exports go through a native "Save as" dialog and get
+     * marked read-only on disk (default true) instead of a browser-style
+     * download — see reports:saveFile in electron/ipc/reports.ts. Set false
+     * to keep the old download behavior (e.g. an automated/background export
+     * with no dialog).
      */
     readOnly?: boolean
 }
@@ -36,6 +38,23 @@ export async function exportReportData(
     const base = `${safeFilename(report.collectionName)}_${todayStamp()}`
 
     switch (format) {
+        case 'pdf': {
+            const html = buildReportHtml(report)
+            const bytes = await window.api.reports.printToPdf(html)
+            if (options.readOnly === false) {
+                downloadBlob(new Blob([new Uint8Array(bytes)], { type: 'application/pdf' }), `${base}_relatorio.pdf`)
+                return
+            }
+            // Same reasoning as JSON below: saved through a native dialog (not a
+            // browser download) so the result can be marked read-only on disk.
+            await window.api.reports.saveFile({
+                content: bytes,
+                suggestedFilename: `${base}_relatorio`,
+                extension: 'pdf',
+                readOnly: true,
+            })
+            return
+        }
         case 'json': {
             const text = serializeExportJson(report, {
                 description: options.description,
@@ -47,7 +66,7 @@ export async function exportReportData(
             }
             // Saved (not downloaded) so it can be marked read-only: window.location's download
             // attribute gives the browser no handle to the final file to chmod afterward.
-            await window.api.exportFiles.saveText({
+            await window.api.reports.saveFile({
                 content: text,
                 suggestedFilename: `${base}_export`,
                 extension: 'json',

@@ -79,9 +79,30 @@ declare global {
                 detectOrphans: () => Promise<{ orphanedFiles: string[]; missingFiles: string[] }>
                 detectDroppedFiles: () => Promise<import('./entities').ScannedFile[]>
             }
+            reviews: {
+                list(): Promise<ReviewListItem[]>
+                get(id: string): Promise<StoredReview>
+                save(input: SaveReviewInput): Promise<ReviewListItem>
+                remove(id: string): Promise<void>
+            }
             reports: {
-                printToPdf: (htmlContent: string) => Promise<Uint8Array>
-                exportDossier: (params: ReportExportParams) => Promise<ReportExportResult>
+                printToPdf(htmlContent: string): Promise<Uint8Array>
+                chooseDossierDestination(args: {
+                    outputKind: DossierOutputKind
+                    collectionName: string
+                }): Promise<string | null>
+                runDossierExport(args: {
+                    plan: DossierPlan
+                    outputKind: DossierOutputKind
+                    destinationPath: string
+                    readOnly?: boolean
+                }): Promise<DossierRunResult>
+                saveFile(args: {
+                    content: string | Uint8Array
+                    suggestedFilename: string
+                    extension: string
+                    readOnly?: boolean
+                }): Promise<{ path: string } | null>
             }
             preferences: {
                 get: () => Promise<{ language: 'en' | 'pt-BR'; theme: 'light' | 'dark' }>
@@ -115,13 +136,7 @@ declare global {
                     | { ok: false; errors: string[] }
                 >
             }
-            reviews: {
-                list(): Promise<ReviewListItem[]>
-                get(id: string): Promise<StoredReview>
-                save(input: SaveReviewInput): Promise<ReviewListItem>
-                remove(id: string): Promise<void>
-            }
-            /*Not sure what this replaces*/
+
             exportFiles: {
                 saveText(args: {
                     content: string

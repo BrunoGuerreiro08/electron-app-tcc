@@ -90,11 +90,10 @@ contextBridge.exposeInMainWorld('api', {
     reports: {
         printToPdf: (htmlContent: string) =>
             ipcRenderer.invoke('reports:printToPdf', htmlContent),
-        exportDossier: (params: {
-            reportHtml: string
-            attachmentPaths: string[]
-            suggestedFilename: string
-        }) => ipcRenderer.invoke('reports:exportDossier', params),
+        chooseDossierDestination: (args: unknown) =>
+            ipcRenderer.invoke('reports:chooseDossierDestination', args),
+        runDossierExport: (args: unknown) => ipcRenderer.invoke('reports:runDossierExport', args),
+        saveFile: (args: unknown) => ipcRenderer.invoke('reports:saveFile', args),
     },
     preferences: {
         get: () => ipcRenderer.invoke('preferences:get'),
