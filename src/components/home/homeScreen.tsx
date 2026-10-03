@@ -50,9 +50,8 @@ export function HomeScreen() {
         navigate(`/collections/${id}`)
     }
 
-    const handleTemplateCreated = (collectionId: string) => {
-        // call whatever refreshes `collections` after handleCreate() today —
-        // I don't have that function's name from the fragment you shared
+    const handleTemplateCreated = async (collectionId: string) => {
+        await load()
         navigate(`/collections/${collectionId}`)
     }
 
