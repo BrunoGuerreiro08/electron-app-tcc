@@ -109,7 +109,7 @@ export function LoginScreen() {
                   </div>
                   <div className="relative flex justify-center text-xs uppercase">
                     <span className="bg-card px-2 text-muted-foreground">
-                      {t('login.emailStep.orDivider', 'Or')}
+                      {t('login.emailStep.orDivider')}
                     </span>
                   </div>
                 </div>
@@ -122,7 +122,7 @@ export function LoginScreen() {
                   onClick={() => loginAsGuest && loginAsGuest()}
                 >
                   <User className="h-4 w-4" />
-                  {t('login.emailStep.guestMode', 'Continue as Guest')}
+                  {t('login.emailStep.guestMode')}
                 </Button>
               </form>
             )}

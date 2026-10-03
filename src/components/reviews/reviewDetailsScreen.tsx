@@ -45,16 +45,16 @@ export function ReviewDetailScreen() {
         return (
             <div className="p-12 text-center space-y-3">
                 <p className="text-sm text-muted-foreground">
-                    {t('errors.notFound', 'Não foi possível abrir esta revisão. Ela pode ter sido excluída.')}
+                    {t('errors.notFound')}
                 </p>
                 <Button variant="outline" onClick={() => navigate('/reviews')}>
-                    {t('actions.backToList', 'Voltar para as revisões')}
+                    {t('actions.backToList')}
                 </Button>
             </div>
         )
     }
     if (!review) {
-        return <div className="p-12 text-center text-sm text-muted-foreground">{t('loading', 'Carregando…')}</div>
+        return <div className="p-12 text-center text-sm text-muted-foreground">{t('loading')}</div>
     }
     return <ReviewView review={review} onBack={() => navigate('/reviews')} />
 }
@@ -97,7 +97,7 @@ export function ReviewView({ review, onBack }: { review: StoredReview; onBack?: 
         <div className="space-y-6 p-6 max-w-5xl mx-auto">
             <div className="flex items-start gap-3">
                 {onBack && (
-                    <Button variant="ghost" size="icon" onClick={onBack} title={t('actions.backToList', 'Voltar para as revisões')}>
+                    <Button variant="ghost" size="icon" onClick={onBack} title={t('actions.backToList')}>
                         <ArrowLeft className="h-5 w-5" />
                     </Button>
                 )}
@@ -108,10 +108,10 @@ export function ReviewView({ review, onBack }: { review: StoredReview; onBack?: 
                     </h1>
                     <p className="text-sm text-muted-foreground">
                         {data.exported_by
-                            ? `${t('fields.sender', 'Enviada por')} ${data.exported_by.name}${data.exported_by.email ? ` (${data.exported_by.email})` : ''}`
-                            : t('fields.senderUnknown', 'Remetente não informado')}
+                            ? `${t('fields.sender')} ${data.exported_by.name}${data.exported_by.email ? ` (${data.exported_by.email})` : ''}`
+                            : t('fields.senderUnknown')}
                         {' · '}
-                        {t('fields.exportedAt', 'Exportada em')} {fmtDateTime(data.exported_at)}
+                        {t('fields.exportedAt')} {fmtDateTime(data.exported_at)}
                     </p>
                 </div>
                 <div className="flex flex-col items-end gap-1 shrink-0">
@@ -124,22 +124,19 @@ export function ReviewView({ review, onBack }: { review: StoredReview; onBack?: 
 
             <div role="note" className="rounded-lg border bg-muted/40 p-4 text-sm space-y-1">
                 <div className="flex items-center gap-2 font-medium">
-                    <Badge variant="secondary">{t('badge.readOnly', 'Somente leitura')}</Badge>
-                    {t('banner.title', 'Cópia recebida para conferência')}
+                    <Badge variant="secondary">{t('badge.readOnly')}</Badge>
+                    {t('banner.title')}
                 </div>
                 <p className="text-muted-foreground">
-                    {t(
-                        'banner.body',
-                        'Os dados e as pontuações abaixo são os enviados por quem exportou e não podem ser alterados aqui. Os arquivos anexados não vêm junto com a exportação.'
-                    )}
+                    {t('banner.body')}
                 </p>
                 <p className="text-muted-foreground">
-                    {stats.documents} {t('fields.documents', 'documentos')}
+                    {stats.documents} {t('fields.documents')}
                     {stats.withoutFile > 0 && (
                         <>
                             {' · '}
                             <span className="text-amber-600">
-                                {stats.withoutFile} {t('stats.withoutFile', 'sem anexo')}
+                                {stats.withoutFile} {t('stats.withoutFile')}
                             </span>
                         </>
                     )}
@@ -150,7 +147,7 @@ export function ReviewView({ review, onBack }: { review: StoredReview; onBack?: 
                         checked={hideEmpty}
                         onChange={(e) => setHideEmpty(e.target.checked)}
                     />
-                    {t('filters.hideEmpty', 'Ocultar categorias sem documentos')}
+                    {t('filters.hideEmpty')}
                 </label>
             </div>
 
@@ -169,12 +166,12 @@ export function ReviewView({ review, onBack }: { review: StoredReview; onBack?: 
                                 <div className="flex items-center gap-2">
                                     {group.min_points != null && (
                                         <span className="text-xs text-muted-foreground">
-                                            {t('fields.min', 'mín.')} {pts(group.min_points)}
+                                            {t('fields.min')} {pts(group.min_points)}
                                         </span>
                                     )}
                                     {group.score.bonus != null && group.score.bonus > 0 && (
                                         <Badge variant="secondary">
-                                            +{pts(group.score.bonus)} {t('fields.bonus', 'excedente')}
+                                            +{pts(group.score.bonus)} {t('fields.bonus')}
                                         </Badge>
                                     )}
                                     {group.score.completion && (
@@ -198,7 +195,7 @@ export function ReviewView({ review, onBack }: { review: StoredReview; onBack?: 
                                             <div className="flex items-center gap-2">
                                                 {sub.max_points != null && (
                                                     <span className="text-xs text-muted-foreground">
-                                                        {t('fields.max', 'máx.')} {pts(sub.max_points)}
+                                                        {t('fields.max')} {pts(sub.max_points)}
                                                     </span>
                                                 )}
                                                 {sub.score.completion && (
@@ -206,8 +203,8 @@ export function ReviewView({ review, onBack }: { review: StoredReview; onBack?: 
                                                 )}
                                                 {sub.score.raw_total !== sub.score.total && (
                                                     <span className="text-xs text-muted-foreground">
-                                                        {t('fields.earned', 'obtido')} {pts(sub.score.raw_total)} →{' '}
-                                                        {t('fields.counted', 'contabilizado')}
+                                                        {t('fields.earned')} {pts(sub.score.raw_total)} →{' '}
+                                                        {t('fields.counted')}
                                                     </span>
                                                 )}
                                                 <MismatchTag items={flagged.get(keyOf.subgroup(gi, si))} />
@@ -229,13 +226,13 @@ export function ReviewView({ review, onBack }: { review: StoredReview; onBack?: 
                                                             {cat.score.capped && (
                                                                 <span className="text-xs text-muted-foreground">
                                                                     {' '}
-                                                                    ({t('fields.capped', 'teto atingido; bruto')} {pts(cat.score.raw_total)})
+                                                                    ({t('fields.capped')} {pts(cat.score.raw_total)})
                                                                 </span>
                                                             )}
                                                         </span>
                                                     </div>
                                                     <div className="text-xs text-muted-foreground">
-                                                        {t('fields.rule', 'Regra')}: {describeRule(cat.rule)}
+                                                        {t('fields.rule')}: {describeRule(cat.rule)}
                                                     </div>
 
                                                     {cat.documents.length > 0 && (
@@ -249,12 +246,12 @@ export function ReviewView({ review, onBack }: { review: StoredReview; onBack?: 
                                                                         {doc.has_file ? (
                                                                             <Paperclip
                                                                                 className="h-3.5 w-3.5 mt-0.5 text-emerald-600 shrink-0"
-                                                                                aria-label={t('doc.hasFile', 'Possui anexo (arquivo não incluído)')}
+                                                                                aria-label={t('doc.hasFile')}
                                                                             />
                                                                         ) : (
                                                                             <AlertCircle
                                                                                 className="h-3.5 w-3.5 mt-0.5 text-amber-500 shrink-0"
-                                                                                aria-label={t('doc.noFile', 'Sem anexo')}
+                                                                                aria-label={t('doc.noFile')}
                                                                             />
                                                                         )}
                                                                         <div className="min-w-0">

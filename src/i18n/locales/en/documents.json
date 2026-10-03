@@ -52,7 +52,8 @@
             "attach": "Attach",
             "link": "Link",
             "selectAll": "Select all",
-            "manageTags": "Manage tags"
+            "manageTags": "Manage tags",
+            "removeFilter": "Remove filter"
         },
         "delete": {
             "title": "Delete \"{{title}}\"?",

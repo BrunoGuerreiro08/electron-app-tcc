@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react'
+import { useTranslation } from 'react-i18next'
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -12,12 +13,8 @@ interface Props {
     onSaved: () => void
 }
 
-// NOTE: hardcoded strings throughout — same i18n caveat flagged elsewhere
-// this session (no visibility into the locale JSON files). Suggest a
-// collections:groupEditDialog.* namespace mirroring whatever
-// subgroupCreateDialog/subgroupCard already use.
-
 export function EditGroupDialog({ group, onOpenChange, onSaved }: Props) {
+    const { t } = useTranslation(['collections', 'common'])
     const [name, setName] = useState('')
     const [minPoints, setMinPoints] = useState('')
     const [maxPoints, setMaxPoints] = useState('')
@@ -64,46 +61,46 @@ export function EditGroupDialog({ group, onOpenChange, onSaved }: Props) {
         <Dialog open={group !== null} onOpenChange={onOpenChange}>
             <DialogContent>
                 <DialogHeader>
-                    <DialogTitle>Edit group</DialogTitle>
+                    <DialogTitle>{t('groupDialog.editTitle')}</DialogTitle>
                 </DialogHeader>
 
                 <div className="space-y-3">
                     <div className="space-y-1">
-                        <Label>Name</Label>
+                        <Label>{t('common:fields.name')}</Label>
                         <Input value={name} onChange={(e) => setName(e.target.value)} autoFocus />
                     </div>
 
                     <div className="grid grid-cols-2 gap-3">
                         <div className="space-y-1">
-                            <Label>Minimum points</Label>
+                            <Label>{t('groupDialog.minPointsLabel')}</Label>
                             <Input
                                 type="number"
                                 value={minPoints}
                                 onChange={(e) => setMinPoints(e.target.value)}
-                                placeholder="None"
+                                placeholder={t('groupDialog.pointsPlaceholder')}
                             />
                         </div>
                         <div className="space-y-1">
-                            <Label>Maximum points</Label>
+                            <Label>{t('groupDialog.maxPointsLabel')}</Label>
                             <Input
                                 type="number"
                                 value={maxPoints}
                                 onChange={(e) => setMaxPoints(e.target.value)}
-                                placeholder="None"
+                                placeholder={t('groupDialog.pointsPlaceholder')}
                             />
                         </div>
                     </div>
 
                     <div className="space-y-1">
-                        <Label>Surplus bonus (% of points above minimum)</Label>
+                        <Label>{t('groupDialog.bonusLabel')}</Label>
                         <Input
                             type="number"
                             value={bonusPercent}
                             onChange={(e) => setBonusPercent(e.target.value)}
-                            placeholder="None"
+                            placeholder={t('groupDialog.pointsPlaceholder')}
                         />
                         <p className="text-xs text-muted-foreground">
-                            Requires a minimum to be set — the bonus applies only to points earned above it.
+                            {t('groupDialog.bonusHelperText')}
                         </p>
                     </div>
 
@@ -112,7 +109,7 @@ export function EditGroupDialog({ group, onOpenChange, onSaved }: Props) {
 
                 <DialogFooter>
                     <Button onClick={handleSave} disabled={!name.trim() || saving}>
-                        {saving ? 'Saving…' : 'Save'}
+                        {saving ? t('common:states.saving') : t('common:actions.save')}
                     </Button>
                 </DialogFooter>
             </DialogContent>

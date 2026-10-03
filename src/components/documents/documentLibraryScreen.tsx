@@ -298,7 +298,7 @@ export function DocumentLibraryScreen() {
                         <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
                         <Input
                             type="search"
-                            placeholder={t('library.searchPlaceholder', 'Search by title, issuer...')}
+                            placeholder={t('library.searchPlaceholder')}
                             className="pl-9 h-9"
                             value={searchQuery}
                             onChange={(e) => setSearchQuery(e.target.value)}
@@ -343,7 +343,7 @@ export function DocumentLibraryScreen() {
 
                             <Button variant="outline" size="sm" onClick={() => setManageTagsOpen(true)} className="gap-2">
                                 <Settings className="h-4 w-4" />
-                                {t('library.actions.manageTags', 'Manage Tags')}
+                                {t('library.actions.manageTags')}
                             </Button>
                         </div>
 
@@ -378,7 +378,7 @@ export function DocumentLibraryScreen() {
                                             <button
                                                 onClick={() => handleRemoveFilterTag(tag)}
                                                 className="hover:bg-background/50 rounded-sm p-0.5 focus:outline-none text-muted-foreground hover:text-foreground"
-                                                title="Remove filter"
+                                                title={t('library.actions.removeFilter')}
                                             >
                                                 <X className="h-3 w-3" />
                                             </button>
@@ -399,7 +399,7 @@ export function DocumentLibraryScreen() {
                 </p>
             ) : filteredDocuments.length === 0 ? (
                 <p className="text-sm text-muted-foreground py-4 text-center">
-                    {t('library.noSearchResults', 'No documents match your search.')}
+                    {t('library.noSearchResults')}
                 </p>
             ) : (
                 <div className="space-y-2">

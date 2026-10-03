@@ -84,7 +84,7 @@ export function BulkLinkCategoriesDialog({
                     <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
                     <Input
                         type="search"
-                        placeholder={t('linkCategories.searchPlaceholder', 'Search categories...')}
+                        placeholder={t('linkCategories.searchPlaceholder')}
                         className="pl-9"
                         value={searchQuery}
                         onChange={(e) => setSearchQuery(e.target.value)}
@@ -100,7 +100,7 @@ export function BulkLinkCategoriesDialog({
                     </p>
                 ) : filteredOptions.length === 0 ? (
                     <p className="text-sm text-muted-foreground py-4 text-center">
-                        {t('linkCategories.noResults', 'No categories match your search.')}
+                        {t('linkCategories.noResults')}
                     </p>
                 ) : (
                     <div className="max-h-[60vh] space-y-4 overflow-y-auto pr-2">
@@ -130,7 +130,7 @@ export function BulkLinkCategoriesDialog({
 
                 <DialogFooter>
                     <Button onClick={handleSave} disabled={selectedCategoryIds.size === 0 || actionLoading}>
-                        {t('form.actions.save', 'Save')}
+                        {t('form.actions.save')}
                     </Button>
                 </DialogFooter>
             </DialogContent>

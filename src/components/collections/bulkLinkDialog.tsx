@@ -8,6 +8,7 @@ import {
     type DragEvent,
     type ReactNode,
 } from 'react'
+import { useTranslation } from 'react-i18next'
 import {
     Dialog,
     DialogContent,
@@ -70,8 +71,6 @@ interface Spring {
     headerEnter: () => void
     headerLeave: () => void
 }
-
-const plural = (n: number, one: string, many: string) => (n === 1 ? one : many)
 
 function tally<T>(items: T[], key: (item: T) => string) {
     const map = new Map<string, number>()
@@ -182,12 +181,13 @@ function CategoryRow({
     onDrop,
     onAddSelected,
 }: CategoryRowProps) {
+    const { t } = useTranslation('collections')
     return (
         <div
             onDragOver={onDragOver}
             onDragLeave={onDragLeave}
             onDrop={onDrop}
-            title={isSource ? `${name} (current category)` : name}
+            title={isSource ? t('bulkLinkDialog.currentCategorySuffix', { name }) : name}
             className={`group ml-4 flex items-center gap-2 rounded p-1.5 text-sm transition-colors ${isSource
                     ? 'text-muted-foreground/50'
                     : isOver
@@ -201,7 +201,7 @@ function CategoryRow({
                 <button
                     type="button"
                     onClick={onAddSelected}
-                    title={`Link ${selectedCount} selected ${plural(selectedCount, 'document', 'documents')} here`}
+                    title={t('bulkLinkDialog.linkSelectedHere', { count: selectedCount })}
                     className="shrink-0 rounded p-0.5 text-muted-foreground opacity-0 hover:bg-muted hover:text-foreground focus-visible:opacity-100 group-hover:opacity-100"
                 >
                     <Plus className="h-3.5 w-3.5" />
@@ -223,6 +223,7 @@ export function BulkLinkDialog({
     documents,
     onLinked,
 }: Props) {
+    const { t } = useTranslation('collections')
     const [step, setStep] = useState<Step>('browse')
     const [selectedDocIds, setSelectedDocIds] = useState<Set<string>>(new Set())
 
@@ -312,8 +313,8 @@ export function BulkLinkDialog({
 
     useEffect(() => {
         if (!notice) return
-        const t = setTimeout(() => setNotice(null), 4000)
-        return () => clearTimeout(t)
+        const timer = setTimeout(() => setNotice(null), 4000)
+        return () => clearTimeout(timer)
     }, [notice])
 
     // ---- undo / redo ------------------------------------------------------
@@ -378,9 +379,9 @@ export function BulkLinkDialog({
     // ---- expand / collapse -----------------------------------------------
 
     const cancelTimer = (timers: typeof openTimers, id: string) => {
-        const t = timers.current.get(id)
-        if (t !== undefined) {
-            clearTimeout(t)
+        const timer = timers.current.get(id)
+        if (timer !== undefined) {
+            clearTimeout(timer)
             timers.current.delete(id)
         }
     }
@@ -524,7 +525,7 @@ export function BulkLinkDialog({
             dispatch({ type: 'add', changes: fresh })
             setNotice(
                 skipped > 0
-                    ? `${skipped} ${plural(skipped, 'document is', 'documents are')} already linked to "${target.category.name}" — skipped.`
+                    ? t('bulkLinkDialog.alreadyLinkedNotice', { count: skipped, category: target.category.name })
                     : null
             )
         } catch (err) {
@@ -590,17 +591,16 @@ export function BulkLinkDialog({
             */}
             <DialogContent className="sm:max-w-4xl [&>*]:min-w-0">
                 <DialogHeader>
-                    <DialogTitle>Link documents to other categories</DialogTitle>
+                    <DialogTitle>{t('bulkLinkDialog.title')}</DialogTitle>
                     <DialogDescription>
-                        Drag documents from{' '}
+                        {t('bulkLinkDialog.descriptionBefore')}{' '}
                         <span
                             className="inline-block max-w-[28ch] truncate align-bottom font-medium"
                             title={sourceCategoryName}
                         >
                             {sourceCategoryName}
                         </span>{' '}
-                        onto the categories you want them linked to. Nothing is removed from this category, and
-                        nothing is saved until you press Apply.
+                        {t('bulkLinkDialog.descriptionAfter')}
                     </DialogDescription>
                 </DialogHeader>
 
@@ -612,12 +612,15 @@ export function BulkLinkDialog({
                             {/* Left: source documents (drag sources) */}
                             <div className="flex w-1/2 min-w-0 flex-col gap-2">
                                 <div className="text-xs font-medium text-muted-foreground">
-                                    {selectedDocIds.size} of {documents.length} documents selected
+                                    {t('bulkLinkDialog.documentsSelected', {
+                                        selected: selectedDocIds.size,
+                                        total: documents.length,
+                                    })}
                                 </div>
                                 <div className="flex-1 overflow-y-auto rounded-md border">
                                     {documents.length === 0 ? (
                                         <p className="p-4 text-sm text-muted-foreground">
-                                            No documents in this category yet.
+                                            {t('bulkLinkDialog.emptyDocuments')}
                                         </p>
                                     ) : (
                                         documents.map((doc) => (
@@ -652,7 +655,7 @@ export function BulkLinkDialog({
                             {/* Right: destination tree (drop targets) */}
                             <div className="flex w-1/2 min-w-0 flex-col gap-2">
                                 <div className="text-xs font-medium text-muted-foreground">
-                                    Drop on a category — folders open as you hover
+                                    {t('bulkLinkDialog.dropHint')}
                                 </div>
                                 <div className="flex-1 overflow-y-auto overflow-x-hidden rounded-md border p-1">
                                     {collections.map((col) => {
@@ -772,7 +775,7 @@ export function BulkLinkDialog({
                         <div className="flex flex-col gap-1.5">
                             <div className="flex items-center justify-between gap-2">
                                 <span className="text-xs font-medium text-muted-foreground">
-                                    Pending changes ({changes.length})
+                                    {t('bulkLinkDialog.pendingChanges', { count: changes.length })}
                                 </span>
                                 <div className="flex items-center gap-1">
                                     <Button
@@ -780,20 +783,20 @@ export function BulkLinkDialog({
                                         size="sm"
                                         onClick={undo}
                                         disabled={!canUndo}
-                                        title={`Undo (${MOD_KEY}+Z)`}
+                                        title={t('bulkLinkDialog.undoTooltip', { key: MOD_KEY })}
                                     >
                                         <Undo2 className="mr-1 h-3.5 w-3.5" />
-                                        Undo
+                                        {t('bulkLinkDialog.undo')}
                                     </Button>
                                     <Button
                                         variant="ghost"
                                         size="sm"
                                         onClick={redo}
                                         disabled={!canRedo}
-                                        title={`Redo (${MOD_KEY}+Shift+Z)`}
+                                        title={t('bulkLinkDialog.redoTooltip', { key: MOD_KEY })}
                                     >
                                         <Redo2 className="mr-1 h-3.5 w-3.5" />
-                                        Redo
+                                        {t('bulkLinkDialog.redo')}
                                     </Button>
                                     <Button
                                         variant="ghost"
@@ -801,7 +804,7 @@ export function BulkLinkDialog({
                                         onClick={() => dispatch({ type: 'clear' })}
                                         disabled={changes.length === 0}
                                     >
-                                        Clear all
+                                        {t('bulkLinkDialog.clearAll')}
                                     </Button>
                                 </div>
                             </div>
@@ -809,7 +812,7 @@ export function BulkLinkDialog({
                             <div ref={changesListRef} className="h-[120px] overflow-y-auto rounded-md border">
                                 {changes.length === 0 ? (
                                     <p className="p-4 text-sm text-muted-foreground">
-                                        Nothing staged yet. Drag a document onto a category to add it here.
+                                        {t('bulkLinkDialog.emptyChanges')}
                                     </p>
                                 ) : (
                                     changes.map((c) => (
@@ -834,7 +837,7 @@ export function BulkLinkDialog({
                                             <button
                                                 type="button"
                                                 onClick={() => dispatch({ type: 'remove', id: c.id })}
-                                                title="Remove this change"
+                                                title={t('bulkLinkDialog.removeChange')}
                                                 className="shrink-0 rounded p-0.5 text-muted-foreground hover:bg-muted hover:text-foreground"
                                             >
                                                 <X className="h-3.5 w-3.5" />
@@ -854,7 +857,7 @@ export function BulkLinkDialog({
 
                 {step === 'saving' && (
                     <p className="flex h-[460px] items-center justify-center text-sm text-muted-foreground">
-                        Linking documents…
+                        {t('bulkLinkDialog.linking')}
                     </p>
                 )}
 
@@ -862,11 +865,11 @@ export function BulkLinkDialog({
                     <div className="flex h-[460px] flex-col items-center justify-center gap-2 text-center">
                         <CheckCircle2 className="h-8 w-8 text-muted-foreground" />
                         <p className="text-sm">
-                            Linked {result.linked} document{result.linked === 1 ? '' : 's'}
+                            {t('bulkLinkDialog.linkedResult', { count: result.linked })}
                             {result.skipped > 0 && (
                                 <span className="text-muted-foreground">
                                     {' '}
-                                    ({result.skipped} already linked, skipped)
+                                    {t('bulkLinkDialog.skippedSuffix', { count: result.skipped })}
                                 </span>
                             )}
                             .
@@ -878,22 +881,24 @@ export function BulkLinkDialog({
                     {step === 'browse' && confirmDiscard && (
                         <>
                             <span className="mr-auto self-center text-sm text-muted-foreground">
-                                Discard {changes.length} pending {plural(changes.length, 'change', 'changes')}?
+                                {t('bulkLinkDialog.discardConfirm', { count: changes.length })}
                             </span>
                             <Button variant="ghost" onClick={() => setConfirmDiscard(false)}>
-                                Keep editing
+                                {t('bulkLinkDialog.keepEditing')}
                             </Button>
                             <Button variant="destructive" onClick={() => onOpenChange(false)}>
-                                Discard
+                                {t('bulkLinkDialog.discard')}
                             </Button>
                         </>
                     )}
                     {step === 'browse' && !confirmDiscard && (
                         <Button onClick={handleApply} disabled={!canApply}>
-                            Apply {changes.length || ''} link{changes.length === 1 ? '' : 's'}
+                            {t('bulkLinkDialog.applyLink', { count: changes.length })}
                         </Button>
                     )}
-                    {step === 'done' && <Button onClick={() => onOpenChange(false)}>Done</Button>}
+                    {step === 'done' && (
+                        <Button onClick={() => onOpenChange(false)}>{t('bulkLinkDialog.done')}</Button>
+                    )}
                 </DialogFooter>
             </DialogContent>
         </Dialog>

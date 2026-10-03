@@ -91,7 +91,7 @@ export function BulkTagsDialog({ selectedIds, open, onOpenChange, onChanged }: B
                         <Input
                             value={newTagName}
                             onChange={(e) => setNewTagName(e.target.value)}
-                            placeholder={t('tags.placeholder', 'New tag name...')}
+                            placeholder={t('tags.placeholder')}
                             className="h-8 text-xs flex-1"
                             onKeyDown={(e) => e.key === 'Enter' && createAndSelectTag()}
                         />
@@ -102,7 +102,7 @@ export function BulkTagsDialog({ selectedIds, open, onOpenChange, onChanged }: B
                 </div>
                 <DialogFooter>
                     <Button onClick={handleSave} disabled={selectedTagIds.size === 0 || loading}>
-                        {t('form.actions.save', 'Save')}
+                        {t('form.actions.save')}
                     </Button>
                 </DialogFooter>
             </DialogContent>

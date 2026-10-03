@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react'
+import { useTranslation } from 'react-i18next'
 import {
     Dialog,
     DialogContent,
@@ -15,13 +16,6 @@ import { templateRepository } from '@/repository/templateRepository'
 import type { TemplateSummary, DocumentMatchSummary } from '@/types/entities'
 import { Upload, FileWarning, FileArchive } from 'lucide-react'
 
-// NOTE: strings here are hardcoded rather than run through t() — I don't
-// have visibility into the locale JSON files (en / pt-BR) this project
-// uses elsewhere (see the home:collections.* keys in the screen this
-// plugs into), so these need moving into that structure before ship.
-// Left as plain strings rather than guessing at key names that might
-// collide with or duplicate existing ones.
-
 type Tab = 'official' | 'imported'
 
 interface Props {
@@ -31,6 +25,7 @@ interface Props {
 }
 
 export function UseTemplateDialog({ open, onOpenChange, onCreated }: Props) {
+    const { t } = useTranslation('collections')
     const [tab, setTab] = useState<Tab>('official')
     const [official, setOfficial] = useState<TemplateSummary[]>([])
     const [imported, setImported] = useState<TemplateSummary[]>([])
@@ -75,14 +70,14 @@ export function UseTemplateDialog({ open, onOpenChange, onCreated }: Props) {
 
     // Only a collection_export reused as a template carries a documents[]
     // list per category — plain structure-only templates never do.
-    const hasDocumentRefs = (t: TemplateSummary): boolean =>
-        t.template.groups.some((g) =>
+    const hasDocumentRefs = (tpl: TemplateSummary): boolean =>
+        tpl.template.groups.some((g) =>
             g.subgroups.some((sg) => sg.categories.some((cat) => (cat.documents?.length ?? 0) > 0))
         )
 
-    const handleSelect = (t: TemplateSummary) => {
-        setSelected(t)
-        setCollectionName(t.template.name)
+    const handleSelect = (tpl: TemplateSummary) => {
+        setSelected(tpl)
+        setCollectionName(tpl.template.name)
         setImportErrors(null)
         setZipPath(null)
         setMatchSummary(null)
@@ -147,10 +142,9 @@ export function UseTemplateDialog({ open, onOpenChange, onCreated }: Props) {
         <Dialog open={open} onOpenChange={onOpenChange}>
             <DialogContent className="sm:max-w-2xl">
                 <DialogHeader>
-                    <DialogTitle>New collection from template</DialogTitle>
+                    <DialogTitle>{t('useTemplateDialog.title')}</DialogTitle>
                     <DialogDescription>
-                        Start from a pre-built structure of groups, subgroups, categories, and
-                        scoring rules — fully editable once created.
+                        {t('useTemplateDialog.description')}
                     </DialogDescription>
                 </DialogHeader>
 
@@ -158,13 +152,17 @@ export function UseTemplateDialog({ open, onOpenChange, onCreated }: Props) {
                     <div className="flex items-center justify-between">
                         <Tabs value={tab} onValueChange={(v) => setTab(v as Tab)}>
                             <TabsList>
-                                <TabsTrigger value="official">Official ({official.length})</TabsTrigger>
-                                <TabsTrigger value="imported">Imported ({imported.length})</TabsTrigger>
+                                <TabsTrigger value="official">
+                                    {t('useTemplateDialog.tabs.official', { count: official.length })}
+                                </TabsTrigger>
+                                <TabsTrigger value="imported">
+                                    {t('useTemplateDialog.tabs.imported', { count: imported.length })}
+                                </TabsTrigger>
                             </TabsList>
                         </Tabs>
                         <Button variant="outline" size="sm" onClick={handleImport}>
                             <Upload className="h-3.5 w-3.5" />
-                            Import template
+                            {t('useTemplateDialog.importButton')}
                         </Button>
                     </div>
 
@@ -183,38 +181,37 @@ export function UseTemplateDialog({ open, onOpenChange, onCreated }: Props) {
                         {/* Template list */}
                         <div className="w-1/2 overflow-y-auto rounded-md border">
                             {loading ? (
-                                <p className="p-4 text-sm text-muted-foreground">Loading…</p>
+                                <p className="p-4 text-sm text-muted-foreground">{t('useTemplateDialog.loading')}</p>
                             ) : list.length === 0 ? (
                                 <p className="p-4 text-sm text-muted-foreground">
                                     {tab === 'official'
-                                        ? 'No official templates yet.'
-                                        : 'No imported templates yet — use "Import template" above.'}
+                                        ? t('useTemplateDialog.emptyOfficial')
+                                        : t('useTemplateDialog.emptyImported')}
                                 </p>
                             ) : (
-                                list.map((t) => {
-                                    const subgroupCount = t.template.groups.reduce(
+                                list.map((tpl) => {
+                                    const subgroupCount = tpl.template.groups.reduce(
                                         (n, g) => n + g.subgroups.length,
                                         0
                                     )
-                                    const categoryCount = t.template.groups.reduce(
+                                    const categoryCount = tpl.template.groups.reduce(
                                         (n, g) => n + g.subgroups.reduce((m, sg) => m + sg.categories.length, 0),
                                         0
                                     )
                                     return (
                                         <button
-                                            key={t.fileName}
-                                            onClick={() => handleSelect(t)}
-                                            className={`block w-full border-b p-2 text-left text-sm last:border-b-0 hover:bg-muted/60 ${selected?.fileName === t.fileName && selected.source === t.source
+                                            key={tpl.fileName}
+                                            onClick={() => handleSelect(tpl)}
+                                            className={`block w-full border-b p-2 text-left text-sm last:border-b-0 hover:bg-muted/60 ${selected?.fileName === tpl.fileName && selected.source === tpl.source
                                                     ? 'bg-muted'
                                                     : ''
                                                 }`}
                                         >
-                                            <p className="font-medium">{t.template.name}</p>
+                                            <p className="font-medium">{tpl.template.name}</p>
                                             <p className="text-xs text-muted-foreground">
-                                                {t.template.groups.length} group
-                                                {t.template.groups.length === 1 ? '' : 's'} · {subgroupCount}{' '}
-                                                subgroup{subgroupCount === 1 ? '' : 's'} · {categoryCount}{' '}
-                                                categories
+                                                {t('useTemplateDialog.summary.groups', { count: tpl.template.groups.length })} ·{' '}
+                                                {t('useTemplateDialog.summary.subgroups', { count: subgroupCount })} ·{' '}
+                                                {t('useTemplateDialog.summary.categories', { count: categoryCount })}
                                             </p>
                                         </button>
                                     )
@@ -226,7 +223,7 @@ export function UseTemplateDialog({ open, onOpenChange, onCreated }: Props) {
                         <div className="flex w-1/2 flex-col gap-2 overflow-y-auto rounded-md border p-3">
                             {!selected ? (
                                 <p className="text-sm text-muted-foreground">
-                                    Select a template to preview its structure.
+                                    {t('useTemplateDialog.selectPrompt')}
                                 </p>
                             ) : (
                                 <>
@@ -236,12 +233,17 @@ export function UseTemplateDialog({ open, onOpenChange, onCreated }: Props) {
                                                 <p className="text-sm font-semibold">{grp.name}</p>
                                                 {(grp.min_points != null || grp.max_points != null) && (
                                                     <Badge variant="outline" className="text-xs">
-                                                        {grp.min_points ?? '–'}–{grp.max_points ?? '–'} pts
+                                                        {t('useTemplateDialog.pointsRange', {
+                                                            min: grp.min_points ?? '–',
+                                                            max: grp.max_points ?? '–',
+                                                        })}
                                                     </Badge>
                                                 )}
                                                 {grp.bonus_rate != null && (
                                                     <Badge variant="secondary" className="text-xs">
-                                                        +{Math.round(grp.bonus_rate * 100)}% surplus bonus
+                                                        {t('useTemplateDialog.surplusBonus', {
+                                                            percent: Math.round(grp.bonus_rate * 100),
+                                                        })}
                                                     </Badge>
                                                 )}
                                             </div>
@@ -251,7 +253,10 @@ export function UseTemplateDialog({ open, onOpenChange, onCreated }: Props) {
                                                         <p className="text-sm font-medium">{sg.name}</p>
                                                         {(sg.min_points != null || sg.max_points != null) && (
                                                             <Badge variant="outline" className="text-xs">
-                                                                {sg.min_points ?? '–'}–{sg.max_points ?? '–'} pts
+                                                                {t('useTemplateDialog.pointsRange', {
+                                                                    min: sg.min_points ?? '–',
+                                                                    max: sg.max_points ?? '–',
+                                                                })}
                                                             </Badge>
                                                         )}
                                                     </div>
@@ -275,7 +280,7 @@ export function UseTemplateDialog({ open, onOpenChange, onCreated }: Props) {
                         <Input
                             value={collectionName}
                             onChange={(e) => setCollectionName(e.target.value)}
-                            placeholder="Collection name"
+                            placeholder={t('useTemplateDialog.collectionNamePlaceholder')}
                         />
                     )}
 
@@ -290,10 +295,10 @@ export function UseTemplateDialog({ open, onOpenChange, onCreated }: Props) {
                             >
                                 <FileArchive className="h-3.5 w-3.5" />
                                 {matching
-                                    ? 'Matching…'
+                                    ? t('useTemplateDialog.matching')
                                     : zipPath
-                                        ? 'Change documents ZIP'
-                                        : 'Add documents from a ZIP (optional)'}
+                                        ? t('useTemplateDialog.changeZip')
+                                        : t('useTemplateDialog.addZip')}
                             </Button>
 
                             {matchErrors && (
@@ -309,9 +314,11 @@ export function UseTemplateDialog({ open, onOpenChange, onCreated }: Props) {
 
                             {matchSummary && (
                                 <p className="text-xs text-muted-foreground">
-                                    {matchSummary.added} will be added · {matchSummary.existing} already in
-                                    your library · {matchSummary.missing} not found in the ZIP (created without a
-                                    file)
+                                    {t('useTemplateDialog.matchSummary', {
+                                        added: matchSummary.added,
+                                        existing: matchSummary.existing,
+                                        missing: matchSummary.missing,
+                                    })}
                                 </p>
                             )}
                         </div>
@@ -323,7 +330,7 @@ export function UseTemplateDialog({ open, onOpenChange, onCreated }: Props) {
                         onClick={handleCreate}
                         disabled={!selected || !collectionName.trim() || creating}
                     >
-                        {creating ? 'Creating…' : 'Create collection'}
+                        {creating ? t('useTemplateDialog.creating') : t('useTemplateDialog.createButton')}
                     </Button>
                 </DialogFooter>
             </DialogContent>

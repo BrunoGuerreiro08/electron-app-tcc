@@ -130,7 +130,7 @@ export function ExportScreen() {
             })
         } catch (err) {
             console.error('Export failed:', err)
-            setExportError(t('reports:errors.exportFailed', 'Não foi possível gerar o arquivo. Tente novamente.'))
+            setExportError(t('reports:errors.exportFailed'))
         } finally {
             setExporting(null)
         }
@@ -173,7 +173,7 @@ export function ExportScreen() {
             setDossierNotice(parts.join(' · '))
         } catch (err) {
             console.error(`Dossier export (${mode}) failed:`, err)
-            setExportError(t('reports:errors.exportFailed', 'Não foi possível gerar o arquivo. Tente novamente.'))
+            setExportError(t('reports:errors.exportFailed'))
         } finally {
             setExporting(null)
         }
@@ -189,7 +189,7 @@ export function ExportScreen() {
             await exportReportData(format, reportData)
         } catch (err) {
             console.error(`Export (${format}) failed:`, err)
-            setExportError(t('reports:errors.exportFailed', 'Não foi possível gerar o arquivo. Tente novamente.'))
+            setExportError(t('reports:errors.exportFailed'))
         } finally {
             setExporting(null)
         }
@@ -204,7 +204,7 @@ export function ExportScreen() {
                             variant="ghost"
                             size="icon"
                             onClick={() => navigate(`/collections/${selectedCollectionId}`)}
-                            title="Voltar para a Coleção"
+                            title={t('actions.backToCollection')}
                         >
                             <ArrowLeft className="h-5 w-5" />
                         </Button>
@@ -233,7 +233,7 @@ export function ExportScreen() {
                             className="gap-2"
                         >
                             <FileSpreadsheet className="h-4 w-4" />
-                            {t('actions.exportXlsx', 'Excel (.xlsx)')}
+                            {t('actions.exportXlsx')}
                         </Button>
                         <Button
                             variant="outline"
@@ -242,7 +242,7 @@ export function ExportScreen() {
                             className="gap-2"
                         >
                             <FileText className="h-4 w-4" />
-                            {t('actions.exportCsv', 'CSV')}
+                            {t('actions.exportCsv')}
                         </Button>
                         <Button
                             variant="outline"
@@ -251,37 +251,31 @@ export function ExportScreen() {
                             className="gap-2"
                         >
                             <FileJson className="h-4 w-4" />
-                            {t('actions.exportJson', 'JSON')}
+                            {t('actions.exportJson')}
                         </Button>
                         <Button
                             variant="outline"
                             onClick={() => handleExportDocumentsBundle('stitched')}
                             disabled={isExporting}
                             className="gap-2"
-                            title={t(
-                                'reports:dossier.stitchedHint',
-                                'Uma pasta por grupo/subgrupo; um PDF por categoria, com todos os documentos daquela categoria unidos'
-                            )}
+                            title={t('reports:dossier.stitchedHint')}
                         >
                             <FolderArchive className="h-4 w-4" />
                             {exporting === 'stitched'
-                                ? t('actions.generatingDossier', 'Gerando…')
-                                : t('actions.exportDossierStitched', 'Documentos por categoria (unidos)')}
+                                ? t('actions.generatingDossier')
+                                : t('actions.exportDossierStitched')}
                         </Button>
                         <Button
                             variant="outline"
                             onClick={() => handleExportDocumentsBundle('individual')}
                             disabled={isExporting}
                             className="gap-2"
-                            title={t(
-                                'reports:dossier.individualHint',
-                                'Uma pasta por grupo/subgrupo/categoria; cada documento como um arquivo separado'
-                            )}
+                            title={t('reports:dossier.individualHint')}
                         >
                             <Files className="h-4 w-4" />
                             {exporting === 'individual'
-                                ? t('actions.generatingDossier', 'Gerando…')
-                                : t('actions.exportDossierIndividual', 'Documentos individuais')}
+                                ? t('actions.generatingDossier')
+                                : t('actions.exportDossierIndividual')}
                         </Button>
                     </div>
                 )}

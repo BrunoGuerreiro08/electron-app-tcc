@@ -133,7 +133,7 @@ export function AppSidebar() {
                     onClick={toggleSidebar}
                     size="sm"
                     className="h-8 w-8 p-0 flex items-center justify-center ml-auto"
-                    title="Toggle Sidebar (Ctrl+B)"
+                    title={t('sidebar.toggleTooltip')}
                 >
                     <ChevronsLeftRight className="h-4 w-4" />
                 </SidebarMenuButton>
@@ -313,7 +313,7 @@ export function AppSidebar() {
                                         <DialogTitle>{t('nav.newCollection')}</DialogTitle>
                                     </DialogHeader>
                                     <Input
-                                        placeholder="e.g. 2026 Progression Portfolio"
+                                        placeholder={t('collections.placeholder', { ns: 'home' })}
                                         value={newName}
                                         onChange={(e) => setNewName(e.target.value)}
                                         autoFocus

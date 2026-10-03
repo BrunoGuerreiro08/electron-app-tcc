@@ -51,7 +51,7 @@ export function DeleteCollectionDialog({
                 <DialogHeader>
                     <DialogTitle>{t('common:actions.delete')} {collectionName}</DialogTitle>
                     <div className="text-sm text-muted-foreground pt-2 space-y-4">
-                        <p>This action cannot be undone. To confirm deletion, type the exact code below:</p>
+                        <p>{t('common:deleteCollection.warning')}</p>
                         <div className="rounded bg-muted py-2 text-center font-mono text-lg font-bold tracking-widest text-foreground select-none">
                             {deleteConfirmCode}
                         </div>
@@ -60,7 +60,7 @@ export function DeleteCollectionDialog({
                 <Input
                     value={deleteInputCode}
                     onChange={(e) => setDeleteInputCode(e.target.value)}
-                    placeholder="Type confirmation code"
+                    placeholder={t('common:deleteCollection.codePlaceholder')}
                     className="font-mono mt-2"
                     autoFocus
                     onKeyDown={(e) => e.key === 'Enter' && deleteInputCode === deleteConfirmCode && handleDelete()}

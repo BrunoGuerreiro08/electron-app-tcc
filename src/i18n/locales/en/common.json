@@ -83,5 +83,9 @@
         "tooltip": "Change language",
         "en": "EN",
         "ptBR": "PT"
+    },
+    "deleteCollection": {
+        "warning": "This action cannot be undone. To confirm deletion, type the exact code below:",
+        "codePlaceholder": "Type confirmation code"
     }
 }

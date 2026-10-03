@@ -91,17 +91,17 @@ export function ManageTagsDialog({ open, onOpenChange, onChanged }: ManageTagsDi
             <Dialog open={open} onOpenChange={onOpenChange}>
                 <DialogContent className="max-w-md max-h-[80vh] flex flex-col">
                     <DialogHeader>
-                        <DialogTitle>{t('tags.manageTitle', 'Manage Tags')}</DialogTitle>
+                        <DialogTitle>{t('tags.manageTitle')}</DialogTitle>
                         <DialogDescription>
-                            {t('tags.manageDescription', 'Rename or permanently delete tags from your library.')}
+                            {t('tags.manageDescription')}
                         </DialogDescription>
                     </DialogHeader>
 
                     <div className="flex-1 overflow-y-auto pr-2 mt-4 space-y-2">
                         {loading ? (
-                            <p className="text-sm text-muted-foreground">{t('library.loading', 'Loading...')}</p>
+                            <p className="text-sm text-muted-foreground">{t('library.loading')}</p>
                         ) : tags.length === 0 ? (
-                            <p className="text-sm text-muted-foreground">{t('tags.empty', 'No tags found.')}</p>
+                            <p className="text-sm text-muted-foreground">{t('tags.empty')}</p>
                         ) : (
                             tags.map((tag) => (
                                 <div key={tag.id} className="flex items-center justify-between p-2 border rounded-md group hover:bg-muted/50 transition-colors">
@@ -154,19 +154,19 @@ export function ManageTagsDialog({ open, onOpenChange, onChanged }: ManageTagsDi
                 <AlertDialogContent>
                     <AlertDialogHeader>
                         <AlertDialogTitle>
-                            {t('tags.deleteConfirmTitle', 'Delete Tag')}
+                            {t('tags.deleteConfirmTitle')}
                         </AlertDialogTitle>
                         <AlertDialogDescription>
-                            {t('tags.deleteConfirm', 'Are you sure you want to permanently delete this tag? It will be removed from all documents.')}
+                            {t('tags.deleteConfirm')}
                         </AlertDialogDescription>
                     </AlertDialogHeader>
                     <AlertDialogFooter>
-                        <AlertDialogCancel>{t('common.cancel', 'Cancel')}</AlertDialogCancel>
+                        <AlertDialogCancel>{t('common.cancel')}</AlertDialogCancel>
                         <AlertDialogAction
                             onClick={confirmDelete}
                             className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
                         >
-                            {t('common.delete', 'Delete')}
+                            {t('common.delete')}
                         </AlertDialogAction>
                     </AlertDialogFooter>
                 </AlertDialogContent>

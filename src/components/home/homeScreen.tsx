@@ -86,7 +86,7 @@ export function HomeScreen() {
                 </CardHeader>
                 <CardContent>
                     <code className="text-xs text-muted-foreground break-all">
-                        {storageFolder ?? 'Loading…'}
+                        {storageFolder ?? t('common:states.loading')}
                     </code>
                     {error && <p className="mt-2 text-sm text-destructive">{error}</p>}
                 </CardContent>
@@ -116,7 +116,7 @@ export function HomeScreen() {
                 <div className="flex gap-2">
                     <Button size="sm" variant="outline" onClick={() => setTemplateDialogOpen(true)}>
                         <FileStack className="h-4 w-4" />
-                        From template
+                        {t('home:collections.fromTemplate')}
                     </Button>
                     <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
                         <DialogTrigger asChild>

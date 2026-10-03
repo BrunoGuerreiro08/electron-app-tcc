@@ -47,5 +47,75 @@
         "errors": {
             "maxLessThanMin": "O máximo deve ser maior que o mínimo."
         }
+    },
+    "groupDialog": {
+        "editTitle": "Editar grupo",
+        "minPointsLabel": "Pontuação mínima",
+        "maxPointsLabel": "Pontuação máxima",
+        "pointsPlaceholder": "Nenhuma",
+        "bonusLabel": "Bônus excedente (% dos pontos acima do mínimo)",
+        "bonusHelperText": "Requer um mínimo definido — o bônus se aplica apenas aos pontos obtidos acima dele."
+    },
+    "useTemplateDialog": {
+        "title": "Nova coleção a partir de um modelo",
+        "description": "Comece a partir de uma estrutura pronta de grupos, subgrupos, categorias e regras de pontuação — totalmente editável após a criação.",
+        "tabs": {
+            "official": "Oficiais ({{count}})",
+            "imported": "Importados ({{count}})"
+        },
+        "importButton": "Importar modelo",
+        "loading": "Carregando…",
+        "emptyOfficial": "Nenhum modelo oficial ainda.",
+        "emptyImported": "Nenhum modelo importado ainda — use \"Importar modelo\" acima.",
+        "summary": {
+            "groups_one": "{{count}} grupo",
+            "groups_other": "{{count}} grupos",
+            "subgroups_one": "{{count}} subgrupo",
+            "subgroups_other": "{{count}} subgrupos",
+            "categories_one": "{{count}} categoria",
+            "categories_other": "{{count}} categorias"
+        },
+        "selectPrompt": "Selecione um modelo para pré-visualizar sua estrutura.",
+        "pointsRange": "{{min}}–{{max}} pts",
+        "surplusBonus": "+{{percent}}% de bônus excedente",
+        "collectionNamePlaceholder": "Nome da coleção",
+        "matching": "Comparando…",
+        "changeZip": "Alterar ZIP de documentos",
+        "addZip": "Adicionar documentos de um ZIP (opcional)",
+        "matchSummary": "{{added}} serão adicionados · {{existing}} já estão na sua biblioteca · {{missing}} não encontrados no ZIP (criados sem arquivo)",
+        "creating": "Criando…",
+        "createButton": "Criar coleção"
+    },
+    "bulkLinkDialog": {
+        "title": "Vincular documentos a outras categorias",
+        "descriptionBefore": "Arraste documentos de",
+        "descriptionAfter": "para as categorias às quais deseja vinculá-los. Nada é removido desta categoria, e nada é salvo até você clicar em Aplicar.",
+        "currentCategorySuffix": "{{name}} (categoria atual)",
+        "linkSelectedHere_one": "Vincular {{count}} documento selecionado aqui",
+        "linkSelectedHere_other": "Vincular {{count}} documentos selecionados aqui",
+        "documentsSelected": "{{selected}} de {{total}} documentos selecionados",
+        "emptyDocuments": "Nenhum documento nesta categoria ainda.",
+        "dropHint": "Solte em uma categoria — as pastas abrem ao passar o mouse",
+        "pendingChanges": "Alterações pendentes ({{count}})",
+        "undo": "Desfazer",
+        "undoTooltip": "Desfazer ({{key}}+Z)",
+        "redo": "Refazer",
+        "redoTooltip": "Refazer ({{key}}+Shift+Z)",
+        "clearAll": "Limpar tudo",
+        "emptyChanges": "Nada preparado ainda. Arraste um documento até uma categoria para adicioná-lo aqui.",
+        "removeChange": "Remover esta alteração",
+        "alreadyLinkedNotice_one": "{{count}} documento já está vinculado a \"{{category}}\" — ignorado.",
+        "alreadyLinkedNotice_other": "{{count}} documentos já estão vinculados a \"{{category}}\" — ignorados.",
+        "linking": "Vinculando documentos…",
+        "linkedResult_one": "{{count}} documento vinculado",
+        "linkedResult_other": "{{count}} documentos vinculados",
+        "skippedSuffix": "({{count}} já vinculado(s), ignorado(s))",
+        "discardConfirm_one": "Descartar {{count}} alteração pendente?",
+        "discardConfirm_other": "Descartar {{count}} alterações pendentes?",
+        "keepEditing": "Continuar editando",
+        "discard": "Descartar",
+        "applyLink_one": "Aplicar {{count}} vínculo",
+        "applyLink_other": "Aplicar {{count}} vínculos",
+        "done": "Concluído"
     }
 }

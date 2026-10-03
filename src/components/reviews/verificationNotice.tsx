@@ -27,7 +27,7 @@ export function VerificationNotice({
             <div role="status" className="flex items-start gap-2 rounded-lg border border-emerald-500/40 bg-emerald-50 dark:bg-emerald-950/20 p-3 text-sm">
                 <CheckCircle className="h-4 w-4 mt-0.5 text-emerald-600 shrink-0" />
                 <div>
-                    <p className="font-medium">{t('verify.ok.title', 'Pontuações conferidas')}</p>
+                    <p className="font-medium">{t('verify.ok.title')}</p>
                     <p className="text-muted-foreground">
                         {t('verify.ok.body', {
                             defaultValue:
@@ -45,7 +45,7 @@ export function VerificationNotice({
             <div role="alert" className="flex items-start gap-2 rounded-lg border border-amber-500/50 bg-amber-50 dark:bg-amber-950/20 p-3 text-sm">
                 <AlertCircle className="h-4 w-4 mt-0.5 text-amber-600 shrink-0" />
                 <div>
-                    <p className="font-medium">{t('verify.error.title', 'Não foi possível conferir as pontuações')}</p>
+                    <p className="font-medium">{t('verify.error.title')}</p>
                     <p className="text-muted-foreground">{verification.message}</p>
                 </div>
             </div>
@@ -66,10 +66,7 @@ export function VerificationNotice({
                         })}
                     </p>
                     <p className="text-muted-foreground">
-                        {t(
-                            'verify.mismatch.body',
-                            'Pode indicar que o arquivo foi alterado, que ele é inconsistente, ou que quem enviou usa uma versão do aplicativo com regras de pontuação diferentes. Confirme com quem enviou antes de aprovar.'
-                        )}
+                        {t('verify.mismatch.body')}
                     </p>
                 </div>
             </div>
@@ -77,7 +74,7 @@ export function VerificationNotice({
                 {shown.map((d, i) => (
                     <li key={i}>
                         <span className="text-foreground">{d.label}</span> — {FIELD_LABELS[d.field]}:{' '}
-                        {t('verify.sent', 'enviado')} {formatValue(d.sent)}, {t('verify.recomputed', 'recalculado')}{' '}
+                        {t('verify.sent')} {formatValue(d.sent)}, {t('verify.recomputed')}{' '}
                         {formatValue(d.recomputed)}
                     </li>
                 ))}
@@ -125,7 +122,7 @@ export function TemplateOriginNotice({ origin }: { origin: import('@/services/co
         return (
             <p className="text-xs text-muted-foreground flex items-center gap-1.5">
                 <CheckCircle className="h-3.5 w-3.5 text-emerald-600" />
-                {t('template.unmodified', 'Estrutura idêntica ao modelo "{{name}}", sem alterações.', {
+                {t('template.unmodified', {
                     name: origin.templateName,
                 })}
             </p>
@@ -135,7 +132,7 @@ export function TemplateOriginNotice({ origin }: { origin: import('@/services/co
         return (
             <p className="text-xs text-muted-foreground flex items-center gap-1.5">
                 <AlertCircle className="h-3.5 w-3.5 text-muted-foreground" />
-                {t('template.modified', 'Baseada no modelo "{{name}}", com alterações na estrutura.', {
+                {t('template.modified', {
                     name: origin.templateName,
                 })}
             </p>
@@ -145,9 +142,7 @@ export function TemplateOriginNotice({ origin }: { origin: import('@/services/co
     return (
         <p className="text-xs text-amber-600 flex items-center gap-1.5">
             <AlertCircle className="h-3.5 w-3.5" />
-            {t(
-                'template.disputed',
-                'O arquivo diz uma coisa sobre o modelo "{{name}}", mas o recálculo da estrutura discorda — confira com quem enviou.',
+            {t('template.disputed',
                 { name: origin.templateName }
             )}
         </p>

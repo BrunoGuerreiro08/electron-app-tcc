@@ -553,7 +553,7 @@ export function CollectionDetailScreen() {
                                                                                             size="icon"
                                                                                             className="h-6 w-6"
                                                                                             onClick={() => setBulkLinkCategory(cat)}
-                                                                                            title="Link documents to other categories"
+                                                                                            title={t('collections:bulkLinkDialog.title')}
                                                                                         >
                                                                                             <Link2 className="h-3 w-3" />
                                                                                         </Button>

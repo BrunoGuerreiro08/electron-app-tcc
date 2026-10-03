@@ -43,7 +43,7 @@ export function ReviewsScreen() {
         setErrors([])
 
         if (file.size > MAX_FILE_BYTES) {
-            setErrors([t('errors.tooLarge', 'O arquivo é maior que 10 MB — não parece ser uma exportação de coleção.')])
+            setErrors([t('errors.tooLarge')])
             return
         }
 
@@ -51,7 +51,7 @@ export function ReviewsScreen() {
         try {
             parsed = JSON.parse(await file.text())
         } catch {
-            setErrors([t('errors.notJson', 'O arquivo não é um JSON válido.')])
+            setErrors([t('errors.notJson')])
             return
         }
 
@@ -73,7 +73,7 @@ export function ReviewsScreen() {
             navigate(`/reviews/${id}`)
         } catch (err) {
             console.error('Import failed:', err)
-            setErrors([t('errors.saveFailed', 'Não foi possível salvar a revisão. Tente novamente.')])
+            setErrors([t('errors.saveFailed')])
         } finally {
             setBusy(false)
         }
@@ -100,13 +100,10 @@ export function ReviewsScreen() {
                 <div>
                     <h1 className="text-2xl font-semibold flex items-center gap-2">
                         <Eye className="h-6 w-6 text-primary" />
-                        {t('title', 'Revisões')}
+                        {t('title')}
                     </h1>
                     <p className="text-sm text-muted-foreground">
-                        {t(
-                            'description',
-                            'Coleções recebidas de outros usuários para conferência. São cópias somente leitura.'
-                        )}
+                        {t('description')}
                     </p>
                 </div>
 
@@ -124,7 +121,7 @@ export function ReviewsScreen() {
                     />
                     <Button onClick={() => fileInput.current?.click()} disabled={busy} className="gap-2">
                         <FileUp className="h-4 w-4" />
-                        {t('actions.import', 'Importar coleção (.json)')}
+                        {t('actions.import')}
                     </Button>
                 </div>
             </div>
@@ -133,7 +130,7 @@ export function ReviewsScreen() {
                 <Card className="border-destructive/50">
                     <CardHeader className="pb-2">
                         <CardTitle className="text-base text-destructive">
-                            {t('errors.title', 'Não foi possível importar este arquivo')}
+                            {t('errors.title')}
                         </CardTitle>
                     </CardHeader>
                     <CardContent>
@@ -150,25 +147,25 @@ export function ReviewsScreen() {
                 <Card className="border-primary/40">
                     <CardHeader className="pb-2">
                         <CardTitle className="text-base">
-                            {t('confirm.title', 'Confirme a importação')}
+                            {t('confirm.title')}
                         </CardTitle>
                     </CardHeader>
                     <CardContent className="space-y-4">
                         <dl className="grid grid-cols-[auto,1fr] gap-x-4 gap-y-1 text-sm">
-                            <dt className="text-muted-foreground">{t('fields.collection', 'Coleção')}</dt>
+                            <dt className="text-muted-foreground">{t('fields.collection')}</dt>
                             <dd className="font-medium">{pendingSummary.name}</dd>
-                            <dt className="text-muted-foreground">{t('fields.sender', 'Enviada por')}</dt>
+                            <dt className="text-muted-foreground">{t('fields.sender')}</dt>
                             <dd>
                                 {pendingSummary.senderName
                                     ? `${pendingSummary.senderName}${pendingSummary.senderEmail ? ` (${pendingSummary.senderEmail})` : ''}`
-                                    : t('fields.senderUnknown', 'Remetente não informado')}
+                                    : t('fields.senderUnknown')}
                             </dd>
-                            <dt className="text-muted-foreground">{t('fields.exportedAt', 'Exportada em')}</dt>
+                            <dt className="text-muted-foreground">{t('fields.exportedAt')}</dt>
                             <dd>{fmtDateTime(pendingSummary.exportedAt)}</dd>
-                            <dt className="text-muted-foreground">{t('fields.content', 'Conteúdo')}</dt>
+                            <dt className="text-muted-foreground">{t('fields.content')}</dt>
                             <dd>
-                                {pendingSummary.groupCount} {t('fields.groups', 'grupos')} ·{' '}
-                                {pendingSummary.documentCount} {t('fields.documents', 'documentos')} ·{' '}
+                                {pendingSummary.groupCount} {t('fields.groups')} ·{' '}
+                                {pendingSummary.documentCount} {t('fields.documents')} ·{' '}
                                 {pendingSummary.totalScore.toFixed(2)} pts
                             </dd>
                         </dl>
@@ -177,28 +174,25 @@ export function ReviewsScreen() {
 
                         {alreadyImported && (
                             <p className="text-sm text-amber-600">
-                                {t('confirm.duplicate', 'Esta versão já foi importada em')}{' '}
+                                {t('confirm.duplicate')}{' '}
                                 {fmtDateTime(alreadyImported.importedAt)}.
                             </p>
                         )}
 
                         <p className="text-xs text-muted-foreground">
-                            {t(
-                                'confirm.note',
-                                'A cópia importada é somente leitura e não é misturada com as suas coleções.'
-                            )}
+                            {t('confirm.note')}
                         </p>
 
                         <div className="flex gap-2">
                             <Button onClick={confirmImport} disabled={busy}>
                                 {busy
-                                    ? t('actions.importing', 'Importando…')
+                                    ? t('actions.importing')
                                     : pendingVerification?.status === 'mismatch'
-                                        ? t('actions.importAnyway', 'Importar mesmo assim')
-                                        : t('actions.confirmImport', 'Importar')}
+                                        ? t('actions.importAnyway')
+                                        : t('actions.confirmImport')}
                             </Button>
                             <Button variant="outline" onClick={() => setPending(null)} disabled={busy}>
-                                {t('actions.cancel', 'Cancelar')}
+                                {t('actions.cancel')}
                             </Button>
                         </div>
                     </CardContent>
@@ -208,12 +202,9 @@ export function ReviewsScreen() {
             {items.length === 0 && !loading ? (
                 <div className="border border-dashed rounded-lg p-12 text-center text-muted-foreground">
                     <Eye className="h-10 w-10 mx-auto mb-3 text-muted-foreground/50" />
-                    <p className="font-medium">{t('empty.title', 'Nenhuma revisão importada')}</p>
+                    <p className="font-medium">{t('empty.title')}</p>
                     <p className="text-sm">
-                        {t(
-                            'empty.description',
-                            'Importe um arquivo .json exportado por outro usuário para conferir a coleção dele.'
-                        )}
+                        {t('empty.description')}
                     </p>
                 </div>
             ) : (
@@ -224,26 +215,26 @@ export function ReviewsScreen() {
                                 <div className="min-w-0 space-y-1">
                                     <div className="flex items-center gap-2">
                                         <span className="font-semibold truncate">{item.summary.name}</span>
-                                        <Badge variant="secondary">{t('badge.readOnly', 'Somente leitura')}</Badge>
+                                        <Badge variant="secondary">{t('badge.readOnly')}</Badge>
                                     </div>
                                     <p className="text-xs text-muted-foreground">
-                                        {item.summary.senderName ?? t('fields.senderUnknown', 'Remetente não informado')}
+                                        {item.summary.senderName ?? t('fields.senderUnknown')}
                                         {' · '}
-                                        {t('fields.exportedAt', 'Exportada em')} {fmtDateTime(item.summary.exportedAt)}
+                                        {t('fields.exportedAt')} {fmtDateTime(item.summary.exportedAt)}
                                         {' · '}
-                                        {item.summary.documentCount} {t('fields.documents', 'documentos')}
+                                        {item.summary.documentCount} {t('fields.documents')}
                                         {' · '}
                                         {item.summary.totalScore.toFixed(2)} pts
                                     </p>
                                     <p className="text-xs text-muted-foreground">
-                                        {t('fields.importedAt', 'Importada em')} {fmtDateTime(item.importedAt)}
+                                        {t('fields.importedAt')} {fmtDateTime(item.importedAt)}
                                     </p>
                                 </div>
 
                                 <div className="flex items-center gap-2 shrink-0">
                                     <Button size="sm" className="gap-2" onClick={() => navigate(`/reviews/${item.id}`)}>
                                         <FolderOpen className="h-4 w-4" />
-                                        {t('actions.open', 'Abrir')}
+                                        {t('actions.open')}
                                     </Button>
 
                                     {confirmDeleteId === item.id ? (
@@ -256,17 +247,17 @@ export function ReviewsScreen() {
                                                     setConfirmDeleteId(null)
                                                 }}
                                             >
-                                                {t('actions.confirmDelete', 'Excluir cópia?')}
+                                                {t('actions.confirmDelete')}
                                             </Button>
                                             <Button size="sm" variant="outline" onClick={() => setConfirmDeleteId(null)}>
-                                                {t('actions.cancel', 'Cancelar')}
+                                                {t('actions.cancel')}
                                             </Button>
                                         </>
                                     ) : (
                                         <Button
                                             size="icon"
                                             variant="ghost"
-                                            title={t('actions.delete', 'Excluir cópia importada')}
+                                            title={t('actions.delete')}
                                             onClick={() => setConfirmDeleteId(item.id)}
                                         >
                                             <Trash2 className="h-4 w-4" />

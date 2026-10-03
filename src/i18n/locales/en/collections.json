@@ -47,5 +47,75 @@
         "errors": {
             "maxLessThanMin": "Maximum must be greater than minimum."
         }
+    },
+    "groupDialog": {
+        "editTitle": "Edit group",
+        "minPointsLabel": "Minimum points",
+        "maxPointsLabel": "Maximum points",
+        "pointsPlaceholder": "None",
+        "bonusLabel": "Surplus bonus (% of points above minimum)",
+        "bonusHelperText": "Requires a minimum to be set — the bonus applies only to points earned above it."
+    },
+    "useTemplateDialog": {
+        "title": "New collection from template",
+        "description": "Start from a pre-built structure of groups, subgroups, categories, and scoring rules — fully editable once created.",
+        "tabs": {
+            "official": "Official ({{count}})",
+            "imported": "Imported ({{count}})"
+        },
+        "importButton": "Import template",
+        "loading": "Loading…",
+        "emptyOfficial": "No official templates yet.",
+        "emptyImported": "No imported templates yet — use \"Import template\" above.",
+        "summary": {
+            "groups_one": "{{count}} group",
+            "groups_other": "{{count}} groups",
+            "subgroups_one": "{{count}} subgroup",
+            "subgroups_other": "{{count}} subgroups",
+            "categories_one": "{{count}} category",
+            "categories_other": "{{count}} categories"
+        },
+        "selectPrompt": "Select a template to preview its structure.",
+        "pointsRange": "{{min}}–{{max}} pts",
+        "surplusBonus": "+{{percent}}% surplus bonus",
+        "collectionNamePlaceholder": "Collection name",
+        "matching": "Matching…",
+        "changeZip": "Change documents ZIP",
+        "addZip": "Add documents from a ZIP (optional)",
+        "matchSummary": "{{added}} will be added · {{existing}} already in your library · {{missing}} not found in the ZIP (created without a file)",
+        "creating": "Creating…",
+        "createButton": "Create collection"
+    },
+    "bulkLinkDialog": {
+        "title": "Link documents to other categories",
+        "descriptionBefore": "Drag documents from",
+        "descriptionAfter": "onto the categories you want them linked to. Nothing is removed from this category, and nothing is saved until you press Apply.",
+        "currentCategorySuffix": "{{name}} (current category)",
+        "linkSelectedHere_one": "Link {{count}} selected document here",
+        "linkSelectedHere_other": "Link {{count}} selected documents here",
+        "documentsSelected": "{{selected}} of {{total}} documents selected",
+        "emptyDocuments": "No documents in this category yet.",
+        "dropHint": "Drop on a category — folders open as you hover",
+        "pendingChanges": "Pending changes ({{count}})",
+        "undo": "Undo",
+        "undoTooltip": "Undo ({{key}}+Z)",
+        "redo": "Redo",
+        "redoTooltip": "Redo ({{key}}+Shift+Z)",
+        "clearAll": "Clear all",
+        "emptyChanges": "Nothing staged yet. Drag a document onto a category to add it here.",
+        "removeChange": "Remove this change",
+        "alreadyLinkedNotice_one": "{{count}} document is already linked to \"{{category}}\" — skipped.",
+        "alreadyLinkedNotice_other": "{{count}} documents are already linked to \"{{category}}\" — skipped.",
+        "linking": "Linking documents…",
+        "linkedResult_one": "Linked {{count}} document",
+        "linkedResult_other": "Linked {{count}} documents",
+        "skippedSuffix": "({{count}} already linked, skipped)",
+        "discardConfirm_one": "Discard {{count}} pending change?",
+        "discardConfirm_other": "Discard {{count}} pending changes?",
+        "keepEditing": "Keep editing",
+        "discard": "Discard",
+        "applyLink_one": "Apply {{count}} link",
+        "applyLink_other": "Apply {{count}} links",
+        "done": "Done"
     }
 }

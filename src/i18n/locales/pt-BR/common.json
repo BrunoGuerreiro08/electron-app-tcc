@@ -83,5 +83,9 @@
     "tooltip": "Alterar idioma",
     "en": "EN",
     "ptBR": "PT"
+  },
+  "deleteCollection": {
+    "warning": "Esta ação não pode ser desfeita. Para confirmar a exclusão, digite o código exato abaixo:",
+    "codePlaceholder": "Digite o código de confirmação"
   }
 }
