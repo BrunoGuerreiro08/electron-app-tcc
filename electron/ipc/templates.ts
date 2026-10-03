@@ -6,6 +6,8 @@ import {
     applyTemplate,
     exportCollectionAsTemplate,
     deleteImportedTemplate,
+    pickDocumentsZip,
+    previewDocumentMatch,
 } from '../templates'
 
 export function registerTemplateHandlers() {
@@ -29,9 +31,10 @@ export function registerTemplateHandlers() {
             _event,
             source: { kind: 'official' | 'imported'; fileName: string },
             collectionName: string,
-            color: string | null
+            color: string | null,
+            zipPath: string | null
         ) => {
-            return applyTemplate(source, collectionName, color)
+            return applyTemplate(source, collectionName, color, zipPath)
         }
     )
 
@@ -44,4 +47,21 @@ export function registerTemplateHandlers() {
     ipcMain.handle('templates:deleteImported', (_event, fileName: string) => {
         deleteImportedTemplate(fileName)
     })
+
+    ipcMain.handle('templates:pickDocumentsZip', async (event) => {
+        const win = BrowserWindow.fromWebContents(event.sender)
+        if (!win) return null
+        return pickDocumentsZip(win)
+    })
+
+    ipcMain.handle(
+        'templates:previewDocumentMatch',
+        (
+            _event,
+            source: { kind: 'official' | 'imported'; fileName: string },
+            zipPath: string
+        ) => {
+            return previewDocumentMatch(source, zipPath)
+        }
+    )
 }

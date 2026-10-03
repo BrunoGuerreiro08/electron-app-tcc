@@ -63,10 +63,20 @@ export interface ScannedFile {
     reason?: string
 }
 
+/** Present only when the template file is a collection_export being reused as a template. */
+export interface TemplateDocumentRef {
+    title: string
+    issued_at: string | null
+    quantity: number
+    hours: number | null
+    file_name: string | null
+}
+
 export interface TemplateCategory {
     name: string
     display_order: number
     rule: Rule
+    documents?: TemplateDocumentRef[]
 }
 
 export interface TemplateSubgroup {
@@ -97,4 +107,15 @@ export interface TemplateSummary {
     fileName: string
     source: 'official' | 'imported'
     template: TemplateFile
+}
+
+export interface DocumentMatchSummary {
+    added: number
+    existing: number
+    missing: number
+}
+
+export interface ApplyTemplateResult {
+    collectionId: string
+    documentSummary: DocumentMatchSummary | null
 }

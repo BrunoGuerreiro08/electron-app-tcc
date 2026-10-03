@@ -1,6 +1,6 @@
 import { promises as fs } from 'node:fs'
 import path from 'node:path'
-import { ZipArchive } from 'archiver'
+import archiver from 'archiver'
 import { createWriteStream } from 'node:fs'
 import { mergeToPdf } from './mergeToPdf'
 import type { DossierOutputKind, DossierPlan, DossierRunResult } from '../../src/services/dossierExport/types'
@@ -58,7 +58,7 @@ async function writeToZip(plan: DossierPlan, destZipPath: string, readOnly: bool
     await fs.mkdir(path.dirname(destZipPath), { recursive: true })
 
     const output = createWriteStream(destZipPath)
-    const archive = new ZipArchive({ zlib: { level: 9 } })
+    const archive = archiver('zip', { zlib: { level: 9 } })
     const closed = new Promise<void>((resolve, reject) => {
         output.on('close', resolve)
         output.on('error', reject)

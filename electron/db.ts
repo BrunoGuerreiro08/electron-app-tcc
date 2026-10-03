@@ -128,7 +128,8 @@ function initSchema(db: Database.Database): void {
       hours REAL,
       notes TEXT,
       file_path TEXT,
-      file_status TEXT NOT NULL DEFAULT 'pending'
+      file_status TEXT NOT NULL DEFAULT 'pending',
+      file_hash TEXT
     );
 
     CREATE TABLE IF NOT EXISTS tags (
@@ -172,6 +173,17 @@ function initSchema(db: Database.Database): void {
     db.exec(`ALTER TABLE subgroups DROP COLUMN bonus_rate`)
   } catch {
     // column already dropped, or this DB never had it — nothing to do
+  }
+
+  try {
+    // Content hash (sha256, hex) of a document's attached file — lets a
+    // template-apply import recognize "this is the same file I already
+    // have" instead of creating a duplicate. Backfilled lazily (see
+    // getOrBackfillHash in fileHandler.ts) rather than eagerly for every
+    // pre-existing document on launch.
+    db.exec(`ALTER TABLE documents ADD COLUMN file_hash TEXT`)
+  } catch {
+    // column already exists — nothing to do
   }
 
   // --- Data migration: backfill a default "Geral" group for every

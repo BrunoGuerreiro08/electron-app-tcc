@@ -12,8 +12,8 @@ import { Input } from '@/components/ui/input'
 import { Badge } from '@/components/ui/badge'
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { templateRepository } from '@/repository/templateRepository'
-import type { TemplateSummary } from '@/types/entities'
-import { Upload, FileWarning } from 'lucide-react'
+import type { TemplateSummary, DocumentMatchSummary } from '@/types/entities'
+import { Upload, FileWarning, FileArchive } from 'lucide-react'
 
 // NOTE: strings here are hardcoded rather than run through t() — I don't
 // have visibility into the locale JSON files (en / pt-BR) this project
@@ -39,6 +39,10 @@ export function UseTemplateDialog({ open, onOpenChange, onCreated }: Props) {
     const [collectionName, setCollectionName] = useState('')
     const [importErrors, setImportErrors] = useState<string[] | null>(null)
     const [creating, setCreating] = useState(false)
+    const [zipPath, setZipPath] = useState<string | null>(null)
+    const [matchSummary, setMatchSummary] = useState<DocumentMatchSummary | null>(null)
+    const [matchErrors, setMatchErrors] = useState<string[] | null>(null)
+    const [matching, setMatching] = useState(false)
 
     const refreshLists = async () => {
         setLoading(true)
@@ -57,6 +61,9 @@ export function UseTemplateDialog({ open, onOpenChange, onCreated }: Props) {
             setSelected(null)
             setCollectionName('')
             setImportErrors(null)
+            setZipPath(null)
+            setMatchSummary(null)
+            setMatchErrors(null)
             // Bundled templates take priority as the default tab if any
             // exist; otherwise land on Imported so a first-time user
             // isn't staring at an empty Official list.
@@ -66,10 +73,44 @@ export function UseTemplateDialog({ open, onOpenChange, onCreated }: Props) {
 
     const list = tab === 'official' ? official : imported
 
+    // Only a collection_export reused as a template carries a documents[]
+    // list per category — plain structure-only templates never do.
+    const hasDocumentRefs = (t: TemplateSummary): boolean =>
+        t.template.groups.some((g) =>
+            g.subgroups.some((sg) => sg.categories.some((cat) => (cat.documents?.length ?? 0) > 0))
+        )
+
     const handleSelect = (t: TemplateSummary) => {
         setSelected(t)
         setCollectionName(t.template.name)
         setImportErrors(null)
+        setZipPath(null)
+        setMatchSummary(null)
+        setMatchErrors(null)
+    }
+
+    const handlePickZip = async () => {
+        if (!selected) return
+        const path = await templateRepository.pickDocumentsZip()
+        if (!path) return
+
+        setZipPath(path)
+        setMatchSummary(null)
+        setMatchErrors(null)
+        setMatching(true)
+        try {
+            const result = await templateRepository.previewDocumentMatch(
+                { kind: selected.source, fileName: selected.fileName },
+                path
+            )
+            if (result.ok) {
+                setMatchSummary(result.summary)
+            } else {
+                setMatchErrors(result.errors)
+            }
+        } finally {
+            setMatching(false)
+        }
     }
 
     const handleImport = async () => {
@@ -89,10 +130,11 @@ export function UseTemplateDialog({ open, onOpenChange, onCreated }: Props) {
         if (!selected || !collectionName.trim()) return
         setCreating(true)
         try {
-            const collectionId = await templateRepository.apply(
+            const { collectionId } = await templateRepository.apply(
                 { kind: selected.source, fileName: selected.fileName },
                 collectionName.trim(),
-                null
+                null,
+                zipPath
             )
             onCreated(collectionId)
             onOpenChange(false)
@@ -235,6 +277,44 @@ export function UseTemplateDialog({ open, onOpenChange, onCreated }: Props) {
                             onChange={(e) => setCollectionName(e.target.value)}
                             placeholder="Collection name"
                         />
+                    )}
+
+                    {selected && hasDocumentRefs(selected) && (
+                        <div className="space-y-1.5">
+                            <Button
+                                variant="outline"
+                                size="sm"
+                                onClick={handlePickZip}
+                                disabled={matching}
+                                className="w-full"
+                            >
+                                <FileArchive className="h-3.5 w-3.5" />
+                                {matching
+                                    ? 'Matching…'
+                                    : zipPath
+                                        ? 'Change documents ZIP'
+                                        : 'Add documents from a ZIP (optional)'}
+                            </Button>
+
+                            {matchErrors && (
+                                <div className="flex items-start gap-2 rounded-md border border-destructive/40 bg-destructive/5 p-2 text-xs text-destructive">
+                                    <FileWarning className="h-3.5 w-3.5 shrink-0" />
+                                    <ul className="list-disc pl-4">
+                                        {matchErrors.map((e, i) => (
+                                            <li key={i}>{e}</li>
+                                        ))}
+                                    </ul>
+                                </div>
+                            )}
+
+                            {matchSummary && (
+                                <p className="text-xs text-muted-foreground">
+                                    {matchSummary.added} will be added · {matchSummary.existing} already in
+                                    your library · {matchSummary.missing} not found in the ZIP (created without a
+                                    file)
+                                </p>
+                            )}
+                        </div>
                     )}
                 </div>
 

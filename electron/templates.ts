@@ -3,6 +3,8 @@ import path from 'node:path'
 import { randomUUID } from 'node:crypto'
 import { app, dialog, type BrowserWindow } from 'electron'
 import { getDb, getActiveUserId } from './db'
+import { adoptDroppedFile, writeTempDroppedFile } from './fileHandler'
+import { matchTemplateDocuments, type DocumentMatch, type DocumentMatchSummary } from './templateDocumentMatch'
 
 // --- Schema ---------------------------------------------------------
 //
@@ -42,10 +44,26 @@ export interface CappedPerDocumentRule {
 
 export type Rule = FlatRule | HoursRule | CappedRule | CappedPerDocumentRule
 
+/**
+ * A document reference carried by a `collection_export` JSON being reused
+ * as a template (see src/services/reportEngine/exporters/exportJson.tsx —
+ * that export is deliberately kept template-compatible). Absent on a plain
+ * structure-only template. `file_name` is what gets matched against an
+ * uploaded ZIP's entries at apply time.
+ */
+export interface TemplateDocumentRef {
+    title: string
+    issued_at: string | null
+    quantity: number
+    hours: number | null
+    file_name: string | null
+}
+
 export interface TemplateCategory {
     name: string
     display_order: number
     rule: Rule
+    documents?: TemplateDocumentRef[]
 }
 
 export interface TemplateSubgroup {
@@ -289,6 +307,31 @@ export function validateTemplate(data: unknown): ValidationResult {
                     if (validateRule(c.rule, `${catPath}.rule`, errors)) {
                         hasValidCategory = true
                     }
+
+                    // Optional — only present when this file is a collection_export
+                    // being reused as a template. Light validation only: this isn't
+                    // required for the template to be usable, just for the document
+                    // list to be trustworthy if present at all.
+                    if (c.documents !== undefined) {
+                        if (!Array.isArray(c.documents)) {
+                            errors.push(`${catPath}.documents: must be a list.`)
+                        } else {
+                            c.documents.forEach((docRaw: unknown, di: number) => {
+                                const docPath = `${catPath}.documents[${di}]`
+                                if (!docRaw || typeof docRaw !== 'object') {
+                                    errors.push(`${docPath}: not a valid object.`)
+                                    return
+                                }
+                                const d = docRaw as Record<string, unknown>
+                                if (typeof d.title !== 'string' || d.title.trim() === '') {
+                                    errors.push(`${docPath}: missing a title.`)
+                                }
+                                if (d.file_name !== null && typeof d.file_name !== 'string') {
+                                    errors.push(`${docPath}.file_name: must be a string or null.`)
+                                }
+                            })
+                        }
+                    }
                 })
             })
         })
@@ -401,7 +444,101 @@ export function deleteImportedTemplate(fileName: string): void {
     if (fs.existsSync(filePath)) fs.unlinkSync(filePath)
 }
 
+// --- Document matching (template + ZIP) --------------------------------
+
+/** Opens a native file picker filtered to .zip — the documents bundle paired with a template. */
+export async function pickDocumentsZip(win: BrowserWindow): Promise<string | null> {
+    const result = await dialog.showOpenDialog(win, {
+        properties: ['openFile'],
+        filters: [{ name: 'ZIP', extensions: ['zip'] }],
+    })
+    if (result.canceled || result.filePaths.length === 0) return null
+    return result.filePaths[0]
+}
+
+type PreviewResult = { ok: true; summary: DocumentMatchSummary } | { ok: false; errors: string[] }
+
+/**
+ * Read-only preview of what applying `source` + `zipPath` together would
+ * do, shown before the user commits to actually creating the collection.
+ * `applyTemplate` re-runs the same match itself rather than trusting this
+ * result, so the two can never drift apart.
+ */
+export function previewDocumentMatch(
+    source: { kind: 'official' | 'imported'; fileName: string },
+    zipPath: string
+): PreviewResult {
+    const dir = source.kind === 'official' ? getOfficialTemplatesDir() : getImportedTemplatesDir()
+    const filePath = path.join(dir, source.fileName)
+
+    const validation = readAndValidate(filePath)
+    if (!validation.ok || !validation.template) {
+        return { ok: false, errors: validation.errors }
+    }
+
+    const { summary } = matchTemplateDocuments(validation.template, zipPath)
+    return { ok: true, summary }
+}
+
 // --- Apply ---------------------------------------------------------
+
+/** Attaches one matched document to a freshly-created category, inside the caller's transaction. */
+function attachMatchedDocument(categoryId: string, match: DocumentMatch): void {
+    if (match.status === 'missing') {
+        // Listed in the template but not found in the ZIP — still create the
+        // document and link it to the category so the collection matches
+        // the template's content, just left unattached (file_status stays
+        // 'pending', exactly like any manually-created document with no
+        // file yet).
+        const documentId = randomUUID()
+        getDb()
+            .prepare(
+                `INSERT INTO documents (id, title, issued_at, quantity, hours, file_status) VALUES (?, ?, ?, ?, ?, 'pending')`
+            )
+            .run(documentId, match.title, match.issued_at, match.quantity, match.hours)
+
+        getDb()
+            .prepare(`INSERT OR IGNORE INTO document_category_links (id, document_id, category_id) VALUES (?, ?, ?)`)
+            .run(randomUUID(), documentId, categoryId)
+        return
+    }
+
+    if (match.status === 'existing') {
+        getDb()
+            .prepare(
+                `INSERT OR IGNORE INTO document_category_links (id, document_id, category_id) VALUES (?, ?, ?)`
+            )
+            .run(randomUUID(), match.existingDocumentId, categoryId)
+        return
+    }
+
+    // status === 'add' — create the document row, then adopt the ZIP bytes
+    // via the same path a manually-dropped file goes through (naming
+    // convention, extension/size validation, file_status/hash updates).
+    const documentId = randomUUID()
+    getDb()
+        .prepare(
+            `INSERT INTO documents (id, title, issued_at, quantity, hours, file_status) VALUES (?, ?, ?, ?, ?, 'pending')`
+        )
+        .run(documentId, match.title, match.issued_at, match.quantity, match.hours)
+
+    const tempFileName = writeTempDroppedFile(match.buffer as Buffer, match.ext || '')
+    const adopted = adoptDroppedFile(documentId, tempFileName)
+    if (!adopted.ok) {
+        // A document should never claim a file it doesn't actually have.
+        getDb().prepare('DELETE FROM documents WHERE id = ?').run(documentId)
+        return
+    }
+
+    getDb()
+        .prepare(`INSERT OR IGNORE INTO document_category_links (id, document_id, category_id) VALUES (?, ?, ?)`)
+        .run(randomUUID(), documentId, categoryId)
+}
+
+export interface ApplyTemplateResult {
+    collectionId: string
+    documentSummary: DocumentMatchSummary | null
+}
 
 /**
  * Instantiates a brand-new collection from a template: fresh UUIDs on
@@ -415,12 +552,21 @@ export function deleteImportedTemplate(fileName: string): void {
  * plain JSON file a user could have hand-edited on disk since importing.
  * Wrapped in a single transaction: either the whole structure is
  * created, or none of it is.
+ *
+ * When `zipPath` is given and the template carries a `documents[]` list
+ * (i.e. it's a collection_export being reused as a template), the match
+ * against the ZIP is freshly recomputed here rather than trusting whatever
+ * a prior preview call returned, so the two can never drift apart. The
+ * match itself is read-only (aside from the harmless, idempotent hash
+ * backfill) — only the actual document/link creation it feeds into runs
+ * inside the transaction below.
  */
 export function applyTemplate(
     source: { kind: 'official' | 'imported'; fileName: string },
     collectionName: string,
-    color: string | null
-): string {
+    color: string | null,
+    zipPath: string | null = null
+): ApplyTemplateResult {
     const dir = source.kind === 'official' ? getOfficialTemplatesDir() : getImportedTemplatesDir()
     const filePath = path.join(dir, source.fileName)
 
@@ -429,6 +575,7 @@ export function applyTemplate(
         throw new Error(`Template is no longer valid: ${validation.errors.join(' ')}`)
     }
     const template = validation.template
+    const matchResult = zipPath ? matchTemplateDocuments(template, zipPath) : null
 
     const db = getDb()
     const create = db.transaction(() => {
@@ -438,6 +585,8 @@ export function applyTemplate(
             collectionName,
             color
         )
+
+        let categoryIndex = 0
 
         for (const grp of template.groups) {
             const groupId = randomUUID()
@@ -470,10 +619,17 @@ export function applyTemplate(
                 )
 
                 for (const cat of sg.categories) {
+                    const categoryId = randomUUID()
                     db.prepare(
                         `INSERT INTO categories (id, subgroup_id, name, rule, display_order)
                          VALUES (?, ?, ?, ?, ?)`
-                    ).run(randomUUID(), subgroupId, cat.name, JSON.stringify(cat.rule), cat.display_order)
+                    ).run(categoryId, subgroupId, cat.name, JSON.stringify(cat.rule), cat.display_order)
+
+                    const matches = matchResult?.categoryMatches[categoryIndex] ?? []
+                    for (const match of matches) {
+                        attachMatchedDocument(categoryId, match)
+                    }
+                    categoryIndex++
                 }
             }
         }
@@ -481,7 +637,8 @@ export function applyTemplate(
         return collectionId
     })
 
-    return create()
+    const collectionId = create()
+    return { collectionId, documentSummary: matchResult?.summary ?? null }
 }
 
 // --- Export ---------------------------------------------------------

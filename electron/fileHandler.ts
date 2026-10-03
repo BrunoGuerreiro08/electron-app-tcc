@@ -1,6 +1,6 @@
 import fs from 'node:fs'
 import path from 'node:path'
-import { randomUUID } from 'node:crypto'
+import { randomUUID, createHash } from 'node:crypto'
 import { dialog, shell, type BrowserWindow } from 'electron'
 import { getStorageRoot } from './fileStorage'
 import { getDb } from './db'
@@ -25,6 +25,43 @@ function documentsDir(): string {
     const dir = path.join(getStorageRoot(), 'documents')
     fs.mkdirSync(dir, { recursive: true })
     return dir
+}
+
+/**
+ * Writes bytes read from elsewhere (e.g. a ZIP entry) into the storage
+ * folder under a fresh random name, ready to be adopted via
+ * adoptDroppedFile — which is what actually assigns it to a document and
+ * renames it to the owned convention. The random name only needs to be
+ * collision-free for that brief handoff; it's never what the file is
+ * called afterward.
+ */
+export function writeTempDroppedFile(buffer: Buffer, ext: string): string {
+    const dir = documentsDir()
+    const fileName = `${randomUUID()}${ext}`
+    fs.writeFileSync(path.join(dir, fileName), buffer)
+    return fileName
+}
+
+export function sha256File(filePath: string): string {
+    return createHash('sha256').update(fs.readFileSync(filePath)).digest('hex')
+}
+
+/**
+ * Returns a document's content hash, computing and persisting it on first
+ * use if the column is still empty (every document created before this
+ * column existed). Returns null when there's no file to hash.
+ */
+export function getOrBackfillHash(documentId: string): string | null {
+    const row = getDb().prepare('SELECT file_path, file_hash FROM documents WHERE id = ?').get(documentId) as
+        | { file_path: string | null; file_hash: string | null }
+        | undefined
+    if (!row?.file_path) return null
+    if (row.file_hash) return row.file_hash
+
+    if (!fs.existsSync(row.file_path)) return null
+    const hash = sha256File(row.file_path)
+    getDb().prepare('UPDATE documents SET file_hash = ? WHERE id = ?').run(hash, documentId)
+    return hash
 }
 
 interface PickedFile {
@@ -91,10 +128,12 @@ export function attachFileToDocument(documentId: string, sourcePath: string): At
     const destination = path.join(destDir, `${documentId}-${randomUUID()}${ext}`)
 
     fs.copyFileSync(sourcePath, destination)
+    const hash = sha256File(destination)
 
     try {
-        getDb().prepare(`UPDATE documents SET file_path = ?, file_status = 'ready' WHERE id = ?`).run(
+        getDb().prepare(`UPDATE documents SET file_path = ?, file_status = 'ready', file_hash = ? WHERE id = ?`).run(
             destination,
+            hash,
             documentId
         )
     } catch (err) {
@@ -142,10 +181,12 @@ export function adoptDroppedFile(documentId: string, fileName: string): AttachRe
 
     const destination = path.join(dir, `${documentId}-${randomUUID()}${ext}`)
     fs.renameSync(sourcePath, destination)
+    const hash = sha256File(destination)
 
     try {
-        getDb().prepare(`UPDATE documents SET file_path = ?, file_status = 'ready' WHERE id = ?`).run(
+        getDb().prepare(`UPDATE documents SET file_path = ?, file_status = 'ready', file_hash = ? WHERE id = ?`).run(
             destination,
+            hash,
             documentId
         )
     } catch (err) {

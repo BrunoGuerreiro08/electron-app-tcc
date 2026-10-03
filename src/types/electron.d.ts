@@ -99,12 +99,21 @@ declare global {
                 apply: (
                     source: { kind: 'official' | 'imported'; fileName: string },
                     collectionName: string,
-                    color: string | null
-                ) => Promise<string>
+                    color: string | null,
+                    zipPath: string | null
+                ) => Promise<import('./entities').ApplyTemplateResult>
                 exportCollection: (
                     collectionId: string
                 ) => Promise<{ ok: true; filePath: string } | { ok: false; error: string } | null>
                 deleteImported: (fileName: string) => Promise<void>
+                pickDocumentsZip: () => Promise<string | null>
+                previewDocumentMatch: (
+                    source: { kind: 'official' | 'imported'; fileName: string },
+                    zipPath: string
+                ) => Promise<
+                    | { ok: true; summary: import('./entities').DocumentMatchSummary }
+                    | { ok: false; errors: string[] }
+                >
             }
             reviews: {
                 list(): Promise<ReviewListItem[]>

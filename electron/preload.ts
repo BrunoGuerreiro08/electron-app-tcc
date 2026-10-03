@@ -108,11 +108,17 @@ contextBridge.exposeInMainWorld('api', {
         apply: (
             source: { kind: 'official' | 'imported'; fileName: string },
             collectionName: string,
-            color: string | null
-        ) => ipcRenderer.invoke('templates:apply', source, collectionName, color),
+            color: string | null,
+            zipPath: string | null
+        ) => ipcRenderer.invoke('templates:apply', source, collectionName, color, zipPath),
         exportCollection: (collectionId: string) =>
             ipcRenderer.invoke('templates:exportCollection', collectionId),
         deleteImported: (fileName: string) => ipcRenderer.invoke('templates:deleteImported', fileName),
+        pickDocumentsZip: () => ipcRenderer.invoke('templates:pickDocumentsZip'),
+        previewDocumentMatch: (
+            source: { kind: 'official' | 'imported'; fileName: string },
+            zipPath: string
+        ) => ipcRenderer.invoke('templates:previewDocumentMatch', source, zipPath),
     },
     reviews: {
         list: () => ipcRenderer.invoke('reviews:list'),
@@ -123,5 +129,13 @@ contextBridge.exposeInMainWorld('api', {
     dossier: {
         chooseDestination: (args: unknown) => ipcRenderer.invoke('dossier:chooseDestination', args),
         run: (args: unknown) => ipcRenderer.invoke('dossier:run', args),
+    },
+    exportFiles: {
+        saveText: (args: {
+            content: string
+            suggestedFilename: string
+            extension: string
+            readOnly?: boolean
+        }) => ipcRenderer.invoke('exportFiles:saveText', args),
     },
 })
