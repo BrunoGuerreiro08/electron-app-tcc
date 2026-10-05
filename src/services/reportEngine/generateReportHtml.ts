@@ -1,4 +1,5 @@
 import type { ReportData } from './types'
+import { formatPoints } from '@/lib/formatPoints'
 
 export function generateReportHtml(data: ReportData): string {
     const getBadgeClass = (status: string | null) => {
@@ -33,7 +34,7 @@ export function generateReportHtml(data: ReportData): string {
     // both expose rawTotal alongside the clamped total.
     const rawTotalNote = (rawTotal: number, total: number, mutedColor: string) =>
         total < rawTotal
-            ? `<span style="font-size:10px; color:${mutedColor}; margin-left:6px;">(bruto: ${rawTotal.toFixed(2)})</span>`
+            ? `<span style="font-size:10px; color:${mutedColor}; margin-left:6px;">(bruto: ${formatPoints(rawTotal)})</span>`
             : ''
 
     return `
@@ -90,7 +91,7 @@ export function generateReportHtml(data: ReportData): string {
 
         <div class="total-card">
             <div class="total-label">Pontuação Total Acumulada</div>
-            <div class="total-value">${data.totalScore.toFixed(2)} pts</div>
+            <div class="total-value">${formatPoints(data.totalScore)} pts</div>
         </div>
 
         ${data.groups
@@ -101,12 +102,12 @@ export function generateReportHtml(data: ReportData): string {
                     <div class="group-title">${group.name}</div>
                     <div>
                         ${group.bonus != null && group.bonus > 0
-                        ? `<span class="bonus-badge">+${group.bonus.toFixed(2)} bônus</span>`
+                        ? `<span class="bonus-badge">+${formatPoints(group.bonus)} bônus</span>`
                         : ''}
                         <span class="badge" style="${getBadgeClass(group.completion)}">
                             ${translateStatus(group.completion)}
                         </span>
-                        <strong style="margin-left: 8px;">${group.total.toFixed(2)} pts</strong>
+                        <strong style="margin-left: 8px;">${formatPoints(group.total)} pts</strong>
                         ${rawTotalNote(group.rawTotal, group.total, '#cbd5e1')}
                     </div>
                 </div>
@@ -121,7 +122,7 @@ export function generateReportHtml(data: ReportData): string {
                                     <span class="badge" style="${getBadgeClass(subgroup.completion)}">
                                         ${translateStatus(subgroup.completion)}
                                     </span>
-                                    <strong style="margin-left: 8px;">${subgroup.total.toFixed(2)} pts</strong>
+                                    <strong style="margin-left: 8px;">${formatPoints(subgroup.total)} pts</strong>
                                     ${rawTotalNote(subgroup.rawTotal, subgroup.total, '#94a3b8')}
                                 </div>
                             </div>
@@ -131,7 +132,7 @@ export function generateReportHtml(data: ReportData): string {
                                 <div class="category">
                                     <div class="category-header">
                                         <span>${cat.name}</span>
-                                        <span>${cat.total.toFixed(2)} pts ${cat.capped ? '(Teto aplicado)' : ''}</span>
+                                        <span>${formatPoints(cat.total)} pts ${cat.capped ? '(Teto aplicado)' : ''}</span>
                                     </div>
                                     ${cat.documents.length > 0
                                                 ? `
@@ -154,7 +155,7 @@ export function generateReportHtml(data: ReportData): string {
                                                         <td>${doc.issuedAt || '-'}</td>
                                                         <td>${doc.hours ? `${doc.hours}h` : `${doc.quantity}x`}</td>
                                                         <td>${doc.hasFile ? '<span class="file-icon">✓ Anexado</span>' : '<span class="no-file">Sem arquivo</span>'}</td>
-                                                        <td class="text-right"><strong>+${doc.points.toFixed(2)}</strong></td>
+                                                        <td class="text-right"><strong>+${formatPoints(doc.points)}</strong></td>
                                                     </tr>
                                                 `
                                                     )

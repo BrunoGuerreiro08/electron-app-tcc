@@ -1,6 +1,7 @@
 import { computeCollectionScore, type CollectionInput } from '@/services/scoringEngine/computeScore'
 import type { ReviewSnapshot } from '@/types/review'
 import { completionLabel } from '@/services/reportEngine/exporters/shared'
+import { formatPoints } from '@/lib/formatPoints'
 
 /**
  * Re-runs THIS app's scoring engine over an imported snapshot and compares the
@@ -70,7 +71,7 @@ export const FIELD_LABELS: Record<DiscrepancyField, string> = {
 
 export function formatValue(v: Value): string {
     if (v === null) return '—'
-    if (typeof v === 'number') return v.toFixed(2)
+    if (typeof v === 'number') return formatPoints(v)
     if (typeof v === 'boolean') return v ? 'sim' : 'não'
     return completionLabel(v) || v
 }

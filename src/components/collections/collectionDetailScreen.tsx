@@ -8,6 +8,7 @@ import { groupRepository } from '@/repository/groupRepository'
 import { subgroupRepository } from '@/repository/subgroupRepository'
 import { categoryRepository } from '@/repository/categoryRepository'
 import { templateRepository } from '@/repository/templateRepository'
+import { formatPoints } from '@/lib/formatPoints'
 import type { Rule } from '@/services/scoringEngine/types'
 import type { Category, Collection, Group, Subgroup } from '@/types/entities'
 import { EditGroupDialog } from './editGroupDialog'
@@ -251,7 +252,7 @@ export function CollectionDetailScreen() {
                         <Trans
                             i18nKey="header.grandTotal"
                             ns="collections"
-                            values={{ total: score?.total ?? 0 }}
+                            values={{ total: formatPoints(score?.total ?? 0) }}
                             components={{ strong: <span className="font-medium text-foreground" /> }}
                         />
                     </p>
@@ -372,16 +373,16 @@ export function CollectionDetailScreen() {
                                             <span className="text-sm text-muted-foreground">
                                                 {g.min_points != null
                                                     ? t('collections:subgroupCard.scoreWithMin', {
-                                                        total: gScore?.total ?? 0,
-                                                        min: g.min_points,
+                                                        total: formatPoints(gScore?.total ?? 0),
+                                                        min: formatPoints(g.min_points),
                                                     })
                                                     : t('collections:subgroupCard.scoreNoMin', {
-                                                        total: gScore?.total ?? 0,
+                                                        total: formatPoints(gScore?.total ?? 0),
                                                     })}
                                             </span>
                                             {gScore?.bonus != null && gScore.bonus > 0 && (
                                                 <Badge variant="secondary" className="text-xs">
-                                                    +{gScore.bonus.toFixed(2)} bonus
+                                                    +{formatPoints(gScore.bonus)} bonus
                                                 </Badge>
                                             )}
                                             {gScore?.completion && (
@@ -458,11 +459,11 @@ export function CollectionDetailScreen() {
                                                                     <span className="text-sm text-muted-foreground">
                                                                         {sg.min_points != null
                                                                             ? t('collections:subgroupCard.scoreWithMin', {
-                                                                                total: sgScore?.total ?? 0,
-                                                                                min: sg.min_points,
+                                                                                total: formatPoints(sgScore?.total ?? 0),
+                                                                                min: formatPoints(sg.min_points),
                                                                             })
                                                                             : t('collections:subgroupCard.scoreNoMin', {
-                                                                                total: sgScore?.total ?? 0,
+                                                                                total: formatPoints(sgScore?.total ?? 0),
                                                                             })}
                                                                     </span>
                                                                     {sgScore?.completion && (
@@ -538,12 +539,12 @@ export function CollectionDetailScreen() {
                                                                                     <div className="flex items-center gap-1">
                                                                                         <span className="text-sm">
                                                                                             {t('collections:categoryCard.scoreSimple', {
-                                                                                                total: catScore?.total.toFixed(2) ?? 0,
+                                                                                                total: formatPoints(catScore?.total ?? 0),
                                                                                             })}
                                                                                             {catScore?.capped && (
                                                                                                 <span className="ml-1 text-xs text-muted-foreground">
                                                                                                     {t('collections:categoryCard.rawSuffix', {
-                                                                                                        raw: catScore.rawTotal,
+                                                                                                        raw: formatPoints(catScore.rawTotal),
                                                                                                     })}
                                                                                                 </span>
                                                                                             )}
@@ -617,7 +618,7 @@ export function CollectionDetailScreen() {
                                                                                                     <span>{doc.title}</span>
                                                                                                     <span>
                                                                                                         {t('collections:categoryCard.documentPoints', {
-                                                                                                            points: contribution?.points.toFixed(2) ?? 0,
+                                                                                                            points: formatPoints(contribution?.points ?? 0),
                                                                                                         })}
                                                                                                     </span>
                                                                                                 </li>

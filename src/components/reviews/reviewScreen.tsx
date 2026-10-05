@@ -13,6 +13,7 @@ import {
 import { verifySnapshotScores } from '@/services/collectionImport/verifyScores'
 import { VerificationNotice } from './verificationNotice'
 import type { ReviewSnapshot } from '@/types/review'
+import { formatPoints } from '@/lib/formatPoints'
 
 const MAX_FILE_BYTES = 10 * 1024 * 1024
 
@@ -166,7 +167,7 @@ export function ReviewsScreen() {
                             <dd>
                                 {pendingSummary.groupCount} {t('fields.groups')} ·{' '}
                                 {pendingSummary.documentCount} {t('fields.documents')} ·{' '}
-                                {pendingSummary.totalScore.toFixed(2)} pts
+                                {formatPoints(pendingSummary.totalScore)} pts
                             </dd>
                         </dl>
 
@@ -224,7 +225,7 @@ export function ReviewsScreen() {
                                         {' · '}
                                         {item.summary.documentCount} {t('fields.documents')}
                                         {' · '}
-                                        {item.summary.totalScore.toFixed(2)} pts
+                                        {formatPoints(item.summary.totalScore)} pts
                                     </p>
                                     <p className="text-xs text-muted-foreground">
                                         {t('fields.importedAt')} {fmtDateTime(item.importedAt)}

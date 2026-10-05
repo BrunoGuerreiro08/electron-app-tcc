@@ -11,6 +11,7 @@ import { Badge } from '@/components/ui/badge'
 import type { ReportData } from '@/services/reportEngine/types'
 import { generateReportHtml } from '@/services/reportEngine/generateReportHtml'
 import { useTranslation } from 'react-i18next'
+import { formatPoints } from '@/lib/formatPoints'
 
 interface ReportPreviewModalProps {
     open: boolean
@@ -75,7 +76,7 @@ export const ReportPreviewModal: React.FC<ReportPreviewModalProps> = ({
                     <DialogTitle className="flex justify-between items-center pr-6">
                         <span>{t('reports.preview.title')}</span>
                         <Badge variant="outline" className="text-base font-bold text-primary">
-                            {t('reports.preview.totalScore', { score: reportData.totalScore.toFixed(2) })}
+                            {t('reports.preview.totalScore', { score: formatPoints(reportData.totalScore) })}
                         </Badge>
                     </DialogTitle>
                 </DialogHeader>
@@ -100,7 +101,7 @@ export const ReportPreviewModal: React.FC<ReportPreviewModalProps> = ({
                                 <div className="flex items-center gap-2">
                                     <Badge>{subgroup.completion || t('reports.preview.noGoal')}</Badge>
                                     <span className="font-bold text-sm">
-                                        {t('reports.preview.pointsSuffix', { count: subgroup.total.toFixed(2) })}
+                                        {t('reports.preview.pointsSuffix', { count: formatPoints(subgroup.total) })}
                                     </span>
                                 </div>
                             </div>
@@ -110,7 +111,7 @@ export const ReportPreviewModal: React.FC<ReportPreviewModalProps> = ({
                                     <div key={cat.id} className="text-sm border-l-2 pl-3 py-1">
                                         <div className="flex justify-between font-medium">
                                             <span>{cat.name}</span>
-                                            <span>{t('reports.preview.pointsSuffix', { count: cat.total.toFixed(2) })}</span>
+                                            <span>{t('reports.preview.pointsSuffix', { count: formatPoints(cat.total) })}</span>
                                         </div>
 
                                         {cat.documents.length > 0 ? (
@@ -124,7 +125,7 @@ export const ReportPreviewModal: React.FC<ReportPreviewModalProps> = ({
                                                             {doc.title} ({doc.hours ? `${doc.hours}h` : `${doc.quantity}x`})
                                                         </span>
                                                         <span className="font-mono font-medium text-foreground">
-                                                            +{t('reports.preview.pointsSuffix', { count: doc.points.toFixed(2) })}
+                                                            +{t('reports.preview.pointsSuffix', { count: formatPoints(doc.points) })}
                                                         </span>
                                                     </div>
                                                 ))}

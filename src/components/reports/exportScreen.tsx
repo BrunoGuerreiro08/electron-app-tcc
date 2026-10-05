@@ -25,6 +25,7 @@ import {
     ArrowLeft,
 } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
+import { formatPoints } from '@/lib/formatPoints'
 
 export function ExportScreen() {
     const { t } = useTranslation(['common', 'reports'])
@@ -338,7 +339,7 @@ export function ExportScreen() {
                             </p>
                         </div>
                         <Badge variant="outline" className="text-base font-bold text-primary px-3 py-1">
-                            {t('reports:preview.totalScore', { score: reportData.totalScore.toFixed(2) })}
+                            {t('reports:preview.totalScore', { score: formatPoints(reportData.totalScore) })}
                         </Badge>
                     </CardHeader>
                     <CardContent className="p-6 space-y-8">
@@ -349,12 +350,12 @@ export function ExportScreen() {
                                     <div className="flex items-center gap-3">
                                         {group.bonus != null && group.bonus > 0 && (
                                             <Badge variant="secondary">
-                                                +{group.bonus.toFixed(2)} {t('reports:preview.bonus')}
+                                                +{formatPoints(group.bonus)} {t('reports:preview.bonus')}
                                             </Badge>
                                         )}
                                         <Badge variant="secondary">{group.completion || t('reports:preview.noGoal')}</Badge>
                                         <span className="font-bold text-sm">
-                                            {t('reports:preview.pointsSuffix', { count: group.total.toFixed(2) })}
+                                            {t('reports:preview.pointsSuffix', { count: formatPoints(group.total) })}
                                         </span>
                                     </div>
                                 </div>
@@ -366,7 +367,7 @@ export function ExportScreen() {
                                                 <span className="font-semibold text-sm">{subgroup.name}</span>
                                                 <div className="flex items-center gap-3">
                                                     <Badge variant="secondary">{subgroup.completion || t('reports:preview.noGoal')}</Badge>
-                                                    <span className="font-bold text-sm">{t('reports:preview.pointsSuffix', { count: subgroup.total.toFixed(2) })}</span>
+                                                    <span className="font-bold text-sm">{t('reports:preview.pointsSuffix', { count: formatPoints(subgroup.total) })}</span>
                                                 </div>
                                             </div>
 
@@ -376,7 +377,7 @@ export function ExportScreen() {
                                                         <div className="flex justify-between font-medium">
                                                             <span>{cat.name}</span>
                                                             <span>
-                                                                {cat.total.toFixed(2)} pts{' '}
+                                                                {formatPoints(cat.total)} pts{' '}
                                                                 {cat.capped && <span className="text-xs text-muted-foreground">{t('reports:preview.capped')}</span>}
                                                             </span>
                                                         </div>
@@ -399,7 +400,7 @@ export function ExportScreen() {
                                                                             </span>
                                                                         </div>
                                                                         <span className="font-mono font-medium text-foreground">
-                                                                            +{doc.points.toFixed(2)} pts
+                                                                            +{formatPoints(doc.points)} pts
                                                                         </span>
                                                                     </div>
                                                                 ))}

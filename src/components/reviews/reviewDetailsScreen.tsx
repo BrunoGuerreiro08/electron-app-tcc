@@ -10,13 +10,14 @@ import { keyOf, verifySnapshotScores, type ScoreDiscrepancy } from '@/services/c
 import { verifyTemplateOrigin } from '@/services/collectionImport/verifyTemplateOrigin'
 import { MismatchTag, TemplateOriginNotice, VerificationNotice } from './verificationNotice'
 import type { StoredReview } from '@/types/review'
+import { formatPoints } from '@/lib/formatPoints'
 
 const fmtDateTime = (iso: string) => new Date(iso).toLocaleString('pt-BR')
 const fmtDate = (iso: string | null) => {
     const m = iso ? /^(\d{4})-(\d{2})-(\d{2})/.exec(iso) : null
     return m ? `${m[3]}/${m[2]}/${m[1]}` : (iso ?? '')
 }
-const pts = (n: number) => n.toFixed(2)
+const pts = formatPoints
 
 /** Loader: fetches the stored snapshot, then hands it to the pure view. */
 export function ReviewDetailScreen() {
