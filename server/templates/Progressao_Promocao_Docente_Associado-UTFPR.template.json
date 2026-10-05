@@ -1,0 +1,1560 @@
+{
+  "schemaVersion": 1,
+  "name": "Progressão/Promoção Docente Associado — UTFPR",
+  "groups": [
+    {
+      "name": "I - Ensino, Orientação e Avaliação do Docente pelo Discente",
+      "display_order": 0,
+      "min_points": 32,
+      "max_points": null,
+      "bonus_rate": 0.25,
+      "subgroups": [
+        {
+          "name": "I.1 - Ensino",
+          "display_order": 0,
+          "min_points": null,
+          "max_points": null,
+          "categories": [
+            {
+              "name": "I.1.1 — Curso técnico, graduação, lato sensu sem remuneração e stricto sensu (Pontuação por 15 horas de carga horária total da disciplina por semestre).",
+              "display_order": 0,
+              "rule": {
+                "type": "hours",
+                "pointsPerUnit": 1,
+                "unitSize": 15
+              }
+            },
+            {
+              "name": "I.1.2 — Curso técnico, graduação, lato sensu (para programas institucionais com financiamento oficial. Ex.: ETEC, FNDE, PARFOR, UAB) (Pontuação por 15 horas de carga horária total da disciplina por semestre).",
+              "display_order": 1,
+              "rule": {
+                "type": "hours",
+                "pointsPerUnit": 0.5,
+                "unitSize": 15
+              }
+            }
+          ]
+        },
+        {
+          "name": "I.2 - Orientação",
+          "display_order": 1,
+          "min_points": null,
+          "max_points": null,
+          "categories": [
+            {
+              "name": "I.2.1 — Orientação em andamento de aluno de mestrado stricto sensu (Pontuação por aluno por ano).",
+              "display_order": 0,
+              "rule": {
+                "type": "flat",
+                "pointsPerUnit": 0.5
+              }
+            },
+            {
+              "name": "I.2.2 — Co-orientação em andamento de aluno de mestrado stricto sensu (Pontuação por aluno por ano).",
+              "display_order": 1,
+              "rule": {
+                "type": "flat",
+                "pointsPerUnit": 0.3
+              }
+            },
+            {
+              "name": "I.2.3 — Dissertação aprovada de mestrado sob orientação do postulante (Pontuação por dissertação aprovada).",
+              "display_order": 2,
+              "rule": {
+                "type": "flat",
+                "pointsPerUnit": 6
+              }
+            },
+            {
+              "name": "I.2.4 — Dissertação aprovada de mestrado sob co-orientação do postulante (Pontuação por dissertação aprovada).",
+              "display_order": 3,
+              "rule": {
+                "type": "flat",
+                "pointsPerUnit": 3
+              }
+            },
+            {
+              "name": "I.2.5 — Orientação em andamento de aluno de doutorado stricto sensu (Pontuação por aluno por ano).",
+              "display_order": 4,
+              "rule": {
+                "type": "flat",
+                "pointsPerUnit": 0.5
+              }
+            },
+            {
+              "name": "I.2.6 — Co-orientação em andamento de aluno de doutorado stricto sensu  (Pontuação por aluno por ano).",
+              "display_order": 5,
+              "rule": {
+                "type": "flat",
+                "pointsPerUnit": 0.3
+              }
+            },
+            {
+              "name": "I.2.7 — Tese aprovada de doutorado sob orientação do postulante (Pontuação por tese aprovada).",
+              "display_order": 6,
+              "rule": {
+                "type": "flat",
+                "pointsPerUnit": 10
+              }
+            },
+            {
+              "name": "I.2.8 — Tese aprovada de doutorado sob co-orientação do postulante (Pontuação por tese aprovada).",
+              "display_order": 7,
+              "rule": {
+                "type": "flat",
+                "pointsPerUnit": 5
+              }
+            },
+            {
+              "name": "I.2.9 — Orientação concluída de alunos inscritos nos programas institucionais de iniciação científica, extensão, inovação e docência da UTFPR (e.g., PIBIC, PIBITI, PIBIC-JR, PIBIC-EM, PIBEXT, PIBIN, PIBID, PET, RONDON) e/ou voluntário sem bolsa de projeto registrado na diretoria responsável pelo acompanhamento (Pontuação por aluno).",
+              "display_order": 8,
+              "rule": {
+                "type": "flat",
+                "pointsPerUnit": 1.5
+              }
+            },
+            {
+              "name": "I.2.10 — Orientação - Coordenador de área de projetos PIBID (Pontuação por orientação de grupo com pelo menos 12 bolsistas).",
+              "display_order": 9,
+              "rule": {
+                "type": "flat",
+                "pointsPerUnit": 5
+              }
+            },
+            {
+              "name": "I.2.11 — Orientação de estágio não obrigatório ou monitoria (Pontuação por 60 horas de orientação realizada).",
+              "display_order": 10,
+              "rule": {
+                "type": "hours",
+                "pointsPerUnit": 0.5,
+                "unitSize": 60
+              }
+            },
+            {
+              "name": "I.2.12 — Orientação concluída de estágio obrigatório em cursos técnico e graduação (Bacharelados e Tecnologias) (Pontuação por orientação individual).",
+              "display_order": 11,
+              "rule": {
+                "type": "flat",
+                "pointsPerUnit": 0.5
+              }
+            },
+            {
+              "name": "I.2.13 — Orientação concluída de estágio obrigatório em cursos de Licenciatura (Pontuação por orientação individual).",
+              "display_order": 12,
+              "rule": {
+                "type": "flat",
+                "pointsPerUnit": 1.5
+              }
+            },
+            {
+              "name": "I.2.14 — Orientação concluída de estágio em cursos de Licenciatura para uma turma (Pontuação por orientação de turma).",
+              "display_order": 13,
+              "rule": {
+                "type": "flat",
+                "pointsPerUnit": 5
+              }
+            },
+            {
+              "name": "I.2.15 — Orientação de bolsista de programa de desenvolvimento científico regional, de recém-doutor e de pós-doutoramento (Pontuação por bolsista por semestre concluído de orientação ou supervisão).",
+              "display_order": 14,
+              "rule": {
+                "type": "flat",
+                "pointsPerUnit": 1
+              }
+            },
+            {
+              "name": "I.2.16 — Orientação de bolsistas com titulação de mestre ou doutor, participante de projetos P&D&I (ex.: PADCT, CNPq, FINEP, FA, Empresas) (Pontuação por bolsista por semestre concluído de orientação ou supervisão).",
+              "display_order": 15,
+              "rule": {
+                "type": "flat",
+                "pointsPerUnit": 1
+              }
+            },
+            {
+              "name": "I.2.17 — Orientação concluída de trabalho de conclusão de curso técnico e de graduação (Pontuação por trabalho orientado).",
+              "display_order": 16,
+              "rule": {
+                "type": "flat",
+                "pointsPerUnit": 1.5
+              }
+            },
+            {
+              "name": "I.2.18 — Orientação em andamento de trabalho de conclusão de curso técnico e de graduação (Pontuação por trabalho com mais de 6 meses de orientação).",
+              "display_order": 17,
+              "rule": {
+                "type": "flat",
+                "pointsPerUnit": 0.5
+              }
+            },
+            {
+              "name": "I.2.19 — Orientação de trabalho de conclusão de curso de especialização sem remuneração ou com remuneração para programas institucionais com financiamento (ex.: Etc, FNDE, PARFOR, UAB) (Pontuação por trabalho orientado).",
+              "display_order": 18,
+              "rule": {
+                "type": "flat",
+                "pointsPerUnit": 1
+              }
+            },
+            {
+              "name": "I.2.20 — Orientação de trabalho no programa de desenvolvimento educacional – PDE ou equivalente (Pontuação por trabalho orientado, limitado a 20 pontos).",
+              "display_order": 19,
+              "rule": {
+                "type": "capped",
+                "inner": {
+                  "type": "flat",
+                  "pointsPerUnit": 2
+                },
+                "cap": 20
+              }
+            },
+            {
+              "name": "I.2.21 — Co-orientação concluída de trabalho de conclusão de curso técnico e de graduação (Pontuação por trabalho).",
+              "display_order": 20,
+              "rule": {
+                "type": "flat",
+                "pointsPerUnit": 1
+              }
+            },
+            {
+              "name": "I.2.22 — Co-orientação em andamento de trabalho de conclusão de curso técnico e de graduação (Pontuação por trabalho com mais de 6 meses de orientação).",
+              "display_order": 21,
+              "rule": {
+                "type": "flat",
+                "pointsPerUnit": 0.2
+              }
+            },
+            {
+              "name": "I.2.23 — Co-orientação de trabalho de final de curso de especialização sem remuneração ou com remuneração para programas institucionais com financiamento (ex.: eTEC, FNDE, PARFOR, UAB) (Pontuação por trabalho).",
+              "display_order": 22,
+              "rule": {
+                "type": "flat",
+                "pointsPerUnit": 0.6
+              }
+            }
+          ]
+        },
+        {
+          "name": "I.3 - Avaliação do Docente pelo Discente",
+          "display_order": 2,
+          "min_points": null,
+          "max_points": 12,
+          "categories": [
+            {
+              "name": "I.3.1 — Avaliação > ou = 18 e < que 22 (Pontuação por ano de avaliação com média > ou = 18 e < que 22 )",
+              "display_order": 0,
+              "rule": {
+                "type": "flat",
+                "pointsPerUnit": 4
+              }
+            },
+            {
+              "name": "I.3.2 — Avaliação > ou = 22 (Pontuação por ano de avaliação com média > ou = 22 )",
+              "display_order": 1,
+              "rule": {
+                "type": "flat",
+                "pointsPerUnit": 6
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "II - Produção Intelectual",
+      "display_order": 1,
+      "min_points": 12,
+      "max_points": null,
+      "bonus_rate": 0.25,
+      "subgroups": [
+        {
+          "name": "II - Produção Intelectual",
+          "display_order": 0,
+          "min_points": null,
+          "max_points": null,
+          "categories": [
+            {
+              "name": "Qualis A ou com JCR acima de 1.2 (Pontuação por artigo).",
+              "display_order": 0,
+              "rule": {
+                "type": "flat",
+                "pointsPerUnit": 30
+              }
+            },
+            {
+              "name": "Qualis B1, B2 ou com JCR acima de 0.5 e abaixo de 1,2 (Pontuação por artigo).",
+              "display_order": 1,
+              "rule": {
+                "type": "flat",
+                "pointsPerUnit": 15
+              }
+            },
+            {
+              "name": "Qualis B3, B4, B5 e Qualis C ou com JCR < 0,5 (Pontuação por artigo).",
+              "display_order": 2,
+              "rule": {
+                "type": "flat",
+                "pointsPerUnit": 6
+              }
+            },
+            {
+              "name": "Sem classificação ou local (Pontuação por artigo).",
+              "display_order": 3,
+              "rule": {
+                "type": "flat",
+                "pointsPerUnit": 2
+              }
+            },
+            {
+              "name": "II.2 — Publicação integral de artigo em Anais de Congressos, Simpósios, Seminários e similares, em eventos de abrangência nacional (Pontuação por artigo documentado).",
+              "display_order": 4,
+              "rule": {
+                "type": "flat",
+                "pointsPerUnit": 4
+              }
+            },
+            {
+              "name": "II.3 — Publicação integral de artigo em Anais de Congressos, Simpósios, Seminários e similares, em eventos de abrangência internacional (Pontuação por artigo documentado).",
+              "display_order": 5,
+              "rule": {
+                "type": "flat",
+                "pointsPerUnit": 5
+              }
+            },
+            {
+              "name": "II.4 — Publicação de artigo em Seminário de Iniciação Científica eTecnológica ou seminários específicos (ex SEI, Sulpet, etc), de abrangência regional ou nacional (Pontuação por artigo documentado).",
+              "display_order": 6,
+              "rule": {
+                "type": "flat",
+                "pointsPerUnit": 2
+              }
+            },
+            {
+              "name": "II.5 — Trabalho de Conclusão de Curso (TCC) concluído e disponibilizado no Portal Institucional em Acesso Aberto da UTFPR (PIAA) (Pontuação por trabalho orientado)",
+              "display_order": 7,
+              "rule": {
+                "type": "flat",
+                "pointsPerUnit": 2
+              }
+            },
+            {
+              "name": "II.6 — Publicação de resumo de artigo em Anais de Congresso, Simpósios, Seminários e similares, em eventos de abrangência nacional (Pontuação por resumo documentado).",
+              "display_order": 8,
+              "rule": {
+                "type": "flat",
+                "pointsPerUnit": 2
+              }
+            },
+            {
+              "name": "II.7 — Publicação de resumo de artigo em Anais de Congresso, Simpósios, Seminários e similares, em eventos de abrangência internacional (Pontuação por resumo documentado).",
+              "display_order": 9,
+              "rule": {
+                "type": "flat",
+                "pointsPerUnit": 3
+              }
+            },
+            {
+              "name": "II.8 — Participação como moderador, debatedor ou coordenador de sessão em Congressos, Simpósios, Seminários, e demais eventos técnico-científicos nacionais (Pontuação por participação).",
+              "display_order": 10,
+              "rule": {
+                "type": "flat",
+                "pointsPerUnit": 2
+              }
+            },
+            {
+              "name": "II.9 — Participação como moderador, debatedor ou coordenador de sessãoem Congressos, Simpósios, Seminários, e demais eventos técnico-científicos internacionais (Pontuação por participação).",
+              "display_order": 11,
+              "rule": {
+                "type": "flat",
+                "pointsPerUnit": 5
+              }
+            },
+            {
+              "name": "II.10 — Palestra ou minicurso proferida em Congressos, Simpósios, Seminários e Workshop de Sociedades Científicas como convidado daOrganização/Comitê Técnico do evento (Invited Talk), em eventos deabrangência nacional (Pontuação por palestra documentada).",
+              "display_order": 12,
+              "rule": {
+                "type": "flat",
+                "pointsPerUnit": 2
+              }
+            },
+            {
+              "name": "II.11 — Palestra ou minicurso proferida em Congressos, Simpósios, Seminários e Workshop de Sociedades Científicas como convidado daOrganização/Comitê Técnico do evento (Invited Talk), em eventos de abrangência internacional (Pontuação por palestra documentada).",
+              "display_order": 13,
+              "rule": {
+                "type": "flat",
+                "pointsPerUnit": 5
+              }
+            },
+            {
+              "name": "II.12 — Livro técnico/científico em língua portuguesa com ISBN. Livro(s) relevante (s) na área de avaliação do postulante podem ser pontuados pela comissão (Pontuação limitada a 20 pontos por livro).",
+              "display_order": 14,
+              "rule": {
+                "type": "flat",
+                "pointsPerUnit": 20
+              }
+            },
+            {
+              "name": "II.13 — Livro técnico/científico em língua estrangeira com ISBN. Livro(s) relevante (s) na área de avaliação do postulante podem ser pontuados pela comissão (Pontuação limitada a 30 pontos por livro).",
+              "display_order": 15,
+              "rule": {
+                "type": "flat",
+                "pointsPerUnit": 30
+              }
+            },
+            {
+              "name": "II.14 — Capítulo de livro técnico/científico em língua portuguesa publicado após ser submetido ao Conselho Editorial em Editora (Pontuação por capítulo).",
+              "display_order": 16,
+              "rule": {
+                "type": "flat",
+                "pointsPerUnit": 10
+              }
+            },
+            {
+              "name": "II.15 — Capítulo de livro técnico/científico em língua estrangeira publicado após ser submetido ao Conselho Editorial em Editora (Pontuação por capítulo).",
+              "display_order": 17,
+              "rule": {
+                "type": "flat",
+                "pointsPerUnit": 15
+              }
+            },
+            {
+              "name": "II.16 — Edição ou organização de livro técnico/científico com ISBN ou Anais de Congressos de Sociedades Cientificas (Pontuação por livro).",
+              "display_order": 18,
+              "rule": {
+                "type": "flat",
+                "pointsPerUnit": 10
+              }
+            },
+            {
+              "name": "II.17 — Autoria de tradução de livro técnico/científico publicado por Editora (Pontuação por livro).",
+              "display_order": 19,
+              "rule": {
+                "type": "flat",
+                "pointsPerUnit": 10
+              }
+            },
+            {
+              "name": "II.18 — Citações em Artigos de Periódicos indexados, anexando ao processo apenas as citações da base de dados Web of Knowledge (ISI) e Scopus de quaisquer artigos de sua autoria somente no interstício da avaliação. Este item está limitado a um máximo de 10 pontos. A cada 2 anos de período de avaliação considerado (Pontuação por citação por artigo).",
+              "display_order": 20,
+              "rule": {
+                "type": "capped",
+                "inner": {
+                  "type": "flat",
+                  "pointsPerUnit": 2
+                },
+                "cap": 10
+              }
+            },
+            {
+              "name": "II.19 — Inventos e demais produtos de pesquisa, com patente ou registro de software concedido (Pontuação por depósito ou registro).",
+              "display_order": 21,
+              "rule": {
+                "type": "flat",
+                "pointsPerUnit": 10
+              }
+            },
+            {
+              "name": "II.20 — Inventos e demais produtos de pesquisa, com patente ou registro de software depositado (Pontuação por concessão).",
+              "display_order": 22,
+              "rule": {
+                "type": "flat",
+                "pointsPerUnit": 30
+              }
+            },
+            {
+              "name": "II.21 — Produção de manual técnico e/ou didático de autoria própria ou coautoria (Pontuação por manual).",
+              "display_order": 23,
+              "rule": {
+                "type": "flat",
+                "pointsPerUnit": 10
+              }
+            },
+            {
+              "name": "II.22 — Produção de Apostila para Disciplina da Matriz Curricular de Curso do ensino médio, técnico, graduação e pós-graduação stricto sensu da UTFPR de autoria ou coautoria própria (Pontuação por apostila).",
+              "display_order": 24,
+              "rule": {
+                "type": "flat",
+                "pointsPerUnit": 10
+              }
+            },
+            {
+              "name": "II.23 — Relatório Técnico Demandado a UTFPR sob a forma de consultoria (Pontuação por relatório).",
+              "display_order": 25,
+              "rule": {
+                "type": "flat",
+                "pointsPerUnit": 10
+              }
+            },
+            {
+              "name": "II.24 — Editor-Chefe de periódico indexado nas bases Web of Knowledge (ISI) e Scopus, possuidor de Fator de Impacto com base nos indicadores JCR e/ou SNIP por pelo menos 1 ano (Pontuação por periódico na função de editor-chefe).",
+              "display_order": 26,
+              "rule": {
+                "type": "flat",
+                "pointsPerUnit": 20
+              }
+            },
+            {
+              "name": "II.25 — Editor-chefe de periódico indexado com abrangência nacional por pelo menos 1 ano (Pontuação por periódico na função de editor-chefe).",
+              "display_order": 27,
+              "rule": {
+                "type": "flat",
+                "pointsPerUnit": 10
+              }
+            },
+            {
+              "name": "II.26 — Editor associado ou de área de periódico indexado com abrangência internacional por pelo menos 1 ano (Pontuação por periódico na função).",
+              "display_order": 28,
+              "rule": {
+                "type": "flat",
+                "pointsPerUnit": 10
+              }
+            },
+            {
+              "name": "II.27 — Editor associado ou de área de periódico indexado com abrangência nacional por pelo menos 1 ano (Pontuação por período na função).",
+              "display_order": 29,
+              "rule": {
+                "type": "flat",
+                "pointsPerUnit": 5
+              }
+            },
+            {
+              "name": "II.28 — Revisor de artigo científico para periódico indexado com abrangência internacional (Pontuação por revisão limitado a 10 pontos a cada 2 anos).",
+              "display_order": 30,
+              "rule": {
+                "type": "capped",
+                "inner": {
+                  "type": "flat",
+                  "pointsPerUnit": 2
+                },
+                "cap": 10
+              }
+            },
+            {
+              "name": "II.29 — Revisor de artigo científico para periódico indexado com abrangência nacional (Pontuação por consultoria limitado a 5 pontos a cada 2 anos).",
+              "display_order": 31,
+              "rule": {
+                "type": "capped",
+                "inner": {
+                  "type": "flat",
+                  "pointsPerUnit": 1
+                },
+                "cap": 5
+              }
+            },
+            {
+              "name": "II.30 — Consultor científico “ad hoc” de projeto individual de pesquisa (e.g.,CNPq, CAPES, FAPs) (Pontuação por consultoria limitado a 5 pontos a cada 2 anos).",
+              "display_order": 32,
+              "rule": {
+                "type": "capped",
+                "inner": {
+                  "type": "flat",
+                  "pointsPerUnit": 1
+                },
+                "cap": 5
+              }
+            },
+            {
+              "name": "II.31 — Consultor científico “ad hoc” de projeto institucional de pesquisa (e.g., CNPq, CAPES, FAPs) (Pontuação por consultoria limitado a 5 pontos a cada 2 anos).",
+              "display_order": 33,
+              "rule": {
+                "type": "capped",
+                "inner": {
+                  "type": "flat",
+                  "pointsPerUnit": 1
+                },
+                "cap": 5
+              }
+            },
+            {
+              "name": "II.32 — Membro de Conselho Científico e Editorial de revista científica indexada (Pontuação por conselho limitado a 3 pontos a cada 2 anos).",
+              "display_order": 34,
+              "rule": {
+                "type": "capped",
+                "inner": {
+                  "type": "flat",
+                  "pointsPerUnit": 1
+                },
+                "cap": 3
+              }
+            },
+            {
+              "name": "II.33 — Recebimento de comendas e premiações advindas do exercício de atividades de ensino, pesquisa e extensão concedidas por entidade distinta da UTFPR. A comissão poderá atribuir pontuações maiores para casos de excelência nacional e internacional (ex.: Comenda de Mérito Científico Nacional, Prêmio de Inovação FINEP, Prêmio Jovem Cientista, Pesquisador Emérito CNPq, Medalha da Ordem de Mérito Militar no exercício de atividades na UTFPR) (Pontuação por comendas e premiações).",
+              "display_order": 35,
+              "rule": {
+                "type": "flat",
+                "pointsPerUnit": 20
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "III - Atividades de Pesquisa, Extensão, Administrativas e Outras",
+      "display_order": 2,
+      "min_points": null,
+      "max_points": null,
+      "bonus_rate": null,
+      "subgroups": [
+        {
+          "name": "III.1 - Atividades de Pesquisa",
+          "display_order": 0,
+          "min_points": null,
+          "max_points": 15,
+          "categories": [
+            {
+              "name": "III.1.1 — Bolsista Produtividade em Pesquisa (PQ) do CNPQ e similares de outras agências oficiais de fomento (Ponto por ano como bolsista).",
+              "display_order": 0,
+              "rule": {
+                "type": "flat",
+                "pointsPerUnit": 15
+              }
+            },
+            {
+              "name": "III.1.2 — Coordenação de projeto com instituição de excelência internacional com produção intelectual relevante e /ou formação em dupla diplomação de doutor (ex.: PROBRAL) (Pontuação por projeto por ano).",
+              "display_order": 1,
+              "rule": {
+                "type": "flat",
+                "pointsPerUnit": 15
+              }
+            },
+            {
+              "name": "III.1.3 — Membro do projeto com instituição de excelência internacional com produção intelectualrelevante e /ou formação em dupla diplomação de doutor sob orientação do postulante (Pontuação por projeto por ano).",
+              "display_order": 2,
+              "rule": {
+                "type": "flat",
+                "pointsPerUnit": 5
+              }
+            },
+            {
+              "name": "III.1.4 — Liderança de projeto com instituição de excelência internacional com formação de dupla diplomação ou intercâmbio acadêmico de alunos no nível graduação (Pontuação por projeto por ano).",
+              "display_order": 3,
+              "rule": {
+                "type": "flat",
+                "pointsPerUnit": 3
+              }
+            },
+            {
+              "name": "III.1.5 — Coordenação de projeto com instituição de excelência internacional para formação de dupla diplomação de recursos humanos no nível de Mestrado (Pontuação por mestre orientado, comprovado por declaração da Pró-Reitoria responsável do docente líder da ação ou comprovante da agência de fomento).",
+              "display_order": 4,
+              "rule": {
+                "type": "flat",
+                "pointsPerUnit": 15
+              }
+            },
+            {
+              "name": "III.1.6 — Coordenação de projetos de (PD&I) em parceria com outros institutos, universidades e centros de pesquisa de excelência internacional (Pontuação por projeto por ano).",
+              "display_order": 5,
+              "rule": {
+                "type": "flat",
+                "pointsPerUnit": 10
+              }
+            },
+            {
+              "name": "III.1.7 — Coordenação de projetos de (PD&I) em parceria com outros institutos, universidades e centros de pesquisa nacional (Pontuação por projeto por ano).",
+              "display_order": 6,
+              "rule": {
+                "type": "flat",
+                "pointsPerUnit": 4
+              }
+            },
+            {
+              "name": "III.1.8 — Participação como membro de projeto de PD&I, contemplado em editais de PD&I cooperativos com instituições parceiras (Pontuação por projeto por ano, limitado a 8 pontos a cada 2 anos).",
+              "display_order": 7,
+              "rule": {
+                "type": "capped",
+                "inner": {
+                  "type": "flat",
+                  "pointsPerUnit": 2
+                },
+                "cap": 8
+              }
+            },
+            {
+              "name": "III.1.9 — Liderança de grupo de pesquisa homologado pela UTFPR e Ativo (Pontuação por grupo de pesquisa por ano).",
+              "display_order": 8,
+              "rule": {
+                "type": "flat",
+                "pointsPerUnit": 1
+              }
+            },
+            {
+              "name": "III.1.10 — Liderança na captação de recursos financeiros em projetos de PD&I com instituições ou empresas parceiras (Pontuação por projeto).",
+              "display_order": 9,
+              "rule": {
+                "type": "flat",
+                "pointsPerUnit": 15
+              }
+            },
+            {
+              "name": "III.1.11 — Contratos de transferência de tecnologia e licenciamento chancelado pela Agência de Inovação da UTFPR. Pontuação por transferência de tecnologia ou licenciamento.",
+              "display_order": 10,
+              "rule": {
+                "type": "flat",
+                "pointsPerUnit": 30
+              }
+            },
+            {
+              "name": "III.1.12 — Desenvolvimento de produtos ou processos (produtos, protótipos e processos implantados e não patenteados, software não registrados). Não somente conceitual, deve demonstrar o aspecto de utilidade prática (Pontuação por produto ou processo).",
+              "display_order": 11,
+              "rule": {
+                "type": "flat",
+                "pointsPerUnit": 5
+              }
+            },
+            {
+              "name": "III.1.13 — Cargo de assessoria em órgãos de fomento à pesquisa, ao ensino ou à extensão (Pontuação por cargo por ano).",
+              "display_order": 12,
+              "rule": {
+                "type": "flat",
+                "pointsPerUnit": 15
+              }
+            },
+            {
+              "name": "III.1.14 — Consultoria ad hoc para órgãos de fomento à pesquisa, ao ensino ou à extensão (Pontuação por consultoria).",
+              "display_order": 13,
+              "rule": {
+                "type": "flat",
+                "pointsPerUnit": 2
+              }
+            },
+            {
+              "name": "III.1.15 — Participação em Conselhos, comitês e afins em órgãos de fomento à pesquisa, ao ensino e à extensão. Com comprovação de participação efetiva (Pontuação por conselho por ano).",
+              "display_order": 14,
+              "rule": {
+                "type": "flat",
+                "pointsPerUnit": 2.5
+              }
+            },
+            {
+              "name": "III.1.16 — Coordenação de projeto institucional de pesquisa financiado por PADCT, FNDCT, RHAE-CNPq, FINEP ou similares, executado na UTFPR (Pontuação por projeto).",
+              "display_order": 15,
+              "rule": {
+                "type": "flat",
+                "pointsPerUnit": 15
+              }
+            },
+            {
+              "name": "III.1.17 — Participação de projeto institucional de pesquisa financiado por PADCT, FNDCT, RHAE-CNPq, FINEP ou similares, executado na UTFPR (Pontuação por projeto).",
+              "display_order": 16,
+              "rule": {
+                "type": "flat",
+                "pointsPerUnit": 10
+              }
+            },
+            {
+              "name": "III.1.18 — Participação em projeto individual de pesquisa, de estudos e/ou de diagnósticos financiado por órgãos públicos e/ou privados executado n a UTFPR. Pontuação por projeto.",
+              "display_order": 17,
+              "rule": {
+                "type": "flat",
+                "pointsPerUnit": 5
+              }
+            },
+            {
+              "name": "III.1.19 — Coordenação de projeto de pesquisa financiado CNPq, CAPES, FINEP, Fundação Araucária ou outros órgãos de fomento oficiais, executado na UTFPR (Pontuação por projeto).",
+              "display_order": 18,
+              "rule": {
+                "type": "flat",
+                "pointsPerUnit": 10
+              }
+            },
+            {
+              "name": "III.1.20 — Participação de projeto de pesquisa financiado CNPq, CAPES, FINEP, Fundação Araucária ou outros órgãos de fomento oficiais, executado na UTFPR (Pontuação por projeto).",
+              "display_order": 19,
+              "rule": {
+                "type": "flat",
+                "pointsPerUnit": 5
+              }
+            },
+            {
+              "name": "III.1.21 — Participação em projetos de desenvolvimento institucional (ex.:INSERIR) (Pontuação por projeto em que participou com mais de 1 anos de atuação).",
+              "display_order": 20,
+              "rule": {
+                "type": "flat",
+                "pointsPerUnit": 10
+              }
+            },
+            {
+              "name": "III.1.22 — Líder na captação e execução de recursos para projetos de desenvolvimento institucional (infraestrutura CT-INFRA/Pro-Equipamentos, Capacitação: MCTI/MEC e assemelhados) (Pontuação por projeto aprovado e executado).",
+              "display_order": 21,
+              "rule": {
+                "type": "flat",
+                "pointsPerUnit": 30
+              }
+            },
+            {
+              "name": "III.1.23 — Coordenação de projeto individual de pesquisa, de estudos e/ou de diagnósticos financiado por órgãos públicos e/ou privados, executado na UTFPR (Pontuação por coordenação de projeto).",
+              "display_order": 22,
+              "rule": {
+                "type": "flat",
+                "pointsPerUnit": 10
+              }
+            }
+          ]
+        },
+        {
+          "name": "III.2 - Atividades de Extensão",
+          "display_order": 1,
+          "min_points": null,
+          "max_points": 15,
+          "categories": [
+            {
+              "name": "III.2.1 — Bolsista em Desenvolvimento Tecnológico e Extensão Inovadora (DT) do CNPQ e similares de outras agências oficiais de fomento (Ponto por ano como bolsista).",
+              "display_order": 0,
+              "rule": {
+                "type": "flat",
+                "pointsPerUnit": 15
+              }
+            },
+            {
+              "name": "III.2.2 — Coordenação não remunerada de Curso de Extensão. Com comprovação de atividade não remunerada (Pontuação por coordenação).",
+              "display_order": 1,
+              "rule": {
+                "type": "flat",
+                "pointsPerUnit": 5
+              }
+            },
+            {
+              "name": "III.2.3 — Hora-aula não remunerada de Curso de Extensão (Até 30 horas). Com comprovação de atividade não remunerada (Pontuação por capacitação).",
+              "display_order": 2,
+              "rule": {
+                "type": "flat",
+                "pointsPerUnit": 2
+              }
+            },
+            {
+              "name": "III.2.4 — Hora-aula não remunerada de Curso de Extensão (Mais de 30horas). Com comprovação de atividade não remunerada (Pontuação por participação).",
+              "display_order": 3,
+              "rule": {
+                "type": "flat",
+                "pointsPerUnit": 3
+              }
+            },
+            {
+              "name": "III.2.5 — Palestras e conferências, não científicas, a convite. Palestras e conferências de caráter científico devem ser relacionadas no item II (Pontuação por palestra).",
+              "display_order": 4,
+              "rule": {
+                "type": "flat",
+                "pointsPerUnit": 2
+              }
+            },
+            {
+              "name": "III.2.6 — Divulgação técnica em televisão, rádio, revista ou jornal (os pontos serão divididos entre os autores) (Pontuação por participação).",
+              "display_order": 5,
+              "rule": {
+                "type": "flat",
+                "pointsPerUnit": 2
+              }
+            },
+            {
+              "name": "III.2.7 — Coordenação de programa de extensão institucional apoiado pela UTFPR (comunitário, esportivo ou similar) (Pontuação por ano de coordenação).",
+              "display_order": 6,
+              "rule": {
+                "type": "flat",
+                "pointsPerUnit": 4
+              }
+            },
+            {
+              "name": "III.2.8 — Coordenação de projeto de extensão institucional apoiado pela UTFPR (comunitário, esportivo ou similar) (Pontuação por ano de coordenação).",
+              "display_order": 7,
+              "rule": {
+                "type": "flat",
+                "pointsPerUnit": 3
+              }
+            },
+            {
+              "name": "III.2.9 — Membro de programa de extensão institucional apoiado pela UTFPR (comunitário, esportivo ou similar) (Pontuação por ano, limitado a 8 pontos a cada 2 anos).",
+              "display_order": 8,
+              "rule": {
+                "type": "capped",
+                "inner": {
+                  "type": "flat",
+                  "pointsPerUnit": 2
+                },
+                "cap": 8
+              }
+            },
+            {
+              "name": "III.2.10 — Coordenação de projeto institucional de extensão financiado por órgão público ou privado (ex.: MCTI, MDS, CNPq, FA) (Pontuação por projeto).",
+              "display_order": 9,
+              "rule": {
+                "type": "flat",
+                "pointsPerUnit": 15
+              }
+            },
+            {
+              "name": "III.2.11 — Membro de projeto institucional de extensão financiado por órgão público ou privado (Pontuação por projeto).",
+              "display_order": 10,
+              "rule": {
+                "type": "flat",
+                "pointsPerUnit": 10
+              }
+            },
+            {
+              "name": "III.2.12 — Participação em projeto individual de extensão financiado por órgão público ou privado (Pontuação por projeto).",
+              "display_order": 11,
+              "rule": {
+                "type": "flat",
+                "pointsPerUnit": 5
+              }
+            },
+            {
+              "name": "III.2.13 — Orientação de estagiário/bolsista de projeto de extensão registrado na DIREC (Pontuação por ano de orientação).",
+              "display_order": 12,
+              "rule": {
+                "type": "flat",
+                "pointsPerUnit": 1
+              }
+            },
+            {
+              "name": "III.2.14 — Organização e coordenação de dia de campo, exposição, visita/reunião técnica, registrados na DIREC (Pontuação por atividade).",
+              "display_order": 13,
+              "rule": {
+                "type": "flat",
+                "pointsPerUnit": 1
+              }
+            },
+            {
+              "name": "III.2.15 — Membro de comissão organizadora de dia de campo, exposição, visita/reunião técnica, mesa redonda, feiras, fóruns, atividades culturais, dias da indústria, jogos regionais da UTFPR, entre outras, registrados na DIREC (Pontuação por atividade).",
+              "display_order": 14,
+              "rule": {
+                "type": "flat",
+                "pointsPerUnit": 1
+              }
+            },
+            {
+              "name": "III.2.16 — Orientação de bolsista e/ou voluntário de projeto de extensão não registrado na DIREC (Pontuação por ano de orientação).",
+              "display_order": 15,
+              "rule": {
+                "type": "flat",
+                "pointsPerUnit": 0.5
+              }
+            },
+            {
+              "name": "III.2.17 — Organização e coordenação de dia de campo, exposição, visita/reunião técnica, não registrados na DIREC (Pontuação por atividade).",
+              "display_order": 16,
+              "rule": {
+                "type": "flat",
+                "pointsPerUnit": 0.5
+              }
+            },
+            {
+              "name": "III.2.18 — Membro de comissão organizadora de dia de campo, exposição, visita/reunião técnica, mesa redonda, feiras, fóruns, atividades culturais, dias da indústria, jogos regionais da UTFPR, entre outras, não registrados na DIREC (Pontuação por atividade).",
+              "display_order": 17,
+              "rule": {
+                "type": "flat",
+                "pointsPerUnit": 1
+              }
+            },
+            {
+              "name": "III.2.19 — Membro de Comissão Técnica ou de Programas de eventos técnicos ou científicos, devidamente comprovados pela Diretoria competente ou Associação de Classe (Pontuação por comissão).",
+              "display_order": 18,
+              "rule": {
+                "type": "flat",
+                "pointsPerUnit": 3
+              }
+            },
+            {
+              "name": "III.2.20 — Participação em Organismos Internacionais reconhecidos (UNESCO, ONU, FAO, IEEE, IEE, e similares) como coordenador de Comissão ou de Área (Pontuação por participação como coordenador).",
+              "display_order": 19,
+              "rule": {
+                "type": "flat",
+                "pointsPerUnit": 5
+              }
+            },
+            {
+              "name": "III.2.21 — Trabalhos técnicos e consultorias com parecer ou laudo técnico emitido e devidamente registrado no DEPET (curto prazo) (Pontuação por parecer ou laudo).",
+              "display_order": 20,
+              "rule": {
+                "type": "flat",
+                "pointsPerUnit": 10
+              }
+            },
+            {
+              "name": "III.2.22 — Trabalhos técnicos e consultorias com parecer ou laudo técnico emitido e não registrado no DEPET mas documentados em órgãos institucionais (ex.: departamento) (curto prazo) (Pontuação por parecer ou laudo).",
+              "display_order": 21,
+              "rule": {
+                "type": "flat",
+                "pointsPerUnit": 8
+              }
+            },
+            {
+              "name": "III.2.23 — Coordenação de projetos de extensão tecnológica com instituições parceiras (Pontuação por projeto).",
+              "display_order": 22,
+              "rule": {
+                "type": "flat",
+                "pointsPerUnit": 10
+              }
+            },
+            {
+              "name": "III.2.24 — Membro da comissão organizadora de congressos, workshops, seminários, mostras em âmbito internacional (Pontuação por evento).",
+              "display_order": 23,
+              "rule": {
+                "type": "flat",
+                "pointsPerUnit": 15
+              }
+            },
+            {
+              "name": "III.2.25 — Membro da comissão organizadora de congressos, workshops, seminários, mostras em âmbito nacional (Pontuação por evento).",
+              "display_order": 24,
+              "rule": {
+                "type": "flat",
+                "pointsPerUnit": 10
+              }
+            },
+            {
+              "name": "III.2.26 — Membro da comissão organizadora de congressos, workshops, seminários, mostras em âmbito regional ou local (Pontuação por evento).",
+              "display_order": 25,
+              "rule": {
+                "type": "flat",
+                "pointsPerUnit": 4
+              }
+            },
+            {
+              "name": "III.2.27 — Membro de comissão de avaliação e premiação (projetos, trabalhos científicos, trabalhos artísticos e culturais) em nível nacional e internacional (Pontuação por evento).",
+              "display_order": 26,
+              "rule": {
+                "type": "flat",
+                "pointsPerUnit": 10
+              }
+            },
+            {
+              "name": "III.2.28 — Coordenação de projeto com empresa, credenciado pela DIREC (Pontuação por projeto).",
+              "display_order": 27,
+              "rule": {
+                "type": "flat",
+                "pointsPerUnit": 10
+              }
+            },
+            {
+              "name": "III.2.29 — Coordenação de programa de extensão individual registrado na DIREC (Pontuação por programa).",
+              "display_order": 28,
+              "rule": {
+                "type": "flat",
+                "pointsPerUnit": 10
+              }
+            },
+            {
+              "name": "III.2.30 — Membro de programa de extensão individual registrado na DIREC (Pontuação por programa).",
+              "display_order": 29,
+              "rule": {
+                "type": "flat",
+                "pointsPerUnit": 5
+              }
+            },
+            {
+              "name": "III.2.31 — Coordenador de projeto de extensão individual registrado na DIREC (Pontuação por projeto).",
+              "display_order": 30,
+              "rule": {
+                "type": "flat",
+                "pointsPerUnit": 10
+              }
+            },
+            {
+              "name": "III.2.32 — Participação em projeto individual de extensão registrado na DIREC (Pontuação por projeto).",
+              "display_order": 31,
+              "rule": {
+                "type": "flat",
+                "pointsPerUnit": 2
+              }
+            },
+            {
+              "name": "III.2.33 — Projeto de Curso de Extensão aprovado pelo Conselho de Ensino da UTFPR (Pontuação por coordenação de projeto).",
+              "display_order": 32,
+              "rule": {
+                "type": "flat",
+                "pointsPerUnit": 5
+              }
+            },
+            {
+              "name": "III.2.34 — Orientação de alunos inscritos em Projetos de Extensão registrados na DIREC (Pontuação por aluno por ano).",
+              "display_order": 33,
+              "rule": {
+                "type": "flat",
+                "pointsPerUnit": 1
+              }
+            },
+            {
+              "name": "III.2.35 — Co-orientação de alunos inscritos em Projetos de Extensão registrados na DIREC (Pontuação por aluno por ano).",
+              "display_order": 34,
+              "rule": {
+                "type": "flat",
+                "pointsPerUnit": 0.5
+              }
+            },
+            {
+              "name": "III.2.36 — Orientação de alunos em empresas pré-incubadas no Hotel Tecnológico (Pontuação por aluno por ano).",
+              "display_order": 35,
+              "rule": {
+                "type": "flat",
+                "pointsPerUnit": 1
+              }
+            }
+          ]
+        },
+        {
+          "name": "III.3 - Atividades Administrativas e de Representação",
+          "display_order": 2,
+          "min_points": null,
+          "max_points": 10,
+          "categories": [
+            {
+              "name": "III.3.1 — Membro do Conselho Universitário (Pontuação por ano).",
+              "display_order": 0,
+              "rule": {
+                "type": "flat",
+                "pointsPerUnit": 5
+              }
+            },
+            {
+              "name": "III.3.2 — Membro do Conselho de Pesquisa e Pós-Graduação (Pontuação por ano).",
+              "display_order": 1,
+              "rule": {
+                "type": "flat",
+                "pointsPerUnit": 4
+              }
+            },
+            {
+              "name": "III.3.3 — Membro do Conselho de Relações Empresariais e Comunitárias (Pontuação por ano).",
+              "display_order": 2,
+              "rule": {
+                "type": "flat",
+                "pointsPerUnit": 4
+              }
+            },
+            {
+              "name": "III.3.4 — Membro do Conselho de Graduação e Educação Profissional (Pontuação por ano).",
+              "display_order": 3,
+              "rule": {
+                "type": "flat",
+                "pointsPerUnit": 4
+              }
+            },
+            {
+              "name": "III.3.5 — Membro do Conselho de Planejamento e Administração (Pontuação por ano).",
+              "display_order": 4,
+              "rule": {
+                "type": "flat",
+                "pointsPerUnit": 4
+              }
+            },
+            {
+              "name": "III.3.6 — Cargo de Direção – Reitor e Vice-Reitor (Pontuação por ano).",
+              "display_order": 5,
+              "rule": {
+                "type": "flat",
+                "pointsPerUnit": 30
+              }
+            },
+            {
+              "name": "III.3.7 — Cargo de Direção – Pró-Reitor e Diretores de Gestão da Reitoria (Pontuação por ano).",
+              "display_order": 6,
+              "rule": {
+                "type": "flat",
+                "pointsPerUnit": 25
+              }
+            },
+            {
+              "name": "III.3.8 — Cargos de Direção – Diretores Gerais de Câmpus (Pontuação por ano).",
+              "display_order": 7,
+              "rule": {
+                "type": "flat",
+                "pointsPerUnit": 25
+              }
+            },
+            {
+              "name": "III.3.9 — Cargo de Direção – Adjuntos de Pró-Reitores, Diretores de Área nas Pró-Reitorias e nos Câmpus (Pontuação por ano).",
+              "display_order": 8,
+              "rule": {
+                "type": "flat",
+                "pointsPerUnit": 20
+              }
+            },
+            {
+              "name": "III.3.10 — Assessoria de Cargos previstos no regimento da UTFPR (A pontuação será equivalente a 60 % da pontuação anual do cargo assessorado - 0,6*Cargo Assessorado - por ano).",
+              "display_order": 9,
+              "rule": {
+                "type": "flat",
+                "pointsPerUnit": 0.6
+              }
+            },
+            {
+              "name": "III.3.11 — Cargo de Ouvidoria Institucional e do Câmpus (Pontuação por ano).",
+              "display_order": 10,
+              "rule": {
+                "type": "flat",
+                "pointsPerUnit": 20
+              }
+            },
+            {
+              "name": "III.3.12 — Chefe de Departamento Acadêmico (Pontuação por ano).",
+              "display_order": 11,
+              "rule": {
+                "type": "flat",
+                "pointsPerUnit": 20
+              }
+            },
+            {
+              "name": "III.3.13 — Coordenador de Curso de Graduação, Técnico e Pós-Graduação Stricto Sensu (Pontuação por ano).",
+              "display_order": 12,
+              "rule": {
+                "type": "flat",
+                "pointsPerUnit": 20
+              }
+            },
+            {
+              "name": "III.3.14 — Coordenador ou Chefe de órgãos vinculados a gestão de Câmpus e Pró-Reitorias previstos no regimento (Pontuação por ano).",
+              "display_order": 13,
+              "rule": {
+                "type": "flat",
+                "pointsPerUnit": 20
+              }
+            },
+            {
+              "name": "III.3.15 — Chefe de gabinete de Reitoria e Diretor-Geral de Câmpus (Pontuação por ano).",
+              "display_order": 14,
+              "rule": {
+                "type": "flat",
+                "pointsPerUnit": 20
+              }
+            },
+            {
+              "name": "III.3.16 — Chefe de Auditor da UTFPR (Pontuação por ano).",
+              "display_order": 15,
+              "rule": {
+                "type": "flat",
+                "pointsPerUnit": 20
+              }
+            },
+            {
+              "name": "III.3.17 — Relator de Processos do CEDA da UTFPR ou processo equivalente de outras IFES (Pontuação por processo).",
+              "display_order": 16,
+              "rule": {
+                "type": "flat",
+                "pointsPerUnit": 4
+              }
+            },
+            {
+              "name": "III.3.18 — Presidente de Órgãos ou Comissões Permanentes de Apoio (ex.: CPPD, CPA, NPPD, Comissão Professor Associado, Comissão Professor Titular ou similares) (Pontuação por ano).",
+              "display_order": 17,
+              "rule": {
+                "type": "flat",
+                "pointsPerUnit": 7
+              }
+            },
+            {
+              "name": "III.3.19 — Membro de Órgãos ou Comissões Permanentes de Apoio (ex.:CPPD, CPA, NPPD, Comissão Professor Titular ou similares) (Pontuação por ano).",
+              "display_order": 18,
+              "rule": {
+                "type": "flat",
+                "pointsPerUnit": 5
+              }
+            },
+            {
+              "name": "III.3.20 — Responsável pelas atividades de Estágio, Responsável pelas Atividades Complementares e Responsável pelo Trabalho de Conclusão de Curso dos cursos técnicos e de graduação (Pontuação por ano).",
+              "display_order": 19,
+              "rule": {
+                "type": "flat",
+                "pointsPerUnit": 10
+              }
+            },
+            {
+              "name": "III.3.21 — Responsável pelos laboratórios, Chefes de grupo de disciplinas e Assessor de Coordenação de curso (Pontuação por ano).",
+              "display_order": 20,
+              "rule": {
+                "type": "flat",
+                "pointsPerUnit": 10
+              }
+            },
+            {
+              "name": "III.3.22 — Membro do Colegiado de Curso, do Conselho Departamental ou do Núcleo Docente Estruturante (Pontuação por ano).",
+              "display_order": 21,
+              "rule": {
+                "type": "flat",
+                "pointsPerUnit": 2
+              }
+            },
+            {
+              "name": "III.3.23 — Presidência de Comissão designada por ato da Administração da UTFPR (Pontuação por portaria).",
+              "display_order": 22,
+              "rule": {
+                "type": "flat",
+                "pointsPerUnit": 3
+              }
+            },
+            {
+              "name": "III.3.24 — Membros de Comissão ou atribuição de função designada por ato da Administração da UTFPR (Pontuação por portaria).",
+              "display_order": 23,
+              "rule": {
+                "type": "flat",
+                "pointsPerUnit": 2
+              }
+            },
+            {
+              "name": "III.3.25 — Participação, como representante da UTFPR, designado por portaria, em comitês/equipes de trabalho em órgãos como MEC, CAPES, FINEP, CNPq, CREA e outros conselhos profissionais (Pontuação por portaria).",
+              "display_order": 24,
+              "rule": {
+                "type": "flat",
+                "pointsPerUnit": 5
+              }
+            },
+            {
+              "name": "III.3.26 — Cargo de Direção. Diretor Executivo da FUNTEF (Pontuação por ano).",
+              "display_order": 25,
+              "rule": {
+                "type": "flat",
+                "pointsPerUnit": 25
+              }
+            },
+            {
+              "name": "III.3.27 — Membro do Conselho Deliberativo ou Fiscal da FUNTEF (Pontuação por ano).",
+              "display_order": 26,
+              "rule": {
+                "type": "flat",
+                "pointsPerUnit": 15
+              }
+            },
+            {
+              "name": "III.3.28 — Presidência da Associação de Servidores da UTFPR (Pontuação por ano).",
+              "display_order": 27,
+              "rule": {
+                "type": "flat",
+                "pointsPerUnit": 15
+              }
+            },
+            {
+              "name": "III.3.29 — Membro eletivo de diretoria de associação de classe e/ou esportiva vinculada à UTFPR (Pontuação por ano).",
+              "display_order": 28,
+              "rule": {
+                "type": "flat",
+                "pointsPerUnit": 4
+              }
+            },
+            {
+              "name": "III.3.30 — Presidência do sindicato docente (local ou nacional) (Pontuação por ano).",
+              "display_order": 29,
+              "rule": {
+                "type": "flat",
+                "pointsPerUnit": 15
+              }
+            },
+            {
+              "name": "III.3.31 — Membro da direção do sindicato docente (local ou nacional) (Pontuação por ano).",
+              "display_order": 30,
+              "rule": {
+                "type": "flat",
+                "pointsPerUnit": 3
+              }
+            },
+            {
+              "name": "III.3.32 — Coordenação de núcleo de inovação tecnológica (Pontuação por ano).",
+              "display_order": 31,
+              "rule": {
+                "type": "flat",
+                "pointsPerUnit": 15
+              }
+            },
+            {
+              "name": "III.3.33 — Exercer função administrativa, não prevista no Regimento da UTFPR comprovado mediante portaria (Pontuação por ano).",
+              "display_order": 32,
+              "rule": {
+                "type": "flat",
+                "pointsPerUnit": 5
+              }
+            },
+            {
+              "name": "III.3.34 — Exercer função administrativa, prevista no Regimento da UTFPR, com função ou cargo diferente dos listados neste Subgrupo (Pontuação por ano).",
+              "display_order": 33,
+              "rule": {
+                "type": "flat",
+                "pointsPerUnit": 8
+              }
+            }
+          ]
+        },
+        {
+          "name": "III.4 - Outras Atividades",
+          "display_order": 3,
+          "min_points": null,
+          "max_points": 10,
+          "categories": [
+            {
+              "name": "III.4.1 — Conclusão de Curso de Licenciatura na área de atuação durante a carreira docente na UTFPR (Pontuação por curso).",
+              "display_order": 0,
+              "rule": {
+                "type": "flat",
+                "pointsPerUnit": 10
+              }
+            },
+            {
+              "name": "III.4.2 — Conclusão de Curso de Aperfeiçoamento na área de atuação durante a carreira docente na UTFPR (Pontuação por curso).",
+              "display_order": 1,
+              "rule": {
+                "type": "flat",
+                "pointsPerUnit": 5
+              }
+            },
+            {
+              "name": "III.4.3 — Conclusão de Curso de curta duração (workshops, seminários, mostras, jornadas, treinamentos) (Pontuação por curso).",
+              "display_order": 2,
+              "rule": {
+                "type": "flat",
+                "pointsPerUnit": 1
+              }
+            },
+            {
+              "name": "III.4.4 — Formação: participação em eventos técnicos científicos com certificado (Pontuação por participação).",
+              "display_order": 3,
+              "rule": {
+                "type": "flat",
+                "pointsPerUnit": 1
+              }
+            },
+            {
+              "name": "III.4.5 — Participação em missão de trabalho internacional (Pontuação por participação).",
+              "display_order": 4,
+              "rule": {
+                "type": "flat",
+                "pointsPerUnit": 2
+              }
+            },
+            {
+              "name": "III.4.6 — Participação em missão de trabalho nacional (Pontuação por participação).",
+              "display_order": 5,
+              "rule": {
+                "type": "flat",
+                "pointsPerUnit": 2
+              }
+            },
+            {
+              "name": "III.4.7 — Pós-doutorado em programa de excelência internacional no exterior e no país (nível 6 e 7 CAPES) (Pontuação por pós-doutorado).",
+              "display_order": 6,
+              "rule": {
+                "type": "flat",
+                "pointsPerUnit": 25
+              }
+            },
+            {
+              "name": "III.4.8 — Pós-doutorado em programa de excelência nacional (Pontuação por pós-doutorado).",
+              "display_order": 7,
+              "rule": {
+                "type": "flat",
+                "pointsPerUnit": 20
+              }
+            },
+            {
+              "name": "III.4.9 — Pós-doutorado em outros programas (Pontuação por pós-doutorado).",
+              "display_order": 8,
+              "rule": {
+                "type": "flat",
+                "pointsPerUnit": 15
+              }
+            },
+            {
+              "name": "III.4.10 — Membro de banca de tese de doutorado (exceto orientador e co-orientador) (Pontuação por banca).",
+              "display_order": 9,
+              "rule": {
+                "type": "flat",
+                "pointsPerUnit": 5
+              }
+            },
+            {
+              "name": "III.4.11 — Membro de banca de qualificação de doutorado (exceto orientador e co-orientador)  (Pontuação por banca).",
+              "display_order": 10,
+              "rule": {
+                "type": "flat",
+                "pointsPerUnit": 2.5
+              }
+            },
+            {
+              "name": "III.4.12 — Membro de banca de dissertação de mestrado (exceto orientador e co-orientador)  (Pontuação por banca).",
+              "display_order": 11,
+              "rule": {
+                "type": "flat",
+                "pointsPerUnit": 3
+              }
+            },
+            {
+              "name": "III.4.13 — Membro de banca de qualificação da dissertação de mestrado (exceto orientador e co-orientador)  (Pontuação por banca).",
+              "display_order": 12,
+              "rule": {
+                "type": "flat",
+                "pointsPerUnit": 1.5
+              }
+            },
+            {
+              "name": "III.4.14 — Membro de banca de concurso público para provimento de cargo de Professor efetivo  (Pontuação por banca).",
+              "display_order": 13,
+              "rule": {
+                "type": "flat",
+                "pointsPerUnit": 5
+              }
+            },
+            {
+              "name": "III.4.15 — Presidência de Associação Científica de abrangência nacional ou internacional  (Pontuação por presidência por ano).",
+              "display_order": 14,
+              "rule": {
+                "type": "flat",
+                "pointsPerUnit": 1.5
+              }
+            },
+            {
+              "name": "III.4.16 — Membro de diretoria (exceto Presidência) de Associação Científica de abrangência nacional ou internacional  (Pontuação por participação por ano).",
+              "display_order": 15,
+              "rule": {
+                "type": "flat",
+                "pointsPerUnit": 1
+              }
+            },
+            {
+              "name": "III.4.17 — Membro de banca de concurso público para provimento de cargo de Professor Substituto (Pontuação por banca).",
+              "display_order": 16,
+              "rule": {
+                "type": "flat",
+                "pointsPerUnit": 2
+              }
+            },
+            {
+              "name": "III.4.18 — Membro de Comissão designada pelo MEC para avaliação das condições de criação, credenciamento e recredenciamento de cursos (Pontuação por comissão).",
+              "display_order": 17,
+              "rule": {
+                "type": "flat",
+                "pointsPerUnit": 3
+              }
+            },
+            {
+              "name": "III.4.19 — Membro de Comissão designada pelo MEC para avaliação institucional (Pontuação por comissão).",
+              "display_order": 18,
+              "rule": {
+                "type": "flat",
+                "pointsPerUnit": 3
+              }
+            },
+            {
+              "name": "III.4.20 — Membro de Banca (exceto orientador e co-orientador) de Avaliação de Estágio ou de trabalho de final de curso de graduação ou de especialização (não remunerado) (Pontuação por banca).",
+              "display_order": 19,
+              "rule": {
+                "type": "flat",
+                "pointsPerUnit": 1
+              }
+            },
+            {
+              "name": "III.4.21 — Implementação ou execução de projeto didático-pedagógico no curso técnico, na graduação e na pós-graduação stricto sensu para melhoria e desenvolvimento de curso (Pontuação por projeto por ano).",
+              "display_order": 20,
+              "rule": {
+                "type": "flat",
+                "pointsPerUnit": 3
+              }
+            },
+            {
+              "name": "III.4.22 — Consultoria para Organismos Internacionais reconhecidos (UNESCO, ONU, FAO, IEEE, IEE, e similares) (Pontuação por consultoria).",
+              "display_order": 21,
+              "rule": {
+                "type": "flat",
+                "pointsPerUnit": 2
+              }
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}
