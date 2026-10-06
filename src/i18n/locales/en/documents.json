@@ -41,6 +41,7 @@
         "emptyUnfiled": "Everything is linked to a category.",
         "emptyAll": "No documents yet.",
         "tagsFilter": "Add tag to filter...",
+        "tagsFilterHint": "Click a tag to toggle include/exclude.",
         "badges": {
             "category_one": "{{count}} category",
             "category_other": "{{count}} categories",

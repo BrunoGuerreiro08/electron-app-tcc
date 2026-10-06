@@ -41,6 +41,7 @@
         "emptyUnfiled": "Tudo está vinculado a uma categoria.",
         "emptyAll": "Nenhum documento ainda.",
         "tagsFilter": "Adicione uma tag para filtrar...",
+        "tagsFilterHint": "Clique em uma tag para alternar entre incluir/excluir.",
         "badges": {
             "category_one": "{{count}} categoria",
             "category_other": "{{count}} categorias",

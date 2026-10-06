@@ -70,33 +70,31 @@ export function DocumentLibraryScreen() {
 
     const refresh = async () => {
         setLoading(true)
-        const docs =
+        const [docs, allTags] = await Promise.all([
             filter === 'unfiled'
-                ? await documentRepository.listUnlinked()
-                : await documentRepository.list()
+                ? documentRepository.listUnlinked()
+                : documentRepository.list(),
+            tagRepository.list(),
+        ])
 
         setDocuments(docs)
         setSelectedIds(new Set())
 
         const counts: Record<string, number> = {}
         const tagsMap: Record<string, Tag[]> = {}
-        const tagSet = new Set<string>()
 
         await Promise.all(
             docs.map(async (d) => {
                 const links = await documentCategoryLinkRepository.listByDocument(d.id)
                 counts[d.id] = links.length
 
-                const tags = await tagRepository.listForDocument(d.id)
-                const tagNames = tags.map(t => t.name)
-                tagsMap[d.id] = tags
-                tagNames.forEach(tag => tagSet.add(tag))
+                tagsMap[d.id] = await tagRepository.listForDocument(d.id)
             })
         )
 
         setLinkedCounts(counts)
         setDocumentTags(tagsMap)
-        setAllAvailableTags(Array.from(tagSet).sort((a, b) => a.localeCompare(b)))
+        setAllAvailableTags(allTags.map(tag => tag.name).sort((a, b) => a.localeCompare(b)))
         setLoading(false)
     }
 
@@ -335,7 +333,7 @@ export function DocumentLibraryScreen() {
 
                             {activeFilterTags.length > 0 && (
                                 <div className="text-xs text-muted-foreground">
-                                    Click a tag to toggle include/exclude.
+                                    {t('library.tagsFilterHint')}
                                 </div>
                             )}
 
