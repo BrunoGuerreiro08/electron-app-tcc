@@ -102,41 +102,6 @@ export function ExportScreen() {
             )
             : null
 
-    // const handleExportDossier = async () => {
-    //     if (!reportData) return
-
-    //     try {
-    //         setExporting('pdf')
-    //         setExportError(null)
-    //         const htmlContent = generateReportHtml(reportData)
-
-    //         const attachmentPaths: string[] = []
-    //         reportData.groups.forEach((g) => {
-    //             g.subgroups.forEach((s) => {
-    //                 s.categories.forEach((c) => {
-    //                     c.documents.forEach((d) => {
-    //                         if (d.filePath) attachmentPaths.push(d.filePath)
-    //                     })
-    //                 })
-    //             })
-    //         })
-
-    //         const uniquePaths = Array.from(new Set(attachmentPaths))
-    //         const suggestedFilename = `${reportData.collectionName.replace(/[^a-zA-Z0-9_-]/g, '_')}_Dossier.pdf`
-
-    //         await window.api.reports.exportDossier({
-    //             reportHtml: htmlContent,
-    //             attachmentPaths: uniquePaths,
-    //             suggestedFilename,
-    //         })
-    //     } catch (err) {
-    //         console.error('Export failed:', err)
-    //         setExportError(t('reports:errors.exportFailed'))
-    //     } finally {
-    //         setExporting(null)
-    //     }
-    // }
-
     // Documents grouped/stitched by category, or kept individual — see dossierExport.
     // Runs against the SAME local ReportData (still carrying real file paths) as
     // everything else on this screen; never available for an imported/reviewed
@@ -269,7 +234,7 @@ export function ExportScreen() {
                             <FolderArchive className="h-4 w-4" />
                             {exporting === 'stitched'
                                 ? t('actions.generatingDossier')
-                                : t('actions.exportDossierStitched')}
+                                : t('actions.exportDocsStitched')}
                         </Button>
                         <Button
                             variant="outline"
@@ -281,7 +246,7 @@ export function ExportScreen() {
                             <Files className="h-4 w-4" />
                             {exporting === 'individual'
                                 ? t('actions.generatingDossier')
-                                : t('actions.exportDossierIndividual')}
+                                : t('actions.exportDocsIndividual')}
                         </Button>
                     </div>
                 )}

@@ -16,7 +16,7 @@
     "collections": {
         "title": "Coleções",
         "newCollection": "Nova coleção",
-        "fromTemplate": "A partir de um modelo",
+        "fromTemplate": "Usar modelo",
         "placeholder": "ex.: Portfólio de Progressão 2026",
         "empty": "Nenhuma coleção ainda — crie uma para começar."
     }

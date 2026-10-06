@@ -18,6 +18,8 @@
         "backToCollection": "Back to Collection",
         "exportDossier": "Export Dossier (.pdf)",
         "generatingDossier": "Generating Dossier…",
+        "exportDocsStitched": "Export documents (Stitched)",
+        "exportDocsIndividual": "Export documents (Individual)",
         "exportXlsx": "Excel (.xlsx)",
         "exportCsv": "CSV",
         "exportJson": "JSON"
