@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 import { useTranslation, Trans } from 'react-i18next'
 import { useCollectionDetail } from '@/hooks/useCollectionDetail'
-import type { CategoryWithDocuments } from '@/hooks/useCollectionDetail'
+import type { CategoryWithDocuments, GroupWithSubgroups, SubgroupWithCategories } from '@/hooks/useCollectionDetail'
 import { collectionRepository } from '@/repository/collectionRepository'
 import { groupRepository } from '@/repository/groupRepository'
 import { subgroupRepository } from '@/repository/subgroupRepository'
@@ -10,7 +10,7 @@ import { categoryRepository } from '@/repository/categoryRepository'
 import { templateRepository } from '@/repository/templateRepository'
 import { formatPoints } from '@/lib/formatPoints'
 import type { Rule } from '@/services/scoringEngine/types'
-import type { Category, Collection, Group, Subgroup } from '@/types/entities'
+import type { Category, Collection } from '@/types/entities'
 import { EditGroupDialog } from './editGroupDialog'
 import { EditSubgroupDialog } from './editSubgroupDialog'
 import { BulkLinkDialog } from './bulkLinkDialog'
@@ -82,7 +82,7 @@ export function CollectionDetailScreen() {
 
     const [newGroupName, setNewGroupName] = useState('')
     const [groupDialogOpen, setGroupDialogOpen] = useState(false)
-    const [editingGroup, setEditingGroup] = useState<Group | null>(null)
+    const [editingGroup, setEditingGroup] = useState<GroupWithSubgroups | null>(null)
     const [bulkLinkCategory, setBulkLinkCategory] = useState<CategoryWithDocuments | null>(null)
 
     const [newSubgroupName, setNewSubgroupName] = useState('')
@@ -96,7 +96,7 @@ export function CollectionDetailScreen() {
         | null
     >(null)
 
-    const [editingSubgroup, setEditingSubgroup] = useState<Subgroup | null>(null)
+    const [editingSubgroup, setEditingSubgroup] = useState<SubgroupWithCategories | null>(null)
 
     const [exportingTemplate, setExportingTemplate] = useState(false)
     const [templateExportError, setTemplateExportError] = useState<string | null>(null)

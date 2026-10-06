@@ -24,6 +24,7 @@ contextBridge.exposeInMainWorld('api', {
             ipcRenderer.invoke('subgroups:create', collectionId, groupId, name, displayOrder),
         update: (id: string, updates: unknown) =>
             ipcRenderer.invoke('subgroups:update', id, updates),
+        reorder: (orderedIds: string[]) => ipcRenderer.invoke('subgroups:reorder', orderedIds),
         delete: (id: string) => ipcRenderer.invoke('subgroups:delete', id),
     },
     categories: {
@@ -33,6 +34,7 @@ contextBridge.exposeInMainWorld('api', {
             ipcRenderer.invoke('categories:create', subgroupId, name, rule, displayOrder),
         update: (id: string, updates: unknown) =>
             ipcRenderer.invoke('categories:update', id, updates),
+        reorder: (orderedIds: string[]) => ipcRenderer.invoke('categories:reorder', orderedIds),
         delete: (id: string) => ipcRenderer.invoke('categories:delete', id),
     },
     documents: {

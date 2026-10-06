@@ -46,7 +46,8 @@
         "helperText": "Leave both blank for no completion tracking on this sub-group.",
         "errors": {
             "maxLessThanMin": "Maximum must be greater than minimum."
-        }
+        },
+        "reorderButton": "Reorder categories"
     },
     "groupDialog": {
         "editTitle": "Edit group",
@@ -54,7 +55,8 @@
         "maxPointsLabel": "Maximum points",
         "pointsPlaceholder": "None",
         "bonusLabel": "Surplus bonus (% of points above minimum)",
-        "bonusHelperText": "Requires a minimum to be set — the bonus applies only to points earned above it."
+        "bonusHelperText": "Requires a minimum to be set — the bonus applies only to points earned above it.",
+        "reorderButton": "Reorder sub-groups"
     },
     "useTemplateDialog": {
         "title": "New collection from template",
@@ -117,5 +119,13 @@
         "applyLink_one": "Apply {{count}} link",
         "applyLink_other": "Apply {{count}} links",
         "done": "Done"
+    },
+    "reorderDialog": {
+        "description": "Drag items or type a position, then save.",
+        "sortAsc": "A→Z",
+        "sortDesc": "Z→A",
+        "reset": "Reset",
+        "positionLabel": "Position",
+        "dragHandle": "Drag to reorder"
     }
 }

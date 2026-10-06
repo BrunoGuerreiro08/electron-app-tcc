@@ -4,11 +4,14 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
+import { ArrowUpDown } from 'lucide-react'
 import { groupRepository } from '@/repository/groupRepository'
-import type { Group } from '@/types/entities'
+import { subgroupRepository } from '@/repository/subgroupRepository'
+import type { GroupWithSubgroups } from '@/hooks/useCollectionDetail'
+import { ReorderItemsDialog, type ReorderableItem } from './reorderItemsDialog'
 
 interface Props {
-    group: Group | null
+    group: GroupWithSubgroups | null
     onOpenChange: (open: boolean) => void
     onSaved: () => void
 }
@@ -23,9 +26,14 @@ export function EditGroupDialog({ group, onOpenChange, onSaved }: Props) {
     const [bonusPercent, setBonusPercent] = useState('')
     const [error, setError] = useState<string | null>(null)
     const [saving, setSaving] = useState(false)
+    // Kept locally (not read straight from `group`) because the parent's
+    // refresh after a reorder doesn't hand this dialog a new group object.
+    const [subgroupOrder, setSubgroupOrder] = useState<ReorderableItem[]>([])
+    const [reorderOpen, setReorderOpen] = useState(false)
 
     useEffect(() => {
         if (group) {
+            setSubgroupOrder(group.subgroups.map((sg) => ({ id: sg.id, name: sg.name })))
             setName(group.name)
             setMinPoints(group.min_points != null ? String(group.min_points) : '')
             setMaxPoints(group.max_points != null ? String(group.max_points) : '')
@@ -57,7 +65,14 @@ export function EditGroupDialog({ group, onOpenChange, onSaved }: Props) {
         }
     }
 
+    const handleReorderSave = async (orderedIds: string[]) => {
+        await subgroupRepository.reorder(orderedIds)
+        setSubgroupOrder(orderedIds.map((id) => subgroupOrder.find((item) => item.id === id)!))
+        onSaved()
+    }
+
     return (
+        <>
         <Dialog open={group !== null} onOpenChange={onOpenChange}>
             <DialogContent>
                 <DialogHeader>
@@ -107,12 +122,30 @@ export function EditGroupDialog({ group, onOpenChange, onSaved }: Props) {
                     {error && <p className="text-sm text-destructive">{error}</p>}
                 </div>
 
-                <DialogFooter>
+                <DialogFooter className="sm:justify-between">
+                    <Button
+                        variant="outline"
+                        className="gap-2"
+                        onClick={() => setReorderOpen(true)}
+                        disabled={subgroupOrder.length < 2}
+                    >
+                        <ArrowUpDown className="h-4 w-4" />
+                        {t('groupDialog.reorderButton')}
+                    </Button>
                     <Button onClick={handleSave} disabled={!name.trim() || saving}>
                         {saving ? t('common:states.saving') : t('common:actions.save')}
                     </Button>
                 </DialogFooter>
             </DialogContent>
         </Dialog>
+
+        <ReorderItemsDialog
+            open={reorderOpen}
+            onOpenChange={setReorderOpen}
+            title={t('groupDialog.reorderButton')}
+            items={subgroupOrder}
+            onSave={handleReorderSave}
+        />
+        </>
     )
 }

@@ -23,12 +23,14 @@ declare global {
                 listByCollection: (collectionId: string) => Promise<import('./entities').Subgroup[]>
                 create: (collectionId: string, groupId: string, name: string, displayOrder?: number) => Promise<string>
                 update: (id: string, updates: unknown) => Promise<void>
+                reorder: (orderedIds: string[]) => Promise<void>
                 delete: (id: string) => Promise<void>
             }
             categories: {
                 listBySubgroup: (subgroupId: string) => Promise<any[]>
                 create: (subgroupId: string, name: string, rule: unknown, displayOrder?: number) => Promise<string>
                 update: (id: string, updates: unknown) => Promise<void>
+                reorder: (orderedIds: string[]) => Promise<void>
                 delete: (id: string) => Promise<void>
             }
             documents: {

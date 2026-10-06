@@ -14,19 +14,34 @@ export function registerCategoryHandlers() {
 
     ipcMain.handle(
         'categories:create',
-        (_event, subgroupId: string, name: string, rule: Rule, displayOrder = 0) => {
+        (_event, subgroupId: string, name: string, rule: Rule, displayOrder?: number) => {
             const { valid, errors } = validateRule(rule)
             if (!valid) {
                 throw new Error(`Invalid rule: ${errors.join(' ')}`)
             }
 
+            const db = getDb()
+            // No explicit order → append after the sub-group's current last category.
+            const order =
+                displayOrder ??
+                (db
+                    .prepare('SELECT COALESCE(MAX(display_order), -1) + 1 AS next FROM categories WHERE subgroup_id = ?')
+                    .get(subgroupId) as { next: number }).next
             const id = randomUUID()
-            getDb().prepare(
+            db.prepare(
                 'INSERT INTO categories (id, subgroup_id, name, rule, display_order) VALUES (?, ?, ?, ?, ?)'
-            ).run(id, subgroupId, name, JSON.stringify(rule), displayOrder)
+            ).run(id, subgroupId, name, JSON.stringify(rule), order)
             return id
         }
     )
+
+    ipcMain.handle('categories:reorder', (_event, orderedIds: string[]) => {
+        const db = getDb()
+        const update = db.prepare('UPDATE categories SET display_order = ? WHERE id = ?')
+        db.transaction(() => {
+            orderedIds.forEach((id, index) => update.run(index, id))
+        })()
+    })
 
     ipcMain.handle(
         'categories:update',

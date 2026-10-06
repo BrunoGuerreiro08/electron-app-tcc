@@ -46,7 +46,8 @@
         "helperText": "Deixe ambos em branco para não acompanhar a conclusão deste subgrupo.",
         "errors": {
             "maxLessThanMin": "O máximo deve ser maior que o mínimo."
-        }
+        },
+        "reorderButton": "Reordenar categorias"
     },
     "groupDialog": {
         "editTitle": "Editar grupo",
@@ -54,7 +55,8 @@
         "maxPointsLabel": "Pontuação máxima",
         "pointsPlaceholder": "Nenhuma",
         "bonusLabel": "Bônus excedente (% dos pontos acima do mínimo)",
-        "bonusHelperText": "Requer um mínimo definido — o bônus se aplica apenas aos pontos obtidos acima dele."
+        "bonusHelperText": "Requer um mínimo definido — o bônus se aplica apenas aos pontos obtidos acima dele.",
+        "reorderButton": "Reordenar subgrupos"
     },
     "useTemplateDialog": {
         "title": "Nova coleção a partir de um modelo",
@@ -117,5 +119,13 @@
         "applyLink_one": "Aplicar {{count}} vínculo",
         "applyLink_other": "Aplicar {{count}} vínculos",
         "done": "Concluído"
+    },
+    "reorderDialog": {
+        "description": "Arraste os itens ou digite uma posição e depois salve.",
+        "sortAsc": "A→Z",
+        "sortDesc": "Z→A",
+        "reset": "Restaurar",
+        "positionLabel": "Posição",
+        "dragHandle": "Arraste para reordenar"
     }
 }

@@ -9,5 +9,6 @@ export const subgroupRepository = {
         id: string,
         updates: { name?: string; minPoints?: number | null; maxPoints?: number | null }
     ): Promise<void> => window.api.subgroups.update(id, updates),
+    reorder: (orderedIds: string[]): Promise<void> => window.api.subgroups.reorder(orderedIds),
     delete: (id: string): Promise<void> => window.api.subgroups.delete(id),
 }

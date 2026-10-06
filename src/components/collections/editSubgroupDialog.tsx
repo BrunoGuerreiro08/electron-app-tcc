@@ -1,14 +1,17 @@
 import { useEffect, useState } from 'react'
 import { useTranslation } from 'react-i18next'
+import { ArrowUpDown } from 'lucide-react'
 import { subgroupRepository } from '@/repository/subgroupRepository'
-import type { Subgroup } from '@/types/entities'
+import { categoryRepository } from '@/repository/categoryRepository'
+import type { SubgroupWithCategories } from '@/hooks/useCollectionDetail'
+import { ReorderItemsDialog, type ReorderableItem } from './reorderItemsDialog'
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Button } from '@/components/ui/button'
 
 interface EditSubgroupDialogProps {
-    subgroup: Subgroup | null
+    subgroup: SubgroupWithCategories | null
     onOpenChange: (open: boolean) => void
     onSaved: () => void
 }
@@ -19,10 +22,15 @@ export function EditSubgroupDialog({ subgroup, onOpenChange, onSaved }: EditSubg
     const [minPoints, setMinPoints] = useState('')
     const [maxPoints, setMaxPoints] = useState('')
     const [error, setError] = useState<string | null>(null)
+    // Kept locally (not read straight from `subgroup`) because the parent's
+    // refresh after a reorder doesn't hand this dialog a new subgroup object.
+    const [categoryOrder, setCategoryOrder] = useState<ReorderableItem[]>([])
+    const [reorderOpen, setReorderOpen] = useState(false)
 
     useEffect(() => {
         if (!subgroup) return
         setName(subgroup.name)
+        setCategoryOrder(subgroup.categories.map((cat) => ({ id: cat.id, name: cat.name })))
         setMinPoints(subgroup.min_points != null ? String(subgroup.min_points) : '')
         setMaxPoints(subgroup.max_points != null ? String(subgroup.max_points) : '')
         setError(null)
@@ -52,7 +60,14 @@ export function EditSubgroupDialog({ subgroup, onOpenChange, onSaved }: EditSubg
         }
     }
 
+    const handleReorderSave = async (orderedIds: string[]) => {
+        await categoryRepository.reorder(orderedIds)
+        setCategoryOrder(orderedIds.map((id) => categoryOrder.find((item) => item.id === id)!))
+        onSaved()
+    }
+
     return (
+        <>
         <Dialog open={subgroup !== null} onOpenChange={onOpenChange}>
             <DialogContent>
                 <DialogHeader>
@@ -90,12 +105,30 @@ export function EditSubgroupDialog({ subgroup, onOpenChange, onSaved }: EditSubg
                     </p>
                     {error && <p className="text-sm text-destructive">{error}</p>}
                 </div>
-                <DialogFooter>
+                <DialogFooter className="sm:justify-between">
+                    <Button
+                        variant="outline"
+                        className="gap-2"
+                        onClick={() => setReorderOpen(true)}
+                        disabled={categoryOrder.length < 2}
+                    >
+                        <ArrowUpDown className="h-4 w-4" />
+                        {t('subgroupDialog.reorderButton')}
+                    </Button>
                     <Button onClick={handleSave} disabled={!name.trim()}>
                         {t('common:actions.save')}
                     </Button>
                 </DialogFooter>
             </DialogContent>
         </Dialog>
+
+        <ReorderItemsDialog
+            open={reorderOpen}
+            onOpenChange={setReorderOpen}
+            title={t('subgroupDialog.reorderButton')}
+            items={categoryOrder}
+            onSave={handleReorderSave}
+        />
+        </>
     )
 }

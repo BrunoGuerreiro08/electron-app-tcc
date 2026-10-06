@@ -8,5 +8,6 @@ export const categoryRepository = {
         window.api.categories.create(subgroupId, name, rule, displayOrder),
     update: (id: string, updates: { name?: string; rule?: Rule }): Promise<void> =>
         window.api.categories.update(id, updates),
+    reorder: (orderedIds: string[]): Promise<void> => window.api.categories.reorder(orderedIds),
     delete: (id: string): Promise<void> => window.api.categories.delete(id),
 }
