@@ -1,0 +1,894 @@
+{
+  "schemaVersion": 1,
+  "name": "Avaliação de Desempenho Docente 2025/26 — UTFPR",
+  "description": "Estrutura de pontuação para avaliação de desempenho docente, convertida da planilha oficial. Três fatores independentes, cada um com teto próprio (15, 35 e 20 pontos) e SEM mínimo exigido nem bônus por excedente — ao contrário do modelo de Progressão/Promoção, aqui o total geral é simplesmente a soma dos três tetos já aplicados. Itens do tipo \"Horas\" com teto por eventos usam a nova regra cappedPerDocument (cada documento é limitado individualmente, mas não há limite de quantos documentos podem ser lançados). Dois itens do fator Funcional-Pedagógico (reunião de Departamento e entrega de documentação no prazo) têm peso zero na planilha original e não foram incluídos aqui — são itens de checklist avaliados diretamente pelo supervisor, não certificados anexáveis. Duas linhas duplicadas no Fator I (bancas de Exame de Suficiência e de TCC Especialização) foram unificadas em uma categoria cada.",
+  "groups": [
+    {
+      "name": "I - Formação/Atualização Continuada",
+      "display_order": 0,
+      "min_points": null,
+      "max_points": 15,
+      "bonus_rate": null,
+      "subgroups": [
+        {
+          "name": "I - Formação/Atualização Continuada",
+          "display_order": 0,
+          "min_points": null,
+          "max_points": null,
+          "categories": [
+            {
+              "name": "a — Participação em eventos com certificado de frequência — Palestras",
+              "display_order": 0,
+              "rule": {
+                "type": "cappedPerDocument",
+                "inner": {
+                  "type": "hours",
+                  "pointsPerUnit": 0.5,
+                  "unitSize": 1
+                },
+                "capPerDocument": 3
+              }
+            },
+            {
+              "name": "b — Participação em eventos com certificado de frequência — Congressos, Seminários, Simpósios",
+              "display_order": 1,
+              "rule": {
+                "type": "cappedPerDocument",
+                "inner": {
+                  "type": "hours",
+                  "pointsPerUnit": 0.5,
+                  "unitSize": 1
+                },
+                "capPerDocument": 5
+              }
+            },
+            {
+              "name": "c — Participação em cursos de atualização e/ou estágios",
+              "display_order": 2,
+              "rule": {
+                "type": "cappedPerDocument",
+                "inner": {
+                  "type": "hours",
+                  "pointsPerUnit": 0.5,
+                  "unitSize": 1
+                },
+                "capPerDocument": 15
+              }
+            },
+            {
+              "name": "d — Exercício de atividade profissional externa correlata à área de atuação",
+              "display_order": 3,
+              "rule": {
+                "type": "hours",
+                "pointsPerUnit": 0.5,
+                "unitSize": 1
+              }
+            },
+            {
+              "name": "e — Participação em cursos de pós-graduação",
+              "display_order": 4,
+              "rule": {
+                "type": "flat",
+                "pointsPerUnit": 15
+              }
+            },
+            {
+              "name": "f — Participação em cursos de pós-graduação — Mestrado/Doutorado",
+              "display_order": 5,
+              "rule": {
+                "type": "flat",
+                "pointsPerUnit": 15
+              }
+            },
+            {
+              "name": "g — Membro de banca de avaliação de Estágio Supervisionado (exceto orientador e coorientador)",
+              "display_order": 6,
+              "rule": {
+                "type": "flat",
+                "pointsPerUnit": 3
+              }
+            },
+            {
+              "name": "h — Membro de banca de avaliação de Monografia ou TCC2 (exceto orientador e coorientador)",
+              "display_order": 7,
+              "rule": {
+                "type": "flat",
+                "pointsPerUnit": 5
+              }
+            },
+            {
+              "name": "i — Membro de banca de proposta de TCC (exceto orientador e coorientador)",
+              "display_order": 8,
+              "rule": {
+                "type": "flat",
+                "pointsPerUnit": 1
+              }
+            },
+            {
+              "name": "j — Membro de banca de TCC1 (exceto orientador e coorientador)",
+              "display_order": 9,
+              "rule": {
+                "type": "flat",
+                "pointsPerUnit": 3
+              }
+            },
+            {
+              "name": "k — Membro de banca de dissertação de mestrado (exceto orientador e coorientador)",
+              "display_order": 10,
+              "rule": {
+                "type": "flat",
+                "pointsPerUnit": 10
+              }
+            },
+            {
+              "name": "l — Membro de banca de qualificação de mestrado (exceto orientador e coorientador)",
+              "display_order": 11,
+              "rule": {
+                "type": "flat",
+                "pointsPerUnit": 5
+              }
+            },
+            {
+              "name": "m — Membro de banca de tese de doutorado (exceto orientador e coorientador)",
+              "display_order": 12,
+              "rule": {
+                "type": "flat",
+                "pointsPerUnit": 15
+              }
+            },
+            {
+              "name": "n — Membro de banca de qualificação de doutorado (exceto orientador e coorientador)",
+              "display_order": 13,
+              "rule": {
+                "type": "flat",
+                "pointsPerUnit": 10
+              }
+            },
+            {
+              "name": "o — Membro de banca de Exame de Suficiência",
+              "display_order": 14,
+              "rule": {
+                "type": "flat",
+                "pointsPerUnit": 1
+              }
+            },
+            {
+              "name": "p — Membro de banca de TCC Especialização Latu Sensu",
+              "display_order": 15,
+              "rule": {
+                "type": "flat",
+                "pointsPerUnit": 5
+              }
+            },
+            {
+              "name": "q — Presidente de banca de Exame de Suficiência",
+              "display_order": 16,
+              "rule": {
+                "type": "flat",
+                "pointsPerUnit": 3
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "II - Funcional-Pedagógico",
+      "display_order": 1,
+      "min_points": null,
+      "max_points": 35,
+      "bonus_rate": null,
+      "subgroups": [
+        {
+          "name": "II - Funcional-Pedagógico",
+          "display_order": 0,
+          "min_points": null,
+          "max_points": null,
+          "categories": [
+            {
+              "name": "a — Orientação de Estágio Supervisionado — Curricular",
+              "display_order": 0,
+              "rule": {
+                "type": "flat",
+                "pointsPerUnit": 10
+              }
+            },
+            {
+              "name": "b — Orientação de Estágio não obrigatório",
+              "display_order": 1,
+              "rule": {
+                "type": "flat",
+                "pointsPerUnit": 2
+              }
+            },
+            {
+              "name": "c — Orientação de Trabalho Final de Curso",
+              "display_order": 2,
+              "rule": {
+                "type": "flat",
+                "pointsPerUnit": 20
+              }
+            },
+            {
+              "name": "d — Orientação de TCC1",
+              "display_order": 3,
+              "rule": {
+                "type": "flat",
+                "pointsPerUnit": 8
+              }
+            },
+            {
+              "name": "e — Orientação de TCC2",
+              "display_order": 4,
+              "rule": {
+                "type": "flat",
+                "pointsPerUnit": 12
+              }
+            },
+            {
+              "name": "f — Orientação de monitoria (semestral)",
+              "display_order": 5,
+              "rule": {
+                "type": "flat",
+                "pointsPerUnit": 5
+              }
+            },
+            {
+              "name": "g — Orientação de trabalho final de curso de especialização",
+              "display_order": 6,
+              "rule": {
+                "type": "flat",
+                "pointsPerUnit": 5
+              }
+            },
+            {
+              "name": "h — Orientação de Aluno de Mestrado — em andamento ou concluído",
+              "display_order": 7,
+              "rule": {
+                "type": "cappedPerDocument",
+                "inner": {
+                  "type": "hours",
+                  "pointsPerUnit": 1,
+                  "unitSize": 1
+                },
+                "capPerDocument": 30
+              }
+            },
+            {
+              "name": "i — Orientação de Aluno de Doutorado — em andamento ou concluído",
+              "display_order": 8,
+              "rule": {
+                "type": "cappedPerDocument",
+                "inner": {
+                  "type": "hours",
+                  "pointsPerUnit": 1,
+                  "unitSize": 1
+                },
+                "capPerDocument": 35
+              }
+            },
+            {
+              "name": "j — Orientação de aluno de iniciação científica (anual)",
+              "display_order": 9,
+              "rule": {
+                "type": "flat",
+                "pointsPerUnit": 20
+              }
+            },
+            {
+              "name": "k — Orientação de bolsista DCR/Recém-Doutor/Pós-Doutoramento (anual)",
+              "display_order": 10,
+              "rule": {
+                "type": "flat",
+                "pointsPerUnit": 20
+              }
+            },
+            {
+              "name": "l — Orientação de bolsistas mestre/doutor em projetos institucionais (anual)",
+              "display_order": 11,
+              "rule": {
+                "type": "flat",
+                "pointsPerUnit": 20
+              }
+            },
+            {
+              "name": "m — Orientação de Projeto Rondon/Empresas incubadas/Empresa JR/outros",
+              "display_order": 12,
+              "rule": {
+                "type": "flat",
+                "pointsPerUnit": 2
+              }
+            },
+            {
+              "name": "n — Coorientação de aluno de iniciação científica (anual)",
+              "display_order": 13,
+              "rule": {
+                "type": "flat",
+                "pointsPerUnit": 10
+              }
+            },
+            {
+              "name": "o — Coorientação de trabalho final de curso",
+              "display_order": 14,
+              "rule": {
+                "type": "flat",
+                "pointsPerUnit": 10
+              }
+            },
+            {
+              "name": "p — Coorientação de TCC1",
+              "display_order": 15,
+              "rule": {
+                "type": "flat",
+                "pointsPerUnit": 4
+              }
+            },
+            {
+              "name": "q — Coorientação de TCC2",
+              "display_order": 16,
+              "rule": {
+                "type": "flat",
+                "pointsPerUnit": 6
+              }
+            },
+            {
+              "name": "r — Coorientação de aluno de mestrado",
+              "display_order": 17,
+              "rule": {
+                "type": "flat",
+                "pointsPerUnit": 10
+              }
+            },
+            {
+              "name": "s — Coorientação de aluno de doutorado",
+              "display_order": 18,
+              "rule": {
+                "type": "flat",
+                "pointsPerUnit": 10
+              }
+            },
+            {
+              "name": "t — Desenvolvimento de software didático",
+              "display_order": 19,
+              "rule": {
+                "type": "flat",
+                "pointsPerUnit": 35
+              }
+            },
+            {
+              "name": "u — Autor de livro técnico/científico publicado",
+              "display_order": 20,
+              "rule": {
+                "type": "flat",
+                "pointsPerUnit": 35
+              }
+            },
+            {
+              "name": "v — Autor de capítulo de livro técnico/científico publicado",
+              "display_order": 21,
+              "rule": {
+                "type": "flat",
+                "pointsPerUnit": 20
+              }
+            },
+            {
+              "name": "w — Editoração ou organização de livro técnico/científico ou Anais de Congressos",
+              "display_order": 22,
+              "rule": {
+                "type": "flat",
+                "pointsPerUnit": 35
+              }
+            },
+            {
+              "name": "x — Autoria de tradução de livro técnico/científico publicado",
+              "display_order": 23,
+              "rule": {
+                "type": "flat",
+                "pointsPerUnit": 30
+              }
+            },
+            {
+              "name": "y — Editor-chefe de revista científica de circulação internacional",
+              "display_order": 24,
+              "rule": {
+                "type": "flat",
+                "pointsPerUnit": 15
+              }
+            },
+            {
+              "name": "z — Editor associado de revista científica de circulação nacional",
+              "display_order": 25,
+              "rule": {
+                "type": "flat",
+                "pointsPerUnit": 8
+              }
+            },
+            {
+              "name": "aa — Membro de Conselho Científico/Editorial — revista internacional",
+              "display_order": 26,
+              "rule": {
+                "type": "flat",
+                "pointsPerUnit": 8
+              }
+            },
+            {
+              "name": "ab — Membro de Conselho Científico/Editorial — revista nacional",
+              "display_order": 27,
+              "rule": {
+                "type": "flat",
+                "pointsPerUnit": 5
+              }
+            },
+            {
+              "name": "ac — Revisor de artigo em revista de abrangência internacional",
+              "display_order": 28,
+              "rule": {
+                "type": "flat",
+                "pointsPerUnit": 16
+              }
+            },
+            {
+              "name": "ad — Revisor de artigo em revista de abrangência nacional",
+              "display_order": 29,
+              "rule": {
+                "type": "flat",
+                "pointsPerUnit": 12
+              }
+            },
+            {
+              "name": "ae — Revisor de artigo em revista de abrangência regional/local",
+              "display_order": 30,
+              "rule": {
+                "type": "flat",
+                "pointsPerUnit": 8
+              }
+            },
+            {
+              "name": "af — Participação em Comitê de Programa — evento científico internacional",
+              "display_order": 31,
+              "rule": {
+                "type": "flat",
+                "pointsPerUnit": 12
+              }
+            },
+            {
+              "name": "ag — Participação em Comitê de Programa — evento científico nacional",
+              "display_order": 32,
+              "rule": {
+                "type": "flat",
+                "pointsPerUnit": 8
+              }
+            },
+            {
+              "name": "ah — Participação em Comitê de Programa — evento científico regional/local",
+              "display_order": 33,
+              "rule": {
+                "type": "flat",
+                "pointsPerUnit": 4
+              }
+            },
+            {
+              "name": "ai — Participação em reunião do Departamento / curso ERRADO NA TABELA",
+              "display_order": 34,
+              "rule": {
+                "type": "flat",
+                "pointsPerUnit": 1
+              }
+            },
+            {
+              "name": "aj — Entrega da documentação acadêmica no prazo",
+              "display_order": 35,
+              "rule": {
+                "type": "flat",
+                "pointsPerUnit": 5
+              }
+            },
+            {
+              "name": "ak — Ministração de cursos de capacitação ou extensão (não remunerado)",
+              "display_order": 36,
+              "rule": {
+                "type": "cappedPerDocument",
+                "inner": {
+                  "type": "hours",
+                  "pointsPerUnit": 1,
+                  "unitSize": 1
+                },
+                "capPerDocument": 10
+              }
+            },
+            {
+              "name": "al — Avaliador Ad-hoc de projetos de pesquisa ou extensão",
+              "display_order": 37,
+              "rule": {
+                "type": "flat",
+                "pointsPerUnit": 3
+              }
+            },
+            {
+              "name": "am — Revisor de artigo em evento de abrangência internacional",
+              "display_order": 38,
+              "rule": {
+                "type": "flat",
+                "pointsPerUnit": 8
+              }
+            },
+            {
+              "name": "an — Revisor de artigo em evento de abrangência nacional",
+              "display_order": 39,
+              "rule": {
+                "type": "flat",
+                "pointsPerUnit": 4
+              }
+            },
+            {
+              "name": "ao — Revisor de artigo em evento de abrangência regional/local",
+              "display_order": 40,
+              "rule": {
+                "type": "flat",
+                "pointsPerUnit": 2
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "III - Produção Institucional",
+      "display_order": 2,
+      "min_points": null,
+      "max_points": 20,
+      "bonus_rate": null,
+      "subgroups": [
+        {
+          "name": "III - Produção Institucional",
+          "display_order": 0,
+          "min_points": null,
+          "max_points": null,
+          "categories": [
+            {
+              "name": "a — Cargos nomeados por Portaria",
+              "display_order": 0,
+              "rule": {
+                "type": "flat",
+                "pointsPerUnit": 10
+              }
+            },
+            {
+              "name": "b — Chefe de Grupo de Disciplinas",
+              "display_order": 1,
+              "rule": {
+                "type": "flat",
+                "pointsPerUnit": 10
+              }
+            },
+            {
+              "name": "c — Presidência de Comissão designada por Portaria",
+              "display_order": 2,
+              "rule": {
+                "type": "flat",
+                "pointsPerUnit": 10
+              }
+            },
+            {
+              "name": "d — Membros de Comissão designada por Portaria",
+              "display_order": 3,
+              "rule": {
+                "type": "flat",
+                "pointsPerUnit": 5
+              }
+            },
+            {
+              "name": "e — Membro de banca de concurso público para provimento de cargo de Professor",
+              "display_order": 4,
+              "rule": {
+                "type": "flat",
+                "pointsPerUnit": 5
+              }
+            },
+            {
+              "name": "f — Membro de banca de teste seletivo para Professor Substituto",
+              "display_order": 5,
+              "rule": {
+                "type": "flat",
+                "pointsPerUnit": 5
+              }
+            },
+            {
+              "name": "g — Membro de Conselho Departamental e Colegiados de Curso",
+              "display_order": 6,
+              "rule": {
+                "type": "flat",
+                "pointsPerUnit": 10
+              }
+            },
+            {
+              "name": "h — Participação na organização de eventos da UTFPR",
+              "display_order": 7,
+              "rule": {
+                "type": "flat",
+                "pointsPerUnit": 10
+              }
+            },
+            {
+              "name": "i1 — Responsável pelos laboratórios — Geral",
+              "display_order": 8,
+              "rule": {
+                "type": "flat",
+                "pointsPerUnit": 20
+              }
+            },
+            {
+              "name": "i2 — Responsável pelos laboratórios — Específico",
+              "display_order": 9,
+              "rule": {
+                "type": "flat",
+                "pointsPerUnit": 5
+              }
+            },
+            {
+              "name": "j — Responsável pelas Atividades Complementares",
+              "display_order": 10,
+              "rule": {
+                "type": "flat",
+                "pointsPerUnit": 10
+              }
+            },
+            {
+              "name": "k — Responsável pela Orientação de Estágio",
+              "display_order": 11,
+              "rule": {
+                "type": "flat",
+                "pointsPerUnit": 20
+              }
+            },
+            {
+              "name": "l — Responsável pelo Trabalho de Diplomação ou TCC",
+              "display_order": 12,
+              "rule": {
+                "type": "flat",
+                "pointsPerUnit": 20
+              }
+            },
+            {
+              "name": "m — Assessor de Coordenação",
+              "display_order": 13,
+              "rule": {
+                "type": "flat",
+                "pointsPerUnit": 10
+              }
+            },
+            {
+              "name": "n — Substituto da coordenação de curso ou da chefia do departamento",
+              "display_order": 14,
+              "rule": {
+                "type": "flat",
+                "pointsPerUnit": 5
+              }
+            },
+            {
+              "name": "o — Participação em eventos representando a Instituição — abrangência internacional",
+              "display_order": 15,
+              "rule": {
+                "type": "flat",
+                "pointsPerUnit": 10
+              }
+            },
+            {
+              "name": "p — Participação em eventos representando a Instituição — abrangência nacional",
+              "display_order": 16,
+              "rule": {
+                "type": "flat",
+                "pointsPerUnit": 8
+              }
+            },
+            {
+              "name": "q — Participação em eventos representando a Instituição — abrangência regional/local",
+              "display_order": 17,
+              "rule": {
+                "type": "flat",
+                "pointsPerUnit": 5
+              }
+            },
+            {
+              "name": "r — Coordenação de programa de extensão institucional apoiado pela UTFPR",
+              "display_order": 18,
+              "rule": {
+                "type": "flat",
+                "pointsPerUnit": 20
+              }
+            },
+            {
+              "name": "s — Membro de programa de extensão institucional apoiado pela UTFPR",
+              "display_order": 19,
+              "rule": {
+                "type": "flat",
+                "pointsPerUnit": 10
+              }
+            },
+            {
+              "name": "t — Coordenação de projeto institucional de extensão financiado",
+              "display_order": 20,
+              "rule": {
+                "type": "flat",
+                "pointsPerUnit": 20
+              }
+            },
+            {
+              "name": "u — Membro de projeto institucional de extensão financiado",
+              "display_order": 21,
+              "rule": {
+                "type": "flat",
+                "pointsPerUnit": 10
+              }
+            },
+            {
+              "name": "v — Representante da UTFPR em comitês/equipes (MEC, CAPES, FINEP, CNPq, CREA etc.)",
+              "display_order": 22,
+              "rule": {
+                "type": "flat",
+                "pointsPerUnit": 20
+              }
+            },
+            {
+              "name": "w — Coordenação de projeto institucional de pesquisa executado na UTFPR",
+              "display_order": 23,
+              "rule": {
+                "type": "flat",
+                "pointsPerUnit": 10
+              }
+            },
+            {
+              "name": "x — Participação em projeto institucional de pesquisa executado na UTFPR",
+              "display_order": 24,
+              "rule": {
+                "type": "flat",
+                "pointsPerUnit": 5
+              }
+            },
+            {
+              "name": "y — Participação em projeto individual de pesquisa financiado, executado na UTFPR",
+              "display_order": 25,
+              "rule": {
+                "type": "flat",
+                "pointsPerUnit": 10
+              }
+            },
+            {
+              "name": "z — Membro de comissão de elaboração de Projeto de Curso de Pós-Graduação",
+              "display_order": 26,
+              "rule": {
+                "type": "flat",
+                "pointsPerUnit": 10
+              }
+            },
+            {
+              "name": "aa — Membro de comissão de elaboração de Projeto de Curso de Extensão",
+              "display_order": 27,
+              "rule": {
+                "type": "flat",
+                "pointsPerUnit": 10
+              }
+            },
+            {
+              "name": "ab — Publicação de artigo científico — abrangência internacional",
+              "display_order": 28,
+              "rule": {
+                "type": "flat",
+                "pointsPerUnit": 20
+              }
+            },
+            {
+              "name": "ac — Publicação de artigo científico — abrangência nacional",
+              "display_order": 29,
+              "rule": {
+                "type": "flat",
+                "pointsPerUnit": 10
+              }
+            },
+            {
+              "name": "ad — Publicação de artigo científico — abrangência regional/local",
+              "display_order": 30,
+              "rule": {
+                "type": "flat",
+                "pointsPerUnit": 5
+              }
+            },
+            {
+              "name": "ae — Publicação de resumo em Anais de Congresso — abrangência internacional",
+              "display_order": 31,
+              "rule": {
+                "type": "flat",
+                "pointsPerUnit": 10
+              }
+            },
+            {
+              "name": "af — Publicação de resumo em Anais de Congresso — abrangência nacional",
+              "display_order": 32,
+              "rule": {
+                "type": "flat",
+                "pointsPerUnit": 5
+              }
+            },
+            {
+              "name": "ag — Publicação de resumo em Anais de Congresso — abrangência regional/local",
+              "display_order": 33,
+              "rule": {
+                "type": "flat",
+                "pointsPerUnit": 2
+              }
+            },
+            {
+              "name": "ah — Publicação de texto ou artigo em revista técnica nacional",
+              "display_order": 34,
+              "rule": {
+                "type": "flat",
+                "pointsPerUnit": 5
+              }
+            },
+            {
+              "name": "ai — Proponente (coordenador) de projeto de curso de especialização",
+              "display_order": 35,
+              "rule": {
+                "type": "flat",
+                "pointsPerUnit": 10
+              }
+            },
+            {
+              "name": "aj — Coordenação de projeto de pesquisa financiado por órgão externo",
+              "display_order": 36,
+              "rule": {
+                "type": "flat",
+                "pointsPerUnit": 20
+              }
+            },
+            {
+              "name": "ak — Proposição como coordenador de projeto de pesquisa sem financiamento",
+              "display_order": 37,
+              "rule": {
+                "type": "flat",
+                "pointsPerUnit": 10
+              }
+            },
+            {
+              "name": "al — Depósito de patente ou registro de software",
+              "display_order": 38,
+              "rule": {
+                "type": "flat",
+                "pointsPerUnit": 20
+              }
+            },
+            {
+              "name": "am — Coordenação de cursos de capacitação ou extensão (não remunerado)",
+              "display_order": 39,
+              "rule": {
+                "type": "cappedPerDocument",
+                "inner": {
+                  "type": "hours",
+                  "pointsPerUnit": 0.5,
+                  "unitSize": 1
+                },
+                "capPerDocument": 10
+              }
+            },
+            {
+              "name": "an — PRAEXT",
+              "display_order": 40,
+              "rule": {
+                "type": "flat",
+                "pointsPerUnit": 10
+              }
+            },
+            {
+              "name": "ao — PRAINT",
+              "display_order": 41,
+              "rule": {
+                "type": "flat",
+                "pointsPerUnit": 10
+              }
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}
