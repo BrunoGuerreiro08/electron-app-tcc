@@ -1,12 +1,6 @@
 {
     "title": "Your portfolio",
-    "description": "Collections, documents, and where everything is stored.",
-    "storage": {
-        "title": "Document storage folder",
-        "custom": "Using a custom folder — e.g. one synced by Google Drive or similar.",
-        "default": "Using the default app data folder.",
-        "moving": "Moving files…"
-    },
+    "description": "Collections and documents at a glance.",
     "unfiled": {
         "title_one": "{{count}} document not yet linked to a category",
         "title_other": "{{count}} documents not yet linked to a category",

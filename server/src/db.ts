@@ -83,6 +83,26 @@ export async function updateUserName(userId: string, name: string): Promise<User
   return result.rows[0]
 }
 
+export async function findUserByEmail(email: string): Promise<UserRecord | null> {
+  const result = await pool.query<UserRecord>(
+    'SELECT id, email, name FROM users WHERE email = $1',
+    [email]
+  )
+  return result.rows[0] ?? null
+}
+
+/**
+ * Throws the pg unique-violation error (code 23505) if another user already
+ * owns `email` — callers map that to 409.
+ */
+export async function updateUserEmail(userId: string, email: string): Promise<UserRecord> {
+  const result = await pool.query<UserRecord>(
+    'UPDATE users SET email = $1 WHERE id = $2 RETURNING id, email, name',
+    [email, userId]
+  )
+  return result.rows[0]
+}
+
 /**
  * Resolves a bearer token to its owning user, only if the session
  * hasn't expired. Used by the auth middleware to protect routes that

@@ -2,10 +2,9 @@ import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { documentRepository } from '@/repository/documentRepository'
 import { useCollectionsStore } from '@/store/collectionsStore'
-import { useSettingsStore } from '@/store/settingsStore'
 import type { Document } from '@/types/entities'
 import { Button } from '@/components/ui/button'
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card'
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
 import {
     Dialog,
@@ -15,7 +14,7 @@ import {
     DialogTrigger,
     DialogFooter,
 } from '@/components/ui/dialog'
-import { FolderOpen, Plus, FileText, Loader2, FileStack } from 'lucide-react'
+import { Plus, FileText, FileStack } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
 import { UseTemplateDialog } from '@/components/collections/useTemplateDialog'
 
@@ -28,9 +27,6 @@ export function HomeScreen() {
     const [dialogOpen, setDialogOpen] = useState(false)
     const [templateDialogOpen, setTemplateDialogOpen] = useState(false)
 
-    const { storageFolder, isCustomFolder, migrating, error, load: loadSettings, changeFolder } =
-        useSettingsStore()
-
     const refreshUnfiled = async () => {
         const docs = await documentRepository.listUnlinked()
         setUnfiled(docs)
@@ -39,8 +35,7 @@ export function HomeScreen() {
     useEffect(() => {
         load()
         refreshUnfiled()
-        loadSettings()
-    }, [load, loadSettings])
+    }, [load])
 
     const handleCreate = async () => {
         if (!newName.trim()) return
@@ -63,34 +58,6 @@ export function HomeScreen() {
                     {t('home:description')}
                 </p>
             </div>
-
-            {/* Storage folder — surfaced prominently, not buried in settings */}
-            <Card>
-                <CardHeader className="flex-row items-center justify-between space-y-0">
-                    <div>
-                        <CardTitle className="text-base">{t('home:storage.title')}</CardTitle>
-                        <CardDescription>
-                            {t(isCustomFolder
-                                ? 'home:storage.custom'
-                                : 'home:storage.default')}
-                        </CardDescription>
-                    </div>
-                    <Button variant="outline" size="sm" onClick={changeFolder} disabled={migrating}>
-                        {migrating ? (
-                            <Loader2 className="h-4 w-4 animate-spin" />
-                        ) : (
-                            <FolderOpen className="h-4 w-4" />
-                        )}
-                        {t(migrating ? 'home:storage.moving' : 'common:actions.changeFolder')}
-                    </Button>
-                </CardHeader>
-                <CardContent>
-                    <code className="text-xs text-muted-foreground break-all">
-                        {storageFolder ?? t('common:states.loading')}
-                    </code>
-                    {error && <p className="mt-2 text-sm text-destructive">{error}</p>}
-                </CardContent>
-            </Card>
 
             {/* Unfiled documents — surfaces the "log now, categorize later" workflow */}
             {unfiled.length > 0 && (

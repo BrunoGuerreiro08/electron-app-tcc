@@ -1,0 +1,52 @@
+{
+  "profile": {
+    "title": "Perfil",
+    "description": "Seus dados de cadastro e onde seus documentos ficam guardados.",
+    "guestNotice": "Você está usando o modo visitante. Para editar nome e e-mail, entre com seu e-mail institucional.",
+    "name": {
+      "title": "Nome",
+      "description": "É como você aparece no aplicativo e nos relatórios.",
+      "placeholder": "Seu nome completo",
+      "saved": "Nome salvo."
+    },
+    "email": {
+      "title": "E-mail",
+      "description": "Usado para entrar no aplicativo. Você recebe o código de acesso nele.",
+      "change": "Alterar e-mail",
+      "offline": "É preciso estar conectado ao servidor para alterar o e-mail.",
+      "saved": "E-mail alterado. Use o novo endereço no próximo login.",
+      "dialog": {
+        "title": "Alterar e-mail",
+        "emailStep": "Digite o novo endereço. Vamos enviar um código de 6 dígitos para ele, para confirmar que é seu.",
+        "newEmail": "Novo e-mail",
+        "sendCode": "Enviar código",
+        "codeStep": "Digite o código enviado para {{email}}. Ele expira em 5 minutos.",
+        "confirm": "Confirmar alteração",
+        "useAnother": "Usar outro e-mail"
+      }
+    }
+  },
+  "storage": {
+    "title": "Pasta de armazenamento de documentos",
+    "custom": "Usando uma pasta personalizada — ex.: sincronizada pelo Google Drive ou similar.",
+    "default": "Usando a pasta padrão do aplicativo.",
+    "moving": "Movendo arquivos…",
+    "hint": "Ao trocar de pasta, seus documentos atuais são movidos para a nova pasta."
+  },
+  "preferences": {
+    "title": "Preferências",
+    "description": "Aparência e idioma do aplicativo.",
+    "autoSave": "As alterações são aplicadas e salvas automaticamente.",
+    "theme": {
+      "title": "Tema",
+      "description": "Escolha as cores do aplicativo. \"Sistema\" segue a configuração do seu computador.",
+      "light": "Claro",
+      "dark": "Escuro",
+      "system": "Sistema"
+    },
+    "language": {
+      "title": "Idioma",
+      "description": "Idioma dos menus, mensagens e e-mails de acesso."
+    }
+  }
+}

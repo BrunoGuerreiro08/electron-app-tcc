@@ -1,7 +1,13 @@
 import { Hono } from 'hono'
 import { randomUUID } from 'node:crypto'
-import { createSession, findOrCreateUser, updateUserName } from '../db.js'
-import { clearOtp, getOtp, storeOtp } from '../redis.js'
+import {
+    createSession,
+    findOrCreateUser,
+    findUserByEmail,
+    updateUserEmail,
+    updateUserName,
+} from '../db.js'
+import { clearCode, clearOtp, emailChangeKey, getCode, getOtp, storeCode, storeOtp } from '../redis.js'
 import { sendOtpEmail } from '../mailer.js'
 import { requireAuth, type AuthedVariables } from '../middleware.js'
 
@@ -85,4 +91,81 @@ authRoutes.post('/complete-profile', requireAuth, async (c) => {
 
     const updated = await updateUserName(user.id, name)
     return c.json({ user: updated })
+})
+
+/**
+ * Renames the signed-in user from the settings screen. Same effect as
+ * /complete-profile, kept separate so onboarding and later edits can
+ * diverge without breaking each other.
+ */
+authRoutes.post('/update-profile', requireAuth, async (c) => {
+    const user = c.get('user')
+    const body = await c.req.json<{ name?: string }>()
+    const name = body.name?.trim()
+
+    if (!name) {
+        return c.json({ error: 'Name is required.' }, 400)
+    }
+
+    const updated = await updateUserName(user.id, name)
+    return c.json({ user: updated })
+})
+
+/**
+ * Step 1 of an email change: sends a code to the NEW address, proving the
+ * user controls it before login (which is OTP-by-email) moves over to it.
+ */
+authRoutes.post('/request-email-change', requireAuth, async (c) => {
+    const user = c.get('user')
+    const body = await c.req.json<{ newEmail?: string; lang?: 'pt' | 'en' }>()
+    const newEmail = body.newEmail?.trim().toLowerCase()
+
+    if (!newEmail || !EMAIL_RE.test(newEmail)) {
+        return c.json({ error: 'Enter a valid email address.' }, 400)
+    }
+    if (newEmail === user.email) {
+        return c.json({ error: 'This is already your email address.' }, 400)
+    }
+    if (await findUserByEmail(newEmail)) {
+        return c.json({ error: 'This email is already in use by another account.' }, 409)
+    }
+
+    const code = randomCode()
+    await storeCode(emailChangeKey(user.id, newEmail), code)
+    await sendOtpEmail(newEmail, code, body.lang ?? 'pt')
+
+    return c.json({ ok: true })
+})
+
+/** Step 2 of an email change: redeems the code and swaps the address. */
+authRoutes.post('/confirm-email-change', requireAuth, async (c) => {
+    const user = c.get('user')
+    const body = await c.req.json<{ newEmail?: string; code?: string }>()
+    const newEmail = body.newEmail?.trim().toLowerCase()
+    const code = body.code?.trim()
+
+    if (!newEmail || !code) {
+        return c.json({ error: 'Email and code are required.' }, 400)
+    }
+
+    const key = emailChangeKey(user.id, newEmail)
+    const stored = await getCode(key)
+    if (!stored) {
+        return c.json({ error: 'Request a new code first.' }, 400)
+    }
+    if (stored !== code) {
+        return c.json({ error: 'Incorrect code.' }, 400)
+    }
+
+    try {
+        const updated = await updateUserEmail(user.id, newEmail)
+        await clearCode(key)
+        return c.json({ user: updated })
+    } catch (err) {
+        // Someone claimed the address between request and confirm.
+        if ((err as { code?: string }).code === '23505') {
+            return c.json({ error: 'This email is already in use by another account.' }, 409)
+        }
+        throw err
+    }
 })

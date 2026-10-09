@@ -11,6 +11,7 @@ import enHome from './locales/en/home.json'
 import enDocuments from './locales/en/documents.json'
 import enReports from './locales/en/reports.json'
 import enReviews from './locales/en/reviews.json'
+import enSettings from './locales/en/settings.json'
 
 // Portuguese (Brazil)
 import ptAuth from './locales/pt-BR/auth.json'
@@ -21,6 +22,7 @@ import ptHome from './locales/pt-BR/home.json'
 import ptDocuments from './locales/pt-BR/documents.json'
 import ptReports from './locales/pt-BR/reports.json'
 import ptReviews from './locales/pt-BR/reviews.json'
+import ptSettings from './locales/pt-BR/settings.json'
 
 export const SUPPORTED_LANGUAGES = ['en', 'pt-BR'] as const
 export type SupportedLanguage = (typeof SUPPORTED_LANGUAGES)[number]
@@ -35,6 +37,7 @@ export const resources = {
         documents: enDocuments,
         reports: enReports,
         reviews: enReviews,
+        settings: enSettings,
     },
     'pt-BR': {
         auth: ptAuth,
@@ -45,6 +48,7 @@ export const resources = {
         documents: ptDocuments,
         reports: ptReports,
         reviews: ptReviews,
+        settings: ptSettings,
     },
 } as const
 

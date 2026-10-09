@@ -1,0 +1,52 @@
+{
+  "profile": {
+    "title": "Profile",
+    "description": "Your account details and where your documents are stored.",
+    "guestNotice": "You are using guest mode. To edit your name and email, sign in with your institutional email.",
+    "name": {
+      "title": "Name",
+      "description": "How you appear in the app and in reports.",
+      "placeholder": "Your full name",
+      "saved": "Name saved."
+    },
+    "email": {
+      "title": "Email",
+      "description": "Used to sign in. Your access code is sent here.",
+      "change": "Change email",
+      "offline": "You need to be connected to the server to change your email.",
+      "saved": "Email changed. Use the new address next time you sign in.",
+      "dialog": {
+        "title": "Change email",
+        "emailStep": "Enter the new address. We'll send a 6-digit code to it to confirm it's yours.",
+        "newEmail": "New email",
+        "sendCode": "Send code",
+        "codeStep": "Enter the code sent to {{email}}. It expires in 5 minutes.",
+        "confirm": "Confirm change",
+        "useAnother": "Use a different email"
+      }
+    }
+  },
+  "storage": {
+    "title": "Document storage folder",
+    "custom": "Using a custom folder — e.g. one synced by Google Drive or similar.",
+    "default": "Using the default app data folder.",
+    "moving": "Moving files…",
+    "hint": "When you change folders, your current documents are moved to the new one."
+  },
+  "preferences": {
+    "title": "Preferences",
+    "description": "How the app looks and which language it uses.",
+    "autoSave": "Changes are applied and saved automatically.",
+    "theme": {
+      "title": "Theme",
+      "description": "Choose the app's colors. \"System\" follows your computer's setting.",
+      "light": "Light",
+      "dark": "Dark",
+      "system": "System"
+    },
+    "language": {
+      "title": "Language",
+      "description": "Language for menus, messages and sign-in emails."
+    }
+  }
+}

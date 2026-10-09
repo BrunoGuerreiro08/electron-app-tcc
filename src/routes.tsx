@@ -5,6 +5,8 @@ import { DocumentLibraryScreen } from '@/components/documents/documentLibraryScr
 import { ExportScreen } from './components/reports/exportScreen'
 import { ReviewsScreen } from '@/components/reviews/reviewScreen'
 import { ReviewDetailScreen } from '@/components/reviews/reviewDetailsScreen'
+import { ProfileScreen } from '@/components/settings/profileScreen'
+import { PreferencesScreen } from '@/components/settings/preferencesScreen'
 
 function ComingSoon({ label }: { label: string }) {
     return (
@@ -26,8 +28,11 @@ export function AppRoutes() {
             <Route path="/reviews" element={<ReviewsScreen />} />
             <Route path="/reviews/:reviewId" element={<ReviewDetailScreen />} />
 
-            <Route path="/settings" element={<ComingSoon label="Settings Hub" />} />
-            <Route path="/settings/:section" element={<ComingSoon label="Settings Detail View" />} />
+            <Route path="/settings" element={<Navigate to="/settings/profile" replace />} />
+            <Route path="/settings/profile" element={<ProfileScreen />} />
+            <Route path="/settings/preferences" element={<PreferencesScreen />} />
+            {/* Old name of the preferences tab */}
+            <Route path="/settings/security" element={<Navigate to="/settings/preferences" replace />} />
 
             <Route path="/404" element={<ComingSoon label="Página Não Encontrada (404)" />} />
 

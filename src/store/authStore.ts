@@ -1,5 +1,5 @@
 import { create } from 'zustand'
-import type { AuthStep, Session } from '@/types/auth'
+import type { AuthStep, Session, User } from '@/types/auth'
 import { httpAuthRepository } from '@/repository/httpAuthRepository'
 
 interface AuthState {
@@ -16,6 +16,11 @@ interface AuthState {
     verifyCode: (code: string) => Promise<void>
     completeProfile: (name: string) => Promise<void>
     loginAsGuest: () => Promise<void>
+    // Settings-screen actions: throw on failure so the screen can show the
+    // error inline, instead of reusing the login flow's `error`/`loading`.
+    updateName: (name: string) => Promise<void>
+    requestEmailChange: (newEmail: string) => Promise<void>
+    confirmEmailChange: (newEmail: string, code: string) => Promise<void>
     reset: () => void
     logout: () => Promise<void>
 }
@@ -104,6 +109,23 @@ export const useAuthStore = create<AuthState>((set, get) => ({
         }
     },
 
+    updateName: async (name: string) => {
+        const session = requireAccountSession(get().session)
+        const user = await httpAuthRepository.updateProfile(session.token, name)
+        await applyUser(session, user, set)
+    },
+
+    requestEmailChange: async (newEmail: string) => {
+        const session = requireAccountSession(get().session)
+        await httpAuthRepository.requestEmailChange(session.token, newEmail)
+    },
+
+    confirmEmailChange: async (newEmail: string, code: string) => {
+        const session = requireAccountSession(get().session)
+        const user = await httpAuthRepository.confirmEmailChange(session.token, newEmail, code)
+        await applyUser(session, user, set)
+    },
+
     reset: () => set({ step: 'email', error: null }),
 
     logout: async () => {
@@ -111,3 +133,17 @@ export const useAuthStore = create<AuthState>((set, get) => ({
         set({ step: 'email', email: '', session: null, pendingSession: null, error: null })
     },
 }))
+
+function requireAccountSession(session: Session | null): Session {
+    if (!session || session.isGuest) {
+        throw new Error('Profile changes require a signed-in account.')
+    }
+    return session
+}
+
+// Persists the updated user so the next app start restores it too.
+async function applyUser(session: Session, user: User, set: (partial: Partial<AuthState>) => void) {
+    const updated: Session = { ...session, user }
+    await window.api.session.set(updated)
+    set({ session: updated })
+}

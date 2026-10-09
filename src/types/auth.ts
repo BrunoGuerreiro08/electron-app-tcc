@@ -23,4 +23,7 @@ export interface AuthRepository {
     requestCode(email: string): Promise<void>
     verifyCode(email: string, code: string): Promise<VerifyResult>
     completeProfile(token: string, name: string): Promise<User>
+    updateProfile(token: string, name: string): Promise<User>
+    requestEmailChange(token: string, newEmail: string): Promise<void>
+    confirmEmailChange(token: string, newEmail: string, code: string): Promise<User>
 }

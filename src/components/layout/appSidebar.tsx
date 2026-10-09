@@ -13,7 +13,7 @@ import {
     BookOpen,
     FileText,
     LifeBuoy,
-    Shield,
+    Palette,
     User,
     Library,
     Home,
@@ -232,10 +232,10 @@ export function AppSidebar() {
                                             <SidebarMenuSubItem>
                                                 <SidebarMenuSubButton
                                                     asChild
-                                                    isActive={location.pathname === "/settings/security"}
+                                                    isActive={location.pathname === "/settings/preferences"}
                                                 >
-                                                    <NavLink to="/settings/security">
-                                                        <Shield className="h-3.5 w-3.5 mr-1" /> {t('nav.security')}
+                                                    <NavLink to="/settings/preferences">
+                                                        <Palette className="h-3.5 w-3.5 mr-1" /> {t('nav.preferences')}
                                                     </NavLink>
                                                 </SidebarMenuSubButton>
                                             </SidebarMenuSubItem>
