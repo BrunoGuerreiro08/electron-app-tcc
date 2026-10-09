@@ -1,7 +1,9 @@
 {
     "header": {
         "grandTotal": "Grand total: <strong>{{total}}</strong> points",
-        "exportButton": "Export dossier"
+        "exportButton": "Export dossier",
+        "exportTemplateButton": "Export as template",
+        "exportingTemplate": "Exporting…"
     },
     "groupCreateDialog": {
         "title": "New group",

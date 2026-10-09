@@ -275,11 +275,9 @@ export function CollectionDetailScreen() {
                         disabled={exportingTemplate}
                     >
                         <FileOutput className="h-4 w-4 mr-1.5" />
-                        {/* NOTE: hardcoded — no visibility into the locale JSON files
-                            (see file-reading caveat flagged earlier). Suggest adding
-                            collections:header.exportTemplateButton / .exporting to
-                            match the naming pattern exportButton already uses. */}
-                        {exportingTemplate ? 'Exporting…' : 'Export as template'}
+                        {exportingTemplate
+                            ? t('collections:header.exportingTemplate')
+                            : t('collections:header.exportTemplateButton')}
                     </Button>
 
                     <Dialog open={groupDialogOpen} onOpenChange={setGroupDialogOpen}>
