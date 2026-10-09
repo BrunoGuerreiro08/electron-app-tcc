@@ -28,6 +28,15 @@ export function registerSessionHandlers() {
         detectOrphans()
     })
 
+    // Token refresh / profile edit for the user who is already active: only
+    // the stored record changes, so skip reopening the db and the orphan scan.
+    ipcMain.handle('session:update', (_event, session: SessionRecord) => {
+        if (session.user.id !== getActiveUserId()) {
+            throw new Error('session:update can only change the active user\'s session.')
+        }
+        globalStore.set('session', session)
+    })
+
     ipcMain.handle('session:clear', () => {
         globalStore.set('session', null)
         closeUserDb()

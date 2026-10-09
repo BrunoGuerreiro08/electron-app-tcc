@@ -125,3 +125,67 @@ export async function createSession(userId: string, token: string, expiresAt: Da
     [userId, token, expiresAt]
   )
 }
+
+export interface SessionLookup {
+  user: UserRecord
+  expiresAt: Date
+}
+
+/**
+ * Like getSessionUser, but also finds expired sessions — the refresh
+ * endpoint needs to tell "expired" (renewable) apart from "unknown or
+ * revoked" (needs a new OTP login).
+ */
+export async function findSessionByToken(token: string): Promise<SessionLookup | null> {
+  const result = await pool.query<UserRecord & { expires_at: Date }>(
+    `SELECT u.id, u.email, u.name, s.expires_at
+     FROM sessions s
+     JOIN users u ON u.id = s.user_id
+     WHERE s.token = $1`,
+    [token]
+  )
+  const row = result.rows[0]
+  if (!row) return null
+  return { user: { id: row.id, email: row.email, name: row.name }, expiresAt: row.expires_at }
+}
+
+export async function extendSession(token: string, expiresAt: Date): Promise<void> {
+  await pool.query('UPDATE sessions SET expires_at = $1 WHERE token = $2', [expiresAt, token])
+}
+
+/**
+ * Replaces an expired token with a new one, atomically. Returns false if the
+ * old token was already gone (revoked, or rotated by a concurrent call), so
+ * an old token can never be redeemed twice.
+ */
+export async function rotateSession(
+  oldToken: string,
+  userId: string,
+  newToken: string,
+  expiresAt: Date
+): Promise<boolean> {
+  const client = await pool.connect()
+  try {
+    await client.query('BEGIN')
+    const deleted = await client.query('DELETE FROM sessions WHERE token = $1', [oldToken])
+    if (deleted.rowCount === 0) {
+      await client.query('ROLLBACK')
+      return false
+    }
+    await client.query(
+      'INSERT INTO sessions (user_id, token, expires_at) VALUES ($1, $2, $3)',
+      [userId, newToken, expiresAt]
+    )
+    await client.query('COMMIT')
+    return true
+  } catch (err) {
+    await client.query('ROLLBACK')
+    throw err
+  } finally {
+    client.release()
+  }
+}
+
+export async function deleteSession(token: string): Promise<void> {
+  await pool.query('DELETE FROM sessions WHERE token = $1', [token])
+}

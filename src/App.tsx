@@ -8,8 +8,9 @@ import { HashRouter } from 'react-router-dom'
 import { AppRoutes } from './routes'
 
 function App() {
-  const { session, initializing, init } = useAuthStore()
+  const { session, initializing, init, handleServerStatus } = useAuthStore()
   const startPolling = useServerStatusStore((s) => s.startPolling)
+  const userId = session?.user.id
 
   useEffect(() => {
     init()
@@ -19,6 +20,15 @@ function App() {
     const stop = startPolling()
     return stop
   }, [startPolling])
+
+  // Every health poll feeds the auth state: offline → keep trusting the
+  // local token, online → validate/renew it with the server (NFR-14-06).
+  useEffect(() => {
+    if (!userId) return
+    const sync = () => handleServerStatus(useServerStatusStore.getState().status)
+    sync()
+    return useServerStatusStore.subscribe(sync)
+  }, [userId, handleServerStatus])
 
   if (initializing) {
     /* text-muted-foreground */

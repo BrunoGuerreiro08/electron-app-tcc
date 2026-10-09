@@ -51,6 +51,26 @@
         "unreachable": "Server unreachable — working offline",
         "reconnectTooltip": "Offline — Click to reconnect"
     },
+    "authStatus": {
+        "authenticated": "Connected",
+        "authenticatedTooltip": "Session valid and renewed until {{date}}",
+        "offline": "Offline — using local session",
+        "offlineTooltip": "No connection to the server. Everything keeps working with your local data. Click to try reconnecting.",
+        "checking": "Checking session…",
+        "expired": "Session expired",
+        "expiredTooltip": "The server no longer recognizes this session. You can keep using the app; sign in again to edit your profile.",
+        "guest": "Guest mode (local only)",
+        "guestTooltip": "No server account — your data stays on this computer only.",
+        "reauth": {
+            "button": "Sign in again",
+            "title": "Sign in again",
+            "description": "We'll send a 6-digit code to {{email}}. Your data and current screen won't be affected.",
+            "sendCode": "Send code",
+            "codeSent": "Enter the code sent to {{email}}.",
+            "confirm": "Confirm",
+            "resend": "Resend code"
+        }
+    },
     "theme": {
         "light": "Light Mode",
         "dark": "Dark Mode",

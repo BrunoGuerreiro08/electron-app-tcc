@@ -1,4 +1,3 @@
-import { useEffect } from 'react'
 import { useServerStatusStore } from '@/store/serverStatusStore'
 import { WifiOff, RefreshCw } from 'lucide-react'
 import { Button } from '@/components/ui/button'
@@ -13,12 +12,8 @@ interface ServerStatusIndicatorProps {
 
 export function ServerStatusIndicator({ variant = 'full', className }: ServerStatusIndicatorProps) {
   const { t } = useTranslation();
-  const { status, check, startPolling } = useServerStatusStore()
-
-  useEffect(() => {
-    const stop = startPolling()
-    return stop
-  }, [startPolling])
+  // Polling is started once by App.tsx; this only reads the status.
+  const { status, check } = useServerStatusStore()
 
   if (status !== 'offline') return null
 

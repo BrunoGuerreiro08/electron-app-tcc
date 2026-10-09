@@ -63,6 +63,7 @@ declare global {
             session: {
                 get: () => Promise<import('./auth').Session | null>
                 set: (session: import('./auth').Session) => Promise<void>
+                update: (session: import('./auth').Session) => Promise<void>
                 clear: () => Promise<void>
             }
             settings: {

@@ -72,6 +72,7 @@ contextBridge.exposeInMainWorld('api', {
     session: {
         get: () => ipcRenderer.invoke('session:get'),
         set: (session: unknown) => ipcRenderer.invoke('session:set', session),
+        update: (session: unknown) => ipcRenderer.invoke('session:update', session),
         clear: () => ipcRenderer.invoke('session:clear'),
     },
     settings: {

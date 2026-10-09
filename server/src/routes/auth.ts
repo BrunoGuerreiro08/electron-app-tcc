@@ -2,9 +2,13 @@ import { Hono } from 'hono'
 import { randomUUID } from 'node:crypto'
 import {
     createSession,
+    deleteSession,
+    extendSession,
     findOrCreateUser,
+    findSessionByToken,
     findUserByEmail,
     updateUserEmail,
+    rotateSession,
     updateUserName,
 } from '../db.js'
 import { clearCode, clearOtp, emailChangeKey, getCode, getOtp, storeCode, storeOtp } from '../redis.js'
@@ -14,7 +18,9 @@ import { requireAuth, type AuthedVariables } from '../middleware.js'
 export const authRoutes = new Hono<{ Variables: AuthedVariables }>()
 
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
-const SESSION_TTL_MS = 24 * 60 * 60 * 1000 // 24h
+// Sliding: every successful /session/refresh pushes expiry out again, so a
+// user who comes online at least once every 15 days never has to log in again.
+const SESSION_TTL_MS = 15 * 24 * 60 * 60 * 1000 // 15 days
 
 function randomCode(): string {
     return Math.floor(100000 + Math.random() * 900000).toString()
@@ -168,4 +174,57 @@ authRoutes.post('/confirm-email-change', requireAuth, async (c) => {
         }
         throw err
     }
+})
+
+function bearerToken(header: string | undefined): string | null {
+    return header?.replace(/^Bearer\s+/i, '') || null
+}
+
+/**
+ * Called by the app whenever it (re)connects. The app is local-first and
+ * keeps working with an expired token while offline, so this accepts
+ * expired sessions too:
+ *   - still valid → expiry slides forward, same token;
+ *   - expired     → rotated: new token issued, old one deleted;
+ *   - unknown     → 401 (revoked by /logout, or never existed): the user
+ *                   has to confirm their email with a new OTP.
+ */
+authRoutes.post('/session/refresh', async (c) => {
+    const token = bearerToken(c.req.header('Authorization'))
+    if (!token) {
+        return c.json({ error: 'Missing authorization token.' }, 401)
+    }
+
+    const found = await findSessionByToken(token)
+    if (!found) {
+        return c.json({ error: 'Session not found. Please sign in again.' }, 401)
+    }
+
+    const issuedAt = new Date()
+    const expiresAt = new Date(issuedAt.getTime() + SESSION_TTL_MS)
+    let activeToken = token
+
+    if (found.expiresAt.getTime() > issuedAt.getTime()) {
+        await extendSession(token, expiresAt)
+    } else {
+        activeToken = randomUUID()
+        const rotated = await rotateSession(token, found.user.id, activeToken, expiresAt)
+        if (!rotated) {
+            return c.json({ error: 'Session not found. Please sign in again.' }, 401)
+        }
+    }
+
+    return c.json({
+        user: found.user,
+        token: activeToken,
+        issuedAt: issuedAt.getTime(),
+        expiresAt: expiresAt.getTime(),
+    })
+})
+
+/** Revokes the session server-side; the app also clears it locally. */
+authRoutes.post('/logout', async (c) => {
+    const token = bearerToken(c.req.header('Authorization'))
+    if (token) await deleteSession(token)
+    return c.json({ ok: true })
 })

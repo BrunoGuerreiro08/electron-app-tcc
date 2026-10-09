@@ -3,6 +3,8 @@
     "title": "Profile",
     "description": "Your account details and where your documents are stored.",
     "guestNotice": "You are using guest mode. To edit your name and email, sign in with your institutional email.",
+    "offlineNotice": "No connection to the server. You can change your name and email once the connection is back.",
+    "expiredNotice": "Your session has expired. Use \"Sign in again\" in the sidebar to edit your name and email.",
     "name": {
       "title": "Name",
       "description": "How you appear in the app and in reports.",
@@ -13,7 +15,6 @@
       "title": "Email",
       "description": "Used to sign in. Your access code is sent here.",
       "change": "Change email",
-      "offline": "You need to be connected to the server to change your email.",
       "saved": "Email changed. Use the new address next time you sign in.",
       "dialog": {
         "title": "Change email",

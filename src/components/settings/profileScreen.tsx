@@ -15,12 +15,20 @@ import {
 } from '@/components/ui/dialog'
 import { useAuthStore } from '@/store/authStore'
 import { useSettingsStore } from '@/store/settingsStore'
-import { useServerStatusStore } from '@/store/serverStatusStore'
 
 export function ProfileScreen() {
     const { t } = useTranslation(['settings', 'common'])
     const session = useAuthStore((s) => s.session)
+    const authStatus = useAuthStore((s) => s.authStatus)
     const isGuest = !session || session.isGuest === true
+    // Name/email live on the server: editable only with a confirmed session.
+    const canEditAccount = !isGuest && authStatus === 'authenticated'
+    const blockedNotice =
+        authStatus === 'offline'
+            ? t('settings:profile.offlineNotice')
+            : authStatus === 'expired'
+              ? t('settings:profile.expiredNotice')
+              : null
 
     return (
         <div className="space-y-8 p-6">
@@ -36,8 +44,15 @@ export function ProfileScreen() {
                 </div>
             )}
 
-            <NameCard currentName={session?.user.name ?? ''} disabled={isGuest} />
-            <EmailCard currentEmail={session?.user.email ?? ''} disabled={isGuest} />
+            {!isGuest && blockedNotice && (
+                <div className="flex items-start gap-3 rounded-md border bg-muted/40 p-4 text-sm">
+                    <Info className="mt-0.5 h-4 w-4 shrink-0 text-muted-foreground" />
+                    <p>{blockedNotice}</p>
+                </div>
+            )}
+
+            <NameCard currentName={session?.user.name ?? ''} disabled={!canEditAccount} />
+            <EmailCard currentEmail={session?.user.email ?? ''} disabled={!canEditAccount} />
             <StorageFolderCard />
         </div>
     )
@@ -113,10 +128,8 @@ function NameCard({ currentName, disabled }: { currentName: string; disabled: bo
 
 function EmailCard({ currentEmail, disabled }: { currentEmail: string; disabled: boolean }) {
     const { t } = useTranslation('settings')
-    const serverStatus = useServerStatusStore((s) => s.status)
     const [open, setOpen] = useState(false)
     const [saved, setSaved] = useState(false)
-    const offline = serverStatus === 'offline'
 
     return (
         <Card>
@@ -128,7 +141,7 @@ function EmailCard({ currentEmail, disabled }: { currentEmail: string; disabled:
                 <Button
                     variant="outline"
                     size="sm"
-                    disabled={disabled || offline}
+                    disabled={disabled}
                     onClick={() => {
                         setSaved(false)
                         setOpen(true)
@@ -140,9 +153,6 @@ function EmailCard({ currentEmail, disabled }: { currentEmail: string; disabled:
             </CardHeader>
             <CardContent>
                 <p className="text-sm">{currentEmail}</p>
-                {!disabled && offline && (
-                    <p className="mt-2 text-sm text-muted-foreground">{t('profile.email.offline')}</p>
-                )}
                 {saved && <p className="mt-2 text-sm text-muted-foreground">{t('profile.email.saved')}</p>}
             </CardContent>
 

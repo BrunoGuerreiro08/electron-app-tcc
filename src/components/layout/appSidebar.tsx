@@ -49,7 +49,7 @@ import {
     AlertDialogTrigger,
 } from "@/components/ui/alert-dialog"
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible"
-import { ServerStatusIndicator } from "./serverStatusIndicator"
+import { AuthStatusIndicator } from "./authStatusIndicator"
 import { useCollectionsStore } from "@/store/collectionsStore"
 import { useEffect, useState } from "react"
 import { DialogContent, DialogHeader, DialogTitle, DialogFooter, Dialog } from "@/components/ui/dialog"
@@ -379,7 +379,7 @@ export function AppSidebar() {
             </SidebarContent>
 
             <SidebarFooter className="p-2 border-t border-border/50">
-                <ServerStatusIndicator variant={state === "collapsed" ? "icon" : "full"} />
+                <AuthStatusIndicator variant={state === "collapsed" ? "icon" : "full"} />
                 <SidebarMenu>
                     <SidebarMenuItem>
                         <SidebarMenuButton onClick={cycleTheme} tooltip={t('theme.tooltip')}>

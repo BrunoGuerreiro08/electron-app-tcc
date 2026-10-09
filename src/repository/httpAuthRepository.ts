@@ -1,5 +1,5 @@
 import { usePreferencesStore } from '@/store/preferenceStore'
-import type { AuthRepository, Session, User, VerifyResult } from '@/types/auth'
+import { AuthExpiredError, type AuthRepository, type Session, type User, type VerifyResult } from '@/types/auth'
 
 const API_BASE = import.meta.env.VITE_API_BASE_URL ?? 'http://localhost:3000'
 
@@ -18,6 +18,7 @@ async function postAuthed<T>(path: string, token: string, body: unknown, fallbac
     })
     if (!res.ok) {
         const { error } = await res.json().catch(() => ({ error: null }))
+        if (res.status === 401) throw new AuthExpiredError(error ?? undefined)
         throw new Error(error ?? fallbackError)
     }
     return res.json()
@@ -88,5 +89,22 @@ export const httpAuthRepository: AuthRepository = {
     async confirmEmailChange(token: string, newEmail: string, code: string): Promise<User> {
         const data = await postAuthed<{ user: User }>('/auth/confirm-email-change', token, { newEmail, code }, 'Failed to verify code.')
         return data.user
+    },
+
+    // Throws AuthExpiredError on 401 (session revoked); any other failure
+    // (network, timeout) is a plain error and means "offline".
+    async refreshSession(token: string): Promise<Session> {
+        const data = await postAuthed<Session>('/auth/session/refresh', token, {}, 'Failed to refresh session.')
+        return { user: data.user, token: data.token, issuedAt: data.issuedAt, expiresAt: data.expiresAt }
+    },
+
+    // Best effort: revokes the token server-side. Offline, the token simply
+    // stays in the server db until it expires.
+    async logout(token: string): Promise<void> {
+        await fetch(`${API_BASE}/auth/logout`, {
+            method: 'POST',
+            headers: { Authorization: `Bearer ${token}` },
+            signal: AbortSignal.timeout(3000),
+        }).catch(() => {})
     },
 }
