@@ -14,9 +14,10 @@ import { Badge } from '@/components/ui/badge'
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { templateRepository } from '@/repository/templateRepository'
 import type { TemplateSummary, DocumentMatchSummary } from '@/types/entities'
-import { Upload, FileWarning, FileArchive } from 'lucide-react'
+import { Upload, FileWarning, FileArchive, RefreshCw, CloudOff } from 'lucide-react'
 
 type Tab = 'official' | 'imported'
+type SyncState = 'syncing' | 'synced' | 'failed'
 
 interface Props {
     open: boolean
@@ -25,7 +26,7 @@ interface Props {
 }
 
 export function UseTemplateDialog({ open, onOpenChange, onCreated }: Props) {
-    const { t } = useTranslation('collections')
+    const { t, i18n } = useTranslation('collections')
     const [tab, setTab] = useState<Tab>('official')
     const [official, setOfficial] = useState<TemplateSummary[]>([])
     const [imported, setImported] = useState<TemplateSummary[]>([])
@@ -38,6 +39,8 @@ export function UseTemplateDialog({ open, onOpenChange, onCreated }: Props) {
     const [matchSummary, setMatchSummary] = useState<DocumentMatchSummary | null>(null)
     const [matchErrors, setMatchErrors] = useState<string[] | null>(null)
     const [matching, setMatching] = useState(false)
+    const [syncState, setSyncState] = useState<SyncState>('syncing')
+    const [lastSyncedAt, setLastSyncedAt] = useState<number | null>(null)
 
     const refreshLists = async () => {
         setLoading(true)
@@ -50,9 +53,28 @@ export function UseTemplateDialog({ open, onOpenChange, onCreated }: Props) {
         setLoading(false)
     }
 
+    // Lists from the local cache first (instant, works offline), then asks
+    // the server for updates and refreshes the official list when it answers.
+    const syncOfficial = async () => {
+        setSyncState('syncing')
+        const result = await templateRepository.syncOfficial()
+        setLastSyncedAt(result.lastSyncedAt)
+        setSyncState(result.ok ? 'synced' : 'failed')
+        if (!result.ok) return
+
+        const off = await templateRepository.listOfficial()
+        setOfficial(off)
+        // Keep the preview in step with the refreshed list: show the new
+        // version if it changed, drop it if the server removed it.
+        setSelected((prev) =>
+            prev?.source === 'official' ? off.find((tpl) => tpl.fileName === prev.fileName) ?? null : prev
+        )
+    }
+
     useEffect(() => {
         if (open) {
             refreshLists()
+            syncOfficial()
             setSelected(null)
             setCollectionName('')
             setImportErrors(null)
@@ -166,6 +188,15 @@ export function UseTemplateDialog({ open, onOpenChange, onCreated }: Props) {
                         </Button>
                     </div>
 
+                    {tab === 'official' && (
+                        <OfficialSyncStatus
+                            state={syncState}
+                            lastSyncedAt={lastSyncedAt}
+                            locale={i18n.language}
+                            onRefresh={syncOfficial}
+                        />
+                    )}
+
                     {importErrors && (
                         <div className="flex items-start gap-2 rounded-md border border-destructive/40 bg-destructive/5 p-2 text-xs text-destructive">
                             <FileWarning className="h-3.5 w-3.5 shrink-0" />
@@ -207,7 +238,14 @@ export function UseTemplateDialog({ open, onOpenChange, onCreated }: Props) {
                                                     : ''
                                                 }`}
                                         >
-                                            <p className="font-medium">{tpl.template.name}</p>
+                                            <div className="flex items-center gap-2">
+                                                <p className="font-medium">{tpl.template.name}</p>
+                                                {tpl.change && (
+                                                    <Badge variant="secondary" className="shrink-0 text-xs">
+                                                        {t(`useTemplateDialog.badges.${tpl.change}`)}
+                                                    </Badge>
+                                                )}
+                                            </div>
                                             <p className="text-xs text-muted-foreground">
                                                 {t('useTemplateDialog.summary.groups', { count: tpl.template.groups.length })} ·{' '}
                                                 {t('useTemplateDialog.summary.subgroups', { count: subgroupCount })} ·{' '}
@@ -335,5 +373,47 @@ export function UseTemplateDialog({ open, onOpenChange, onCreated }: Props) {
                 </DialogFooter>
             </DialogContent>
         </Dialog>
+    )
+}
+
+function OfficialSyncStatus({
+    state,
+    lastSyncedAt,
+    locale,
+    onRefresh,
+}: {
+    state: SyncState
+    lastSyncedAt: number | null
+    locale: string
+    onRefresh: () => void
+}) {
+    const { t } = useTranslation('collections')
+
+    let message: string
+    if (state === 'syncing') {
+        message = t('useTemplateDialog.officialStatus.syncing')
+    } else if (state === 'synced' && lastSyncedAt) {
+        message = t('useTemplateDialog.officialStatus.synced', {
+            time: new Date(lastSyncedAt).toLocaleTimeString(locale, { hour: '2-digit', minute: '2-digit' }),
+        })
+    } else if (lastSyncedAt) {
+        message = t('useTemplateDialog.officialStatus.offlineCached', {
+            date: new Date(lastSyncedAt).toLocaleString(locale, { dateStyle: 'short', timeStyle: 'short' }),
+        })
+    } else {
+        message = t('useTemplateDialog.officialStatus.neverSynced')
+    }
+
+    return (
+        <div className="flex items-center justify-between gap-2 text-xs text-muted-foreground">
+            <span className="flex items-center gap-1.5">
+                {state === 'failed' && <CloudOff className="h-3.5 w-3.5 shrink-0" />}
+                {message}
+            </span>
+            <Button variant="ghost" size="sm" onClick={onRefresh} disabled={state === 'syncing'}>
+                <RefreshCw className={`h-3.5 w-3.5 ${state === 'syncing' ? 'animate-spin' : ''}`} />
+                {t('useTemplateDialog.officialStatus.refresh')}
+            </Button>
+        </div>
     )
 }

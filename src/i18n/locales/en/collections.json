@@ -70,6 +70,17 @@
         "importButton": "Import template",
         "loading": "Loading…",
         "emptyOfficial": "No official templates yet.",
+        "officialStatus": {
+            "syncing": "Checking the server for updates…",
+            "synced": "Updated from the server at {{time}}",
+            "offlineCached": "Server unavailable — showing versions saved on {{date}}",
+            "neverSynced": "Connect to the server to download the official templates.",
+            "refresh": "Refresh"
+        },
+        "badges": {
+            "added": "New",
+            "updated": "Updated"
+        },
         "emptyImported": "No imported templates yet — use \"Import template\" above.",
         "summary": {
             "groups_one": "{{count}} group",

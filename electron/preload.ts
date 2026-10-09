@@ -104,6 +104,8 @@ contextBridge.exposeInMainWorld('api', {
     },
     templates: {
         listOfficial: () => ipcRenderer.invoke('templates:listOfficial'),
+        syncOfficial: () => ipcRenderer.invoke('templates:syncOfficial'),
+        officialStatus: () => ipcRenderer.invoke('templates:officialStatus'),
         listImported: () => ipcRenderer.invoke('templates:listImported'),
         pickAndImport: () => ipcRenderer.invoke('templates:pickAndImport'),
         apply: (

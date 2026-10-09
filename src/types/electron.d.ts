@@ -113,6 +113,8 @@ declare global {
             }
             templates: {
                 listOfficial: () => Promise<import('./entities').TemplateSummary[]>
+                syncOfficial: () => Promise<import('./entities').OfficialSyncResult>
+                officialStatus: () => Promise<{ lastSyncedAt: number | null }>
                 listImported: () => Promise<import('./entities').TemplateSummary[]>
                 pickAndImport: () => Promise<
                     | { ok: true; fileName: string; template: import('./entities').TemplateFile }

@@ -1,6 +1,7 @@
+/// <reference types="vite/client" />
 import fs from 'node:fs'
 import path from 'node:path'
-import { randomUUID } from 'node:crypto'
+import { createHash, randomUUID } from 'node:crypto'
 import { app, dialog, type BrowserWindow } from 'electron'
 import { getDb, getActiveUserId } from './db'
 import { adoptDroppedFile, writeTempDroppedFile } from './fileHandler'
@@ -94,6 +95,8 @@ export interface TemplateSummary {
     fileName: string
     source: 'official' | 'imported'
     template: TemplateFile
+    /** Official only: set when the template arrived or changed recently. */
+    change?: 'added' | 'updated'
 }
 
 // --- Paths ------------------------------------------------------------
@@ -115,18 +118,18 @@ function getImportedTemplatesDir(): string {
 }
 
 /**
- * Bundled with the installer, shared across every user on this device,
- * read-only from the app's perspective. ASSUMPTION: in a packaged build
- * this expects an `extraResources` entry in your electron-builder config
- * copying an "official templates" folder to `resources/templates/
- * official` — haven't seen that config, so double-check this path
- * matches once you wire up packaging. In dev, reads straight from the
- * project source instead.
+ * Local mirror of the server's official templates (see syncOfficialTemplates).
+ * Per device, not per user — official templates are the same for everyone —
+ * and readable with the server offline. Read-only to everything but the sync.
  */
+function getOfficialTemplatesRoot(): string {
+    return path.join(app.getPath('userData'), 'templates')
+}
+
 function getOfficialTemplatesDir(): string {
-    return app.isPackaged
-        ? path.join(process.resourcesPath, 'templates', 'official')
-        : path.join(app.getAppPath(), 'electron', 'templates', 'official')
+    const dir = path.join(getOfficialTemplatesRoot(), 'official')
+    fs.mkdirSync(dir, { recursive: true })
+    return dir
 }
 
 function slugify(name: string): string {
@@ -390,11 +393,159 @@ function listTemplatesIn(dir: string, source: 'official' | 'imported'): Template
 }
 
 export function listOfficialTemplates(): TemplateSummary[] {
-    return listTemplatesIn(getOfficialTemplatesDir(), 'official')
+    const { entries } = readOfficialIndex()
+    const badgeCutoff = Date.now() - CHANGE_BADGE_MS
+    return listTemplatesIn(getOfficialTemplatesDir(), 'official').map((summary) => {
+        const entry = entries[summary.fileName]
+        return entry?.change && entry.changedAt > badgeCutoff ? { ...summary, change: entry.change } : summary
+    })
 }
 
 export function listImportedTemplates(): TemplateSummary[] {
     return listTemplatesIn(getImportedTemplatesDir(), 'imported')
+}
+
+// --- Official templates sync ------------------------------------------
+//
+// The server (GET /templates) is the only source of official templates.
+// Each sync downloads what changed into the local mirror; the mirror is
+// what the app lists and applies from, so they keep working offline.
+
+const API_BASE = import.meta.env.VITE_API_BASE_URL ?? 'http://localhost:3000'
+const SYNC_TIMEOUT_MS = 5000
+const CHANGE_BADGE_MS = 7 * 24 * 60 * 60 * 1000 // "New"/"Updated" badge lifetime
+
+interface OfficialIndexEntry {
+    sha256: string
+    changedAt: number
+    change: 'added' | 'updated'
+}
+
+interface OfficialIndex {
+    lastSyncedAt: number | null
+    entries: Record<string, OfficialIndexEntry>
+}
+
+interface ServerTemplateEntry {
+    fileName: string
+    sha256: string
+}
+
+export type OfficialSyncResult =
+    | { ok: true; lastSyncedAt: number; added: number; updated: number; removed: number }
+    | { ok: false; lastSyncedAt: number | null }
+
+function getOfficialIndexPath(): string {
+    return path.join(getOfficialTemplatesRoot(), 'official-index.json')
+}
+
+function readOfficialIndex(): OfficialIndex {
+    try {
+        const parsed = JSON.parse(fs.readFileSync(getOfficialIndexPath(), 'utf-8'))
+        return { lastSyncedAt: parsed.lastSyncedAt ?? null, entries: parsed.entries ?? {} }
+    } catch {
+        return { lastSyncedAt: null, entries: {} }
+    }
+}
+
+// Write-then-rename, so a crash mid-write never leaves a half file behind.
+function writeFileAtomic(filePath: string, content: string): void {
+    const tmp = `${filePath}.tmp`
+    fs.writeFileSync(tmp, content, 'utf-8')
+    fs.renameSync(tmp, filePath)
+}
+
+function isSafeTemplateFileName(fileName: string): boolean {
+    return fileName === path.basename(fileName) && fileName.endsWith('.json')
+}
+
+async function fetchWithTimeout(url: string): Promise<Response> {
+    const res = await fetch(url, { signal: AbortSignal.timeout(SYNC_TIMEOUT_MS) })
+    if (!res.ok) throw new Error(`${url} responded ${res.status}`)
+    return res
+}
+
+async function runOfficialSync(): Promise<OfficialSyncResult> {
+    const index = readOfficialIndex()
+
+    let remote: ServerTemplateEntry[]
+    try {
+        const res = await fetchWithTimeout(`${API_BASE}/templates`)
+        remote = ((await res.json()) as { templates: ServerTemplateEntry[] }).templates
+            .filter((entry) => isSafeTemplateFileName(entry.fileName))
+    } catch (err) {
+        console.warn('[templates] official sync skipped, server unreachable:', (err as Error).message)
+        return { ok: false, lastSyncedAt: index.lastSyncedAt }
+    }
+
+    const dir = getOfficialTemplatesDir()
+    const now = Date.now()
+    let added = 0
+    let updated = 0
+    let removed = 0
+
+    for (const { fileName, sha256 } of remote) {
+        const known = index.entries[fileName]
+        const filePath = path.join(dir, fileName)
+        if (known?.sha256 === sha256 && fs.existsSync(filePath)) continue
+
+        try {
+            const res = await fetchWithTimeout(`${API_BASE}/templates/${encodeURIComponent(fileName)}`)
+            const bytes = Buffer.from(await res.arrayBuffer())
+            // Same bytes the server hashed, before any decoding.
+            if (createHash('sha256').update(bytes).digest('hex') !== sha256) {
+                throw new Error('checksum mismatch')
+            }
+            const raw = bytes.toString('utf-8')
+            const validation = validateTemplate(JSON.parse(raw))
+            if (!validation.ok) throw new Error(validation.errors.join('; '))
+
+            writeFileAtomic(filePath, raw)
+            const change = known ? 'updated' : 'added'
+            index.entries[fileName] = { sha256, changedAt: now, change }
+            if (change === 'added') added++
+            else updated++
+        } catch (err) {
+            // Keep whatever version is already cached; try again next sync.
+            console.warn(`[templates] could not update ${fileName}:`, (err as Error).message)
+        }
+    }
+
+    // The server dropped these — mirror that. Collections already created
+    // from them are unaffected; they're independent copies.
+    const remoteNames = new Set(remote.map((entry) => entry.fileName))
+    for (const fileName of fs.readdirSync(dir)) {
+        if (!fileName.endsWith('.json') || remoteNames.has(fileName)) continue
+        fs.rmSync(path.join(dir, fileName), { force: true })
+        delete index.entries[fileName]
+        removed++
+    }
+    for (const fileName of Object.keys(index.entries)) {
+        if (!remoteNames.has(fileName)) delete index.entries[fileName]
+    }
+
+    index.lastSyncedAt = now
+    writeFileAtomic(getOfficialIndexPath(), JSON.stringify(index, null, 2))
+    return { ok: true, lastSyncedAt: now, added, updated, removed }
+}
+
+let syncInFlight: Promise<OfficialSyncResult> | null = null
+
+/** Never throws: on any failure the cached templates stay as they were. */
+export function syncOfficialTemplates(): Promise<OfficialSyncResult> {
+    syncInFlight ??= runOfficialSync()
+        .catch((err): OfficialSyncResult => {
+            console.error('[templates] official sync failed:', err)
+            return { ok: false, lastSyncedAt: readOfficialIndex().lastSyncedAt }
+        })
+        .finally(() => {
+            syncInFlight = null
+        })
+    return syncInFlight
+}
+
+export function getOfficialTemplatesStatus(): { lastSyncedAt: number | null } {
+    return { lastSyncedAt: readOfficialIndex().lastSyncedAt }
 }
 
 // --- Import ---------------------------------------------------------

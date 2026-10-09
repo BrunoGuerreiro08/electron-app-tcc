@@ -107,7 +107,13 @@ export interface TemplateSummary {
     fileName: string
     source: 'official' | 'imported'
     template: TemplateFile
+    /** Official only: set when the template arrived or changed recently. */
+    change?: 'added' | 'updated'
 }
+
+export type OfficialSyncResult =
+    | { ok: true; lastSyncedAt: number; added: number; updated: number; removed: number }
+    | { ok: false; lastSyncedAt: number | null }
 
 export interface DocumentMatchSummary {
     added: number

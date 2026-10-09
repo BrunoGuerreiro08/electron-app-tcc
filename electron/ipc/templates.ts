@@ -1,6 +1,8 @@
 import { ipcMain, BrowserWindow } from 'electron'
 import {
     listOfficialTemplates,
+    syncOfficialTemplates,
+    getOfficialTemplatesStatus,
     listImportedTemplates,
     pickAndImportTemplate,
     applyTemplate,
@@ -13,6 +15,14 @@ import {
 export function registerTemplateHandlers() {
     ipcMain.handle('templates:listOfficial', () => {
         return listOfficialTemplates()
+    })
+
+    ipcMain.handle('templates:syncOfficial', () => {
+        return syncOfficialTemplates()
+    })
+
+    ipcMain.handle('templates:officialStatus', () => {
+        return getOfficialTemplatesStatus()
     })
 
     ipcMain.handle('templates:listImported', () => {

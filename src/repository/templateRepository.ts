@@ -1,7 +1,15 @@
-import type { TemplateSummary, TemplateFile, ApplyTemplateResult, DocumentMatchSummary } from '@/types/entities'
+import type {
+    TemplateSummary,
+    TemplateFile,
+    ApplyTemplateResult,
+    DocumentMatchSummary,
+    OfficialSyncResult,
+} from '@/types/entities'
 
 export const templateRepository = {
     listOfficial: (): Promise<TemplateSummary[]> => window.api.templates.listOfficial(),
+    syncOfficial: (): Promise<OfficialSyncResult> => window.api.templates.syncOfficial(),
+    officialStatus: (): Promise<{ lastSyncedAt: number | null }> => window.api.templates.officialStatus(),
     listImported: (): Promise<TemplateSummary[]> => window.api.templates.listImported(),
     pickAndImport: (): Promise<
         | { ok: true; fileName: string; template: TemplateFile }

@@ -70,6 +70,17 @@
         "importButton": "Importar modelo",
         "loading": "Carregando…",
         "emptyOfficial": "Nenhum modelo oficial ainda.",
+        "officialStatus": {
+            "syncing": "Verificando atualizações no servidor…",
+            "synced": "Atualizado do servidor às {{time}}",
+            "offlineCached": "Servidor indisponível — exibindo versões salvas em {{date}}",
+            "neverSynced": "Conecte-se ao servidor para baixar os modelos oficiais.",
+            "refresh": "Atualizar"
+        },
+        "badges": {
+            "added": "Novo",
+            "updated": "Atualizado"
+        },
         "emptyImported": "Nenhum modelo importado ainda — use \"Importar modelo\" acima.",
         "summary": {
             "groups_one": "{{count}} grupo",

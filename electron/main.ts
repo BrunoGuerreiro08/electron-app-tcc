@@ -16,6 +16,7 @@ import { registerReportHandlers } from './ipc/reports'
 import { registerReviewHandlers } from './ipc/reviews'
 import { registerPreferencesHandlers } from './ipc/preferences'
 import { registerTemplateHandlers } from './ipc/templates'
+import { syncOfficialTemplates } from './templates'
 import { registerDossierHandlers } from './ipc/dossier'
 import { registerExportFileHandlers } from './ipc/exportFiles'
 
@@ -89,6 +90,10 @@ app.whenReady().then(() => {
     if (session) detectOrphans()
 
     createWindow()
+
+    // Refresh the local copy of the official templates in the background;
+    // offline, the cached ones are used as-is.
+    void syncOfficialTemplates()
 })
 
 app.on('will-quit', () => {
