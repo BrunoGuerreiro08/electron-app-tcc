@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useAuthStore } from '@/store/authStore'
-import { useTheme } from 'next-themes'
+import { usePreferencesStore } from '@/store/preferenceStore'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
@@ -10,16 +10,17 @@ import { InputOTP, InputOTPGroup, InputOTPSlot } from '@/components/ui/input-otp
 import { Sun, Moon, Monitor, User } from 'lucide-react'
 import { useServerStatusStore } from '@/store/serverStatusStore'
 import { ServerStatusIndicator } from '@/components/layout/serverStatusIndicator'
-import i18n from '@/i18n'
 
 export function LoginScreen() {
-  const { t } = useTranslation('auth')
+  const { t, i18n } = useTranslation('auth')
   const serverStatus = useServerStatusStore((s) => s.status)
 
   const { step, email, loading, error, requestCode, verifyCode, completeProfile, reset, loginAsGuest } =
     useAuthStore()
 
-  const { theme, setTheme } = useTheme()
+  const theme = usePreferencesStore((s) => s.theme)
+  const setTheme = usePreferencesStore((s) => s.setTheme)
+  const setLanguage = usePreferencesStore((s) => s.setLanguage)
   const [emailInput, setEmailInput] = useState('')
   const [codeInput, setCodeInput] = useState('')
   const [nameInput, setNameInput] = useState('')
@@ -51,7 +52,7 @@ export function LoginScreen() {
 
       <button
         className="fixed bottom-4 left-4 text-xs underline"
-        onClick={() => i18n.changeLanguage(i18n.language === 'en' ? 'pt-BR' : 'en')}
+        onClick={() => setLanguage(i18n.language === 'en' ? 'pt-BR' : 'en')}
       >
         {i18n.language}
       </button>

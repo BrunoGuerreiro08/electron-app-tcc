@@ -10,7 +10,7 @@ export function registerPreferencesHandlers() {
         setLanguage(language)
     })
 
-    ipcMain.handle('preferences:setTheme', (_event, theme: 'light' | 'dark') => {
+    ipcMain.handle('preferences:setTheme', (_event, theme: 'light' | 'dark' | 'system') => {
         setTheme(theme)
     })
 }

@@ -100,7 +100,7 @@ contextBridge.exposeInMainWorld('api', {
     preferences: {
         get: () => ipcRenderer.invoke('preferences:get'),
         setLanguage: (language: 'en' | 'pt-BR') => ipcRenderer.invoke('preferences:setLanguage', language),
-        setTheme: (theme: 'light' | 'dark') => ipcRenderer.invoke('preferences:setTheme', theme),
+        setTheme: (theme: 'light' | 'dark' | 'system') => ipcRenderer.invoke('preferences:setTheme', theme),
     },
     templates: {
         listOfficial: () => ipcRenderer.invoke('templates:listOfficial'),

@@ -1,4 +1,3 @@
-import { useTheme } from "next-themes"
 import { useAuthStore } from "@/store/authStore"
 import { NavLink, useLocation, useNavigate } from "react-router-dom"
 import {
@@ -61,13 +60,14 @@ import { useTranslation } from 'react-i18next'
 
 export function AppSidebar() {
     const { t, i18n } = useTranslation()
-    const { theme, setTheme } = useTheme()
     const { state, toggleSidebar } = useSidebar()
     const logout = useAuthStore((state) => state.logout)
     const isCollapsed = state === "collapsed"
     const location = useLocation()
 
     const setLanguage = usePreferencesStore((s) => s.setLanguage)
+    const theme = usePreferencesStore((s) => s.theme)
+    const setTheme = usePreferencesStore((s) => s.setTheme)
 
     const cycleLanguage = () => {
         const isPt = i18n.language?.toLowerCase().startsWith('pt')

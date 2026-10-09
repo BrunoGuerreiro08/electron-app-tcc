@@ -59,20 +59,4 @@ i18n.use(initReactI18next).init({
     returnNull: false,
 })
 
-/**
- * Call once at app boot, before rendering <App />.
- * Reads the persisted language from Electron so the first paint is already correct —
- * avoids a flash of English before preferencesStore.load() runs later.
- */
-export async function initI18n(): Promise<void> {
-    try {
-        const prefs = await window.api.preferences.get()
-        if (SUPPORTED_LANGUAGES.includes(prefs.language)) {
-            await i18n.changeLanguage(prefs.language)
-        }
-    } catch {
-        // window.api unavailable or read failed — fall back to default 'pt-BR'
-    }
-}
-
 export default i18n

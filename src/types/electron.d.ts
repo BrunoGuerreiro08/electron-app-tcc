@@ -107,9 +107,9 @@ declare global {
                 }): Promise<{ path: string } | null>
             }
             preferences: {
-                get: () => Promise<{ language: 'en' | 'pt-BR'; theme: 'light' | 'dark' }>
+                get: () => Promise<{ language: 'en' | 'pt-BR'; theme: 'light' | 'dark' | 'system' }>
                 setLanguage: (language: 'en' | 'pt-BR') => Promise<void>
-                setTheme: (theme: 'light' | 'dark') => Promise<void>
+                setTheme: (theme: 'light' | 'dark' | 'system') => Promise<void>
             }
             templates: {
                 listOfficial: () => Promise<import('./entities').TemplateSummary[]>
