@@ -89,23 +89,98 @@ export interface TemplateFile {
 }
 
 // --- Validation ---------------------------------------------------------
+//
+// Errors are structured (key + params + location), not text: the app
+// translates them into the user's language (src/lib/translateTemplateErrors.ts),
+// while the server and the publish script — admin-facing, English is fine —
+// use formatTemplateError() below. Keeps this module free of any i18n
+// dependency, since both sides import it.
+
+export type TemplateErrorKey =
+    // whole file (the last two are raised by the app when reading the file)
+    | 'file.notObject'
+    | 'file.unreadable'
+    | 'file.invalidJson'
+    // template level
+    | 'template.schemaVersion'
+    | 'template.missingName'
+    | 'template.noGroups'
+    | 'template.noValidCategory'
+    // structure
+    | 'group.notObject'
+    | 'group.missingName'
+    | 'group.maxNotAboveMin'
+    | 'group.bonusRateInvalid'
+    | 'group.bonusRateNeedsMin'
+    | 'group.noSubgroups'
+    | 'subgroup.notObject'
+    | 'subgroup.missingName'
+    | 'subgroup.maxNotAboveMin'
+    | 'subgroup.noCategories'
+    | 'category.notObject'
+    | 'category.missingName'
+    | 'category.documentsNotList'
+    | 'document.notObject'
+    | 'document.missingTitle'
+    | 'document.fileNameInvalid'
+    // scoring rules
+    | 'rule.missing'
+    | 'rule.flatPointsPerUnit'
+    | 'rule.hoursPointsPerUnit'
+    | 'rule.hoursUnitSize'
+    | 'rule.innerType'
+    | 'rule.cappedCap'
+    | 'rule.cappedPerDocumentCap'
+    | 'rule.unknownType'
+    // documents ZIP paired with a template (raised by the app)
+    | 'zip.unreadable'
+
+/**
+ * Where in the template the problem is. Indexes are 0-based; names are
+ * included when the item has one, so messages can say "Grupo I › I3"
+ * instead of "groups[0].subgroups[2]".
+ */
+export interface TemplateErrorLocation {
+    group?: number
+    groupName?: string
+    subgroup?: number
+    subgroupName?: string
+    category?: number
+    categoryName?: string
+    document?: number
+    documentTitle?: string
+    /** The problem is in a capped rule's inner rule. */
+    innerRule?: boolean
+}
+
+export interface TemplateError {
+    key: TemplateErrorKey
+    params?: Record<string, string | number>
+    at?: TemplateErrorLocation
+}
 
 export interface ValidationResult {
     ok: boolean
-    errors: string[]
+    errors: TemplateError[]
     template?: TemplateFile
 }
 
-function validateFlatOrHours(rule: unknown, fieldPath: string, errors: string[]): boolean {
+function nameOf(value: unknown, field: 'name' | 'title' = 'name'): string | undefined {
+    if (!value || typeof value !== 'object') return undefined
+    const raw = (value as Record<string, unknown>)[field]
+    return typeof raw === 'string' && raw.trim() !== '' ? raw.trim() : undefined
+}
+
+function validateFlatOrHours(rule: unknown, at: TemplateErrorLocation, errors: TemplateError[]): boolean {
     if (!rule || typeof rule !== 'object') {
-        errors.push(`${fieldPath}: rule is missing or not an object.`)
+        errors.push({ key: 'rule.missing', at })
         return false
     }
     const r = rule as Record<string, unknown>
 
     if (r.type === 'flat') {
         if (typeof r.pointsPerUnit !== 'number' || r.pointsPerUnit <= 0) {
-            errors.push(`${fieldPath}: flat rule needs a positive numeric pointsPerUnit.`)
+            errors.push({ key: 'rule.flatPointsPerUnit', at })
             return false
         }
         return true
@@ -113,56 +188,50 @@ function validateFlatOrHours(rule: unknown, fieldPath: string, errors: string[])
 
     if (r.type === 'hours') {
         if (typeof r.pointsPerUnit !== 'number' || r.pointsPerUnit <= 0) {
-            errors.push(`${fieldPath}: hours rule needs a positive numeric pointsPerUnit.`)
+            errors.push({ key: 'rule.hoursPointsPerUnit', at })
             return false
         }
         if (typeof r.unitSize !== 'number' || r.unitSize <= 0) {
-            errors.push(`${fieldPath}: hours rule needs a positive numeric unitSize.`)
+            errors.push({ key: 'rule.hoursUnitSize', at })
             return false
         }
         return true
     }
 
-    errors.push(`${fieldPath}: expected "flat" or "hours", got "${String(r.type)}".`)
+    errors.push({ key: 'rule.innerType', params: { type: String(r.type) }, at })
     return false
 }
 
-function validateRule(rule: unknown, fieldPath: string, errors: string[]): rule is Rule {
+function validateRule(rule: unknown, at: TemplateErrorLocation, errors: TemplateError[]): rule is Rule {
     if (!rule || typeof rule !== 'object') {
-        errors.push(`${fieldPath}: rule is missing or not an object.`)
+        errors.push({ key: 'rule.missing', at })
         return false
     }
     const r = rule as Record<string, unknown>
 
     if (r.type === 'flat' || r.type === 'hours') {
-        return validateFlatOrHours(r, fieldPath, errors)
+        return validateFlatOrHours(r, at, errors)
     }
 
     if (r.type === 'capped') {
         if (typeof r.cap !== 'number' || r.cap <= 0) {
-            errors.push(`${fieldPath}: capped rule needs a numeric cap greater than zero.`)
+            errors.push({ key: 'rule.cappedCap', at })
             return false
         }
         // Deliberately validateFlatOrHours, not a recursive validateRule
         // call — capped rules can't wrap another capped rule.
-        if (!validateFlatOrHours(r.inner, `${fieldPath}.inner`, errors)) {
-            return false
-        }
-        return true
+        return validateFlatOrHours(r.inner, { ...at, innerRule: true }, errors)
     }
 
     if (r.type === 'cappedPerDocument') {
         if (typeof r.capPerDocument !== 'number' || r.capPerDocument <= 0) {
-            errors.push(`${fieldPath}: cappedPerDocument rule needs a numeric capPerDocument greater than zero.`)
+            errors.push({ key: 'rule.cappedPerDocumentCap', at })
             return false
         }
-        if (!validateFlatOrHours(r.inner, `${fieldPath}.inner`, errors)) {
-            return false
-        }
-        return true
+        return validateFlatOrHours(r.inner, { ...at, innerRule: true }, errors)
     }
 
-    errors.push(`${fieldPath}: unknown rule type "${String(r.type)}".`)
+    errors.push({ key: 'rule.unknownType', params: { type: String(r.type) }, at })
     return false
 }
 
@@ -174,92 +243,93 @@ function validateRule(rule: unknown, fieldPath: string, errors: string[]): rule 
  */
 export function validateTemplate(data: unknown): ValidationResult {
     if (!data || typeof data !== 'object') {
-        return { ok: false, errors: ['Template file is not a valid JSON object.'] }
+        return { ok: false, errors: [{ key: 'file.notObject' }] }
     }
 
-    const errors: string[] = []
+    const errors: TemplateError[] = []
     const t = data as Record<string, unknown>
 
     if (t.schemaVersion !== 1) {
-        errors.push(`Unsupported schemaVersion (expected 1, got ${JSON.stringify(t.schemaVersion)}).`)
+        errors.push({ key: 'template.schemaVersion', params: { got: JSON.stringify(t.schemaVersion) ?? 'undefined' } })
     }
     if (typeof t.name !== 'string' || t.name.trim() === '') {
-        errors.push('Template is missing a name.')
+        errors.push({ key: 'template.missingName' })
     }
 
     let hasValidCategory = false
 
     if (!Array.isArray(t.groups) || t.groups.length === 0) {
-        errors.push('Template must have at least one group.')
+        errors.push({ key: 'template.noGroups' })
     } else {
         t.groups.forEach((grp: unknown, g: number) => {
-            const grpPath = `groups[${g}]`
+            const grpAt: TemplateErrorLocation = { group: g, groupName: nameOf(grp) }
             if (!grp || typeof grp !== 'object') {
-                errors.push(`${grpPath}: not a valid object.`)
+                errors.push({ key: 'group.notObject', at: grpAt })
                 return
             }
             const group = grp as Record<string, unknown>
 
-            if (typeof group.name !== 'string' || group.name.trim() === '') {
-                errors.push(`${grpPath}: missing a name.`)
+            if (!grpAt.groupName) {
+                errors.push({ key: 'group.missingName', at: grpAt })
             }
             if (
                 typeof group.min_points === 'number' &&
                 typeof group.max_points === 'number' &&
                 group.max_points <= group.min_points
             ) {
-                errors.push(`${grpPath}: max_points must be greater than min_points.`)
+                errors.push({ key: 'group.maxNotAboveMin', at: grpAt })
             }
             if (group.bonus_rate != null) {
                 if (typeof group.bonus_rate !== 'number' || group.bonus_rate <= 0) {
-                    errors.push(`${grpPath}: bonus_rate must be a positive number when present.`)
+                    errors.push({ key: 'group.bonusRateInvalid', at: grpAt })
                 }
+                // A surplus bonus is only meaningful relative to a minimum.
                 if (typeof group.min_points !== 'number') {
-                    errors.push(`${grpPath}: bonus_rate requires min_points to be set — a surplus bonus is only meaningful relative to a minimum.`)
+                    errors.push({ key: 'group.bonusRateNeedsMin', at: grpAt })
                 }
             }
 
             if (!Array.isArray(group.subgroups) || group.subgroups.length === 0) {
-                errors.push(`${grpPath}: must have at least one subgroup.`)
+                errors.push({ key: 'group.noSubgroups', at: grpAt })
                 return
             }
 
             group.subgroups.forEach((sg: unknown, i: number) => {
-                const sgPath = `${grpPath}.subgroups[${i}]`
+                const sgAt: TemplateErrorLocation = { ...grpAt, subgroup: i, subgroupName: nameOf(sg) }
                 if (!sg || typeof sg !== 'object') {
-                    errors.push(`${sgPath}: not a valid object.`)
+                    errors.push({ key: 'subgroup.notObject', at: sgAt })
                     return
                 }
                 const s = sg as Record<string, unknown>
 
-                if (typeof s.name !== 'string' || s.name.trim() === '') {
-                    errors.push(`${sgPath}: missing a name.`)
+                if (!sgAt.subgroupName) {
+                    errors.push({ key: 'subgroup.missingName', at: sgAt })
                 }
                 if (
                     typeof s.min_points === 'number' &&
                     typeof s.max_points === 'number' &&
                     s.max_points <= s.min_points
                 ) {
-                    errors.push(`${sgPath}: max_points must be greater than min_points.`)
+                    errors.push({ key: 'subgroup.maxNotAboveMin', at: sgAt })
                 }
 
                 if (!Array.isArray(s.categories) || s.categories.length === 0) {
-                    errors.push(`${sgPath}: must have at least one category.`)
+                    errors.push({ key: 'subgroup.noCategories', at: sgAt })
                     return
                 }
 
                 s.categories.forEach((cat: unknown, j: number) => {
-                    const catPath = `${sgPath}.categories[${j}]`
+                    const catAt: TemplateErrorLocation = { ...sgAt, category: j, categoryName: nameOf(cat) }
                     if (!cat || typeof cat !== 'object') {
-                        errors.push(`${catPath}: not a valid object.`)
+                        errors.push({ key: 'category.notObject', at: catAt })
                         return
                     }
                     const c = cat as Record<string, unknown>
 
-                    if (typeof c.name !== 'string' || c.name.trim() === '') {
-                        errors.push(`${catPath}: missing a name.`)
+                    if (!catAt.categoryName) {
+                        errors.push({ key: 'category.missingName', at: catAt })
                     }
-                    if (validateRule(c.rule, `${catPath}.rule`, errors)) {
+                    if (validateRule(c.rule, catAt, errors)) {
                         hasValidCategory = true
                     }
 
@@ -269,20 +339,24 @@ export function validateTemplate(data: unknown): ValidationResult {
                     // list to be trustworthy if present at all.
                     if (c.documents !== undefined) {
                         if (!Array.isArray(c.documents)) {
-                            errors.push(`${catPath}.documents: must be a list.`)
+                            errors.push({ key: 'category.documentsNotList', at: catAt })
                         } else {
                             c.documents.forEach((docRaw: unknown, di: number) => {
-                                const docPath = `${catPath}.documents[${di}]`
+                                const docAt: TemplateErrorLocation = {
+                                    ...catAt,
+                                    document: di,
+                                    documentTitle: nameOf(docRaw, 'title'),
+                                }
                                 if (!docRaw || typeof docRaw !== 'object') {
-                                    errors.push(`${docPath}: not a valid object.`)
+                                    errors.push({ key: 'document.notObject', at: docAt })
                                     return
                                 }
                                 const d = docRaw as Record<string, unknown>
-                                if (typeof d.title !== 'string' || d.title.trim() === '') {
-                                    errors.push(`${docPath}: missing a title.`)
+                                if (!docAt.documentTitle) {
+                                    errors.push({ key: 'document.missingTitle', at: docAt })
                                 }
                                 if (d.file_name !== null && typeof d.file_name !== 'string') {
-                                    errors.push(`${docPath}.file_name: must be a string or null.`)
+                                    errors.push({ key: 'document.fileNameInvalid', at: docAt })
                                 }
                             })
                         }
@@ -292,10 +366,10 @@ export function validateTemplate(data: unknown): ValidationResult {
         })
     }
 
-    // Mirrors NFR-A01-01: a template with no valid category anywhere is
-    // useless even if every individual field technically parsed.
+    // A template with no valid category anywhere is useless even if every
+    // individual field technically parsed.
     if (Array.isArray(t.groups) && t.groups.length > 0 && !hasValidCategory) {
-        errors.push('Template must have at least one category with a valid scoring rule.')
+        errors.push({ key: 'template.noValidCategory' })
     }
 
     if (errors.length > 0) {
@@ -303,4 +377,60 @@ export function validateTemplate(data: unknown): ValidationResult {
     }
 
     return { ok: true, errors: [], template: t as unknown as TemplateFile }
+}
+
+// --- English formatting (server, publish script, logs) ------------------
+
+const ENGLISH: Record<TemplateErrorKey, string> = {
+    'file.notObject': 'Template file is not a valid JSON object.',
+    'file.unreadable': 'Could not read the file.',
+    'file.invalidJson': 'File is not valid JSON.',
+    'template.schemaVersion': 'Unsupported schemaVersion (expected 1, got {{got}}).',
+    'template.missingName': 'Template is missing a name.',
+    'template.noGroups': 'Template must have at least one group.',
+    'template.noValidCategory': 'Template must have at least one category with a valid scoring rule.',
+    'group.notObject': 'not a valid object.',
+    'group.missingName': 'missing a name.',
+    'group.maxNotAboveMin': 'max_points must be greater than min_points.',
+    'group.bonusRateInvalid': 'bonus_rate must be a positive number when present.',
+    'group.bonusRateNeedsMin': 'bonus_rate requires min_points to be set.',
+    'group.noSubgroups': 'must have at least one subgroup.',
+    'subgroup.notObject': 'not a valid object.',
+    'subgroup.missingName': 'missing a name.',
+    'subgroup.maxNotAboveMin': 'max_points must be greater than min_points.',
+    'subgroup.noCategories': 'must have at least one category.',
+    'category.notObject': 'not a valid object.',
+    'category.missingName': 'missing a name.',
+    'category.documentsNotList': 'documents must be a list.',
+    'document.notObject': 'not a valid object.',
+    'document.missingTitle': 'missing a title.',
+    'document.fileNameInvalid': 'file_name must be a string or null.',
+    'rule.missing': 'rule is missing or not an object.',
+    'rule.flatPointsPerUnit': 'flat rule needs a positive numeric pointsPerUnit.',
+    'rule.hoursPointsPerUnit': 'hours rule needs a positive numeric pointsPerUnit.',
+    'rule.hoursUnitSize': 'hours rule needs a positive numeric unitSize.',
+    'rule.innerType': 'expected "flat" or "hours", got "{{type}}".',
+    'rule.cappedCap': 'capped rule needs a numeric cap greater than zero.',
+    'rule.cappedPerDocumentCap': 'cappedPerDocument rule needs a numeric capPerDocument greater than zero.',
+    'rule.unknownType': 'unknown rule type "{{type}}".',
+    'zip.unreadable': 'Could not read the documents ZIP.',
+}
+
+/** JSON-path style location, e.g. `groups[0].subgroups[2].categories[1].rule.inner`. */
+export function formatTemplateErrorPath(at: TemplateErrorLocation | undefined, key?: TemplateErrorKey): string {
+    if (!at || at.group == null) return ''
+    let p = `groups[${at.group}]`
+    if (at.subgroup != null) p += `.subgroups[${at.subgroup}]`
+    if (at.category != null) p += `.categories[${at.category}]`
+    if (at.document != null) p += `.documents[${at.document}]`
+    else if (key?.startsWith('rule.')) p += at.innerRule ? '.rule.inner' : '.rule'
+    return p
+}
+
+export function formatTemplateError(error: TemplateError): string {
+    const message = ENGLISH[error.key].replace(/\{\{(\w+)\}\}/g, (_, name: string) =>
+        String(error.params?.[name] ?? '')
+    )
+    const where = formatTemplateErrorPath(error.at, error.key)
+    return where ? `${where}: ${message}` : message
 }

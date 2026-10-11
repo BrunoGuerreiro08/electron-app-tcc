@@ -6,7 +6,13 @@ import { app, dialog, type BrowserWindow } from 'electron'
 import { getDb, getActiveUserId } from './db'
 import { adoptDroppedFile, writeTempDroppedFile } from './fileHandler'
 import { matchTemplateDocuments, type DocumentMatch, type DocumentMatchSummary } from './templateDocumentMatch'
-import { validateTemplate, type TemplateFile, type ValidationResult } from '../shared/templateValidation'
+import {
+    formatTemplateError,
+    validateTemplate,
+    type TemplateError,
+    type TemplateFile,
+    type ValidationResult,
+} from '../shared/templateValidation'
 
 export * from '../shared/templateValidation'
 
@@ -60,14 +66,14 @@ function readAndValidate(filePath: string): ValidationResult {
     try {
         raw = fs.readFileSync(filePath, 'utf-8')
     } catch {
-        return { ok: false, errors: ['Could not read the file.'] }
+        return { ok: false, errors: [{ key: 'file.unreadable' }] }
     }
 
     let parsed: unknown
     try {
         parsed = JSON.parse(raw)
     } catch {
-        return { ok: false, errors: ['File is not valid JSON.'] }
+        return { ok: false, errors: [{ key: 'file.invalidJson' }] }
     }
 
     return validateTemplate(parsed)
@@ -205,7 +211,7 @@ async function runOfficialSync(): Promise<OfficialSyncResult> {
             }
             const raw = bytes.toString('utf-8')
             const validation = validateTemplate(JSON.parse(raw))
-            if (!validation.ok) throw new Error(validation.errors.join('; '))
+            if (!validation.ok) throw new Error(validation.errors.map(formatTemplateError).join('; '))
 
             writeFileAtomic(filePath, raw)
             const change = known ? 'updated' : 'added'
@@ -259,7 +265,7 @@ export function getOfficialTemplatesStatus(): { lastSyncedAt: number | null } {
 
 type ImportResult =
     | { ok: true; fileName: string; template: TemplateFile }
-    | { ok: false; errors: string[] }
+    | { ok: false; errors: TemplateError[] }
 
 /**
  * Opens a native file picker, validates the chosen file (NFR-12-01), and
@@ -314,7 +320,7 @@ export async function pickDocumentsZip(win: BrowserWindow): Promise<string | nul
     return result.filePaths[0]
 }
 
-type PreviewResult = { ok: true; summary: DocumentMatchSummary } | { ok: false; errors: string[] }
+type PreviewResult = { ok: true; summary: DocumentMatchSummary } | { ok: false; errors: TemplateError[] }
 
 /**
  * Read-only preview of what applying `source` + `zipPath` together would
@@ -334,8 +340,15 @@ export function previewDocumentMatch(
         return { ok: false, errors: validation.errors }
     }
 
-    const { summary } = matchTemplateDocuments(validation.template, zipPath)
-    return { ok: true, summary }
+    try {
+        const { summary } = matchTemplateDocuments(validation.template, zipPath)
+        return { ok: true, summary }
+    } catch (err) {
+        // Corrupt or non-ZIP file: report it like any other problem instead
+        // of rejecting the IPC call, which the dialog had no message for.
+        console.warn('[templates] could not read documents ZIP:', err)
+        return { ok: false, errors: [{ key: 'zip.unreadable' }] }
+    }
 }
 
 // --- Apply ---------------------------------------------------------
@@ -430,7 +443,7 @@ export function applyTemplate(
 
     const validation = readAndValidate(filePath)
     if (!validation.ok || !validation.template) {
-        throw new Error(`Template is no longer valid: ${validation.errors.join(' ')}`)
+        throw new Error(`Template is no longer valid: ${validation.errors.map(formatTemplateError).join(' ')}`)
     }
     const template = validation.template
     const matchResult = zipPath ? matchTemplateDocuments(template, zipPath) : null

@@ -3,7 +3,7 @@ import { createHash } from 'node:crypto'
 import fs from 'node:fs/promises'
 import path from 'node:path'
 import { fileURLToPath } from 'node:url'
-import { validateTemplate } from '../../../shared/templateValidation.js'
+import { formatTemplateError, validateTemplate } from '../../../shared/templateValidation.js'
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url))
 const TEMPLATES_DIR = process.env.TEMPLATES_DIR ?? path.resolve(__dirname, '../../templates')
@@ -38,7 +38,7 @@ function checkTemplate(fileName: string, raw: string): { valid: boolean; name?: 
 
     const result = validateTemplate(parsed)
     if (!result.ok) {
-        console.error(`[templates] ${fileName} failed validation:\n  ${result.errors.join('\n  ')}`)
+        console.error(`[templates] ${fileName} failed validation:\n  ${result.errors.map(formatTemplateError).join('\n  ')}`)
     }
     const meta = parsed as { name?: string; description?: string }
     return { valid: result.ok, name: meta?.name, description: meta?.description }

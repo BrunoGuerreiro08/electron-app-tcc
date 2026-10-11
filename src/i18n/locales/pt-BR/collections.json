@@ -60,6 +60,63 @@
         "bonusHelperText": "Requer um mínimo definido — o bônus se aplica apenas aos pontos obtidos acima dele.",
         "reorderButton": "Reordenar subgrupos"
     },
+    "templateErrors": {
+        "location": {
+            "group": "{{position}}º grupo",
+            "subgroup": "{{position}}º subgrupo",
+            "category": "{{position}}ª categoria",
+            "document": "{{position}}º documento",
+            "innerRule": "regra interna"
+        },
+        "file": {
+            "notObject": "O arquivo não contém um modelo válido.",
+            "unreadable": "Não foi possível ler o arquivo.",
+            "invalidJson": "O arquivo não está no formato JSON."
+        },
+        "template": {
+            "schemaVersion": "Versão de formato não suportada (esperada 1, recebida {{got}}).",
+            "missingName": "O modelo não tem nome.",
+            "noGroups": "O modelo precisa ter pelo menos um grupo.",
+            "noValidCategory": "O modelo precisa ter pelo menos uma categoria com regra de pontuação válida."
+        },
+        "group": {
+            "notObject": "grupo inválido.",
+            "missingName": "o grupo não tem nome.",
+            "maxNotAboveMin": "a pontuação máxima deve ser maior que a mínima.",
+            "bonusRateInvalid": "a taxa de bônus deve ser um número positivo.",
+            "bonusRateNeedsMin": "a taxa de bônus exige uma pontuação mínima definida.",
+            "noSubgroups": "o grupo precisa ter pelo menos um subgrupo."
+        },
+        "subgroup": {
+            "notObject": "subgrupo inválido.",
+            "missingName": "o subgrupo não tem nome.",
+            "maxNotAboveMin": "a pontuação máxima deve ser maior que a mínima.",
+            "noCategories": "o subgrupo precisa ter pelo menos uma categoria."
+        },
+        "category": {
+            "notObject": "categoria inválida.",
+            "missingName": "a categoria não tem nome.",
+            "documentsNotList": "a lista de documentos está em formato inválido."
+        },
+        "document": {
+            "notObject": "documento inválido.",
+            "missingTitle": "o documento não tem título.",
+            "fileNameInvalid": "o nome do arquivo do documento é inválido."
+        },
+        "rule": {
+            "missing": "a regra de pontuação está ausente.",
+            "flatPointsPerUnit": "a regra fixa precisa de pontos por unidade maiores que zero.",
+            "hoursPointsPerUnit": "a regra por horas precisa de pontos por unidade maiores que zero.",
+            "hoursUnitSize": "a regra por horas precisa de um tamanho de unidade (horas) maior que zero.",
+            "innerType": "esperada uma regra fixa ou por horas, recebido \"{{type}}\".",
+            "cappedCap": "a regra com teto precisa de um teto maior que zero.",
+            "cappedPerDocumentCap": "a regra com teto por documento precisa de um teto maior que zero.",
+            "unknownType": "tipo de regra desconhecido: \"{{type}}\"."
+        },
+        "zip": {
+            "unreadable": "Não foi possível ler o arquivo ZIP de documentos. Verifique se ele não está corrompido."
+        }
+    },
     "useTemplateDialog": {
         "title": "Nova coleção a partir de um modelo",
         "description": "Comece a partir de uma estrutura pronta de grupos, subgrupos, categorias e regras de pontuação — totalmente editável após a criação.",

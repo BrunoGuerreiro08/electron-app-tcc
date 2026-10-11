@@ -4,6 +4,7 @@ import type {
     ApplyTemplateResult,
     DocumentMatchSummary,
     OfficialSyncResult,
+    TemplateError,
 } from '@/types/entities'
 
 export const templateRepository = {
@@ -13,7 +14,7 @@ export const templateRepository = {
     listImported: (): Promise<TemplateSummary[]> => window.api.templates.listImported(),
     pickAndImport: (): Promise<
         | { ok: true; fileName: string; template: TemplateFile }
-        | { ok: false; errors: string[] }
+        | { ok: false; errors: TemplateError[] }
         | null
     > => window.api.templates.pickAndImport(),
     apply: (
@@ -31,6 +32,6 @@ export const templateRepository = {
     previewDocumentMatch: (
         source: { kind: 'official' | 'imported'; fileName: string },
         zipPath: string
-    ): Promise<{ ok: true; summary: DocumentMatchSummary } | { ok: false; errors: string[] }> =>
+    ): Promise<{ ok: true; summary: DocumentMatchSummary } | { ok: false; errors: TemplateError[] }> =>
         window.api.templates.previewDocumentMatch(source, zipPath),
 }

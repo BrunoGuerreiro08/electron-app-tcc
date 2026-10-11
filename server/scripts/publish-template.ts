@@ -10,7 +10,7 @@
 import fs from 'node:fs'
 import path from 'node:path'
 import { fileURLToPath } from 'node:url'
-import { validateTemplate } from '../../shared/templateValidation.js'
+import { formatTemplateError, validateTemplate } from '../../shared/templateValidation.js'
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url))
 const TEMPLATES_DIR = process.env.TEMPLATES_DIR ?? path.resolve(__dirname, '../templates')
@@ -32,7 +32,7 @@ try {
 const result = validateTemplate(parsed)
 if (!result.ok) {
     console.error(`${source} is not a valid template — not published:`)
-    for (const error of result.errors) console.error(`  - ${error}`)
+    for (const error of result.errors) console.error(`  - ${formatTemplateError(error)}`)
     process.exit(1)
 }
 

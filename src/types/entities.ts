@@ -1,5 +1,9 @@
 import type { Rule } from '@/services/scoringEngine/types'
 
+// Structured template validation errors, shared with the main process and
+// the server; translated for display by src/lib/translateTemplateErrors.ts.
+export type { TemplateError, TemplateErrorKey, TemplateErrorLocation } from '../../shared/templateValidation'
+
 export interface Collection {
     id: string
     name: string

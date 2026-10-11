@@ -60,6 +60,63 @@
         "bonusHelperText": "Requires a minimum to be set — the bonus applies only to points earned above it.",
         "reorderButton": "Reorder sub-groups"
     },
+    "templateErrors": {
+        "location": {
+            "group": "Group {{position}}",
+            "subgroup": "Subgroup {{position}}",
+            "category": "Category {{position}}",
+            "document": "Document {{position}}",
+            "innerRule": "inner rule"
+        },
+        "file": {
+            "notObject": "The file doesn't contain a valid template.",
+            "unreadable": "Couldn't read the file.",
+            "invalidJson": "The file isn't valid JSON."
+        },
+        "template": {
+            "schemaVersion": "Unsupported format version (expected 1, got {{got}}).",
+            "missingName": "The template has no name.",
+            "noGroups": "The template needs at least one group.",
+            "noValidCategory": "The template needs at least one category with a valid scoring rule."
+        },
+        "group": {
+            "notObject": "invalid group.",
+            "missingName": "the group has no name.",
+            "maxNotAboveMin": "the maximum score must be greater than the minimum.",
+            "bonusRateInvalid": "the bonus rate must be a positive number.",
+            "bonusRateNeedsMin": "a bonus rate requires a minimum score.",
+            "noSubgroups": "the group needs at least one subgroup."
+        },
+        "subgroup": {
+            "notObject": "invalid subgroup.",
+            "missingName": "the subgroup has no name.",
+            "maxNotAboveMin": "the maximum score must be greater than the minimum.",
+            "noCategories": "the subgroup needs at least one category."
+        },
+        "category": {
+            "notObject": "invalid category.",
+            "missingName": "the category has no name.",
+            "documentsNotList": "the document list has an invalid format."
+        },
+        "document": {
+            "notObject": "invalid document.",
+            "missingTitle": "the document has no title.",
+            "fileNameInvalid": "the document's file name is invalid."
+        },
+        "rule": {
+            "missing": "the scoring rule is missing.",
+            "flatPointsPerUnit": "the flat rule needs points per unit greater than zero.",
+            "hoursPointsPerUnit": "the hours rule needs points per unit greater than zero.",
+            "hoursUnitSize": "the hours rule needs a unit size (hours) greater than zero.",
+            "innerType": "expected a flat or hours rule, got \"{{type}}\".",
+            "cappedCap": "the capped rule needs a cap greater than zero.",
+            "cappedPerDocumentCap": "the per-document capped rule needs a cap greater than zero.",
+            "unknownType": "unknown rule type: \"{{type}}\"."
+        },
+        "zip": {
+            "unreadable": "Couldn't read the documents ZIP file. Check that it isn't corrupted."
+        }
+    },
     "useTemplateDialog": {
         "title": "New collection from template",
         "description": "Start from a pre-built structure of groups, subgroups, categories, and scoring rules — fully editable once created.",

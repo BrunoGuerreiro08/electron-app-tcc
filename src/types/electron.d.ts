@@ -119,7 +119,7 @@ declare global {
                 listImported: () => Promise<import('./entities').TemplateSummary[]>
                 pickAndImport: () => Promise<
                     | { ok: true; fileName: string; template: import('./entities').TemplateFile }
-                    | { ok: false; errors: string[] }
+                    | { ok: false; errors: import('./entities').TemplateError[] }
                     | null
                 >
                 apply: (
@@ -138,7 +138,7 @@ declare global {
                     zipPath: string
                 ) => Promise<
                     | { ok: true; summary: import('./entities').DocumentMatchSummary }
-                    | { ok: false; errors: string[] }
+                    | { ok: false; errors: import('./entities').TemplateError[] }
                 >
             }
 

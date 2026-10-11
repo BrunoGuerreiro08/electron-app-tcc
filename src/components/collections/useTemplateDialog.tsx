@@ -13,7 +13,8 @@ import { Input } from '@/components/ui/input'
 import { Badge } from '@/components/ui/badge'
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { templateRepository } from '@/repository/templateRepository'
-import type { TemplateSummary, DocumentMatchSummary } from '@/types/entities'
+import type { TemplateSummary, DocumentMatchSummary, TemplateError } from '@/types/entities'
+import { translateTemplateErrors } from '@/lib/translateTemplateErrors'
 import { Upload, FileWarning, FileArchive, RefreshCw, CloudOff } from 'lucide-react'
 
 type Tab = 'official' | 'imported'
@@ -33,11 +34,11 @@ export function UseTemplateDialog({ open, onOpenChange, onCreated }: Props) {
     const [loading, setLoading] = useState(true)
     const [selected, setSelected] = useState<TemplateSummary | null>(null)
     const [collectionName, setCollectionName] = useState('')
-    const [importErrors, setImportErrors] = useState<string[] | null>(null)
+    const [importErrors, setImportErrors] = useState<TemplateError[] | null>(null)
     const [creating, setCreating] = useState(false)
     const [zipPath, setZipPath] = useState<string | null>(null)
     const [matchSummary, setMatchSummary] = useState<DocumentMatchSummary | null>(null)
-    const [matchErrors, setMatchErrors] = useState<string[] | null>(null)
+    const [matchErrors, setMatchErrors] = useState<TemplateError[] | null>(null)
     const [matching, setMatching] = useState(false)
     const [syncState, setSyncState] = useState<SyncState>('syncing')
     const [lastSyncedAt, setLastSyncedAt] = useState<number | null>(null)
@@ -201,7 +202,7 @@ export function UseTemplateDialog({ open, onOpenChange, onCreated }: Props) {
                         <div className="flex items-start gap-2 rounded-md border border-destructive/40 bg-destructive/5 p-2 text-xs text-destructive">
                             <FileWarning className="h-3.5 w-3.5 shrink-0" />
                             <ul className="list-disc pl-4">
-                                {importErrors.map((e, i) => (
+                                {translateTemplateErrors(importErrors, t).map((e, i) => (
                                     <li key={i}>{e}</li>
                                 ))}
                             </ul>
@@ -343,7 +344,7 @@ export function UseTemplateDialog({ open, onOpenChange, onCreated }: Props) {
                                 <div className="flex items-start gap-2 rounded-md border border-destructive/40 bg-destructive/5 p-2 text-xs text-destructive">
                                     <FileWarning className="h-3.5 w-3.5 shrink-0" />
                                     <ul className="list-disc pl-4">
-                                        {matchErrors.map((e, i) => (
+                                        {translateTemplateErrors(matchErrors, t).map((e, i) => (
                                             <li key={i}>{e}</li>
                                         ))}
                                     </ul>
