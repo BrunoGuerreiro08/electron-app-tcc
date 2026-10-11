@@ -2,11 +2,13 @@ import { describe, expect, it } from 'vitest'
 import {
     computeCategoryScore,
     computeCollectionScore,
+    computeGroupScore,
     computeSubgroupCompletion,
     computeSubgroupScore,
 } from '@/services/scoringEngine/computeScore'
 import { validateRule } from '@/services/scoringEngine/validateRule'
 import type { CappedRule, FlatRule, HoursRule } from '@/services/scoringEngine/types'
+import type { SubgroupInput } from '@/services/scoringEngine/computeScore'
 
 describe('flat rule', () => {
     const rule: FlatRule = { type: 'flat', pointsPerUnit: 30 }
@@ -206,42 +208,50 @@ describe('subgroup completion state', () => {
 
 describe('subgroup and collection aggregation', () => {
     it('sums category totals into the subgroup total, and subgroup totals into the collection total (NFR-07-02)', () => {
+        // Collection → Group → Subgroup → Category: subgroups now live inside a group.
         const collection = computeCollectionScore({
             id: 'col-1',
-            subgroups: [
+            groups: [
                 {
-                    id: 'sub-1',
-                    minPoints: 5,
-                    maxPoints: null,
-                    categories: [
+                    id: 'grp-1',
+                    subgroups: [
                         {
-                            id: 'cat-1',
-                            rule: { type: 'flat', pointsPerUnit: 2 },
-                            documents: [{ id: 'd1' }, { id: 'd2' }],
+                            id: 'sub-1',
+                            minPoints: 5,
+                            maxPoints: null,
+                            categories: [
+                                {
+                                    id: 'cat-1',
+                                    rule: { type: 'flat', pointsPerUnit: 2 },
+                                    documents: [{ id: 'd1' }, { id: 'd2' }],
+                                },
+                                {
+                                    id: 'cat-2',
+                                    rule: { type: 'hours', pointsPerUnit: 1, unitSize: 15 },
+                                    documents: [{ id: 'd3', hours: 15 }],
+                                },
+                            ],
                         },
                         {
-                            id: 'cat-2',
-                            rule: { type: 'hours', pointsPerUnit: 1, unitSize: 15 },
-                            documents: [{ id: 'd3', hours: 15 }],
-                        },
-                    ],
-                },
-                {
-                    id: 'sub-2',
-                    categories: [
-                        {
-                            id: 'cat-3',
-                            rule: { type: 'flat', pointsPerUnit: 10 },
-                            documents: [{ id: 'd4' }],
+                            id: 'sub-2',
+                            categories: [
+                                {
+                                    id: 'cat-3',
+                                    rule: { type: 'flat', pointsPerUnit: 10 },
+                                    documents: [{ id: 'd4' }],
+                                },
+                            ],
                         },
                     ],
                 },
             ],
         })
 
-        expect(collection.subgroups[0].total).toBe(5)
-        expect(collection.subgroups[0].completion).toBe('complete')
-        expect(collection.subgroups[1].total).toBe(10)
+        const group = collection.groups[0]
+        expect(group.subgroups[0].total).toBe(5)
+        expect(group.subgroups[0].completion).toBe('complete')
+        expect(group.subgroups[1].total).toBe(10)
+        expect(group.total).toBe(15)
         expect(collection.total).toBe(15)
     })
 
@@ -258,6 +268,153 @@ describe('subgroup and collection aggregation', () => {
             ],
         })
         expect(subgroup.total).toBe(5)
+    })
+})
+
+// Builds a subgroup worth exactly `points` (one flat category, 1 point per document).
+function subgroupWorth(id: string, points: number, limits: Pick<SubgroupInput, 'minPoints' | 'maxPoints'> = {}): SubgroupInput {
+    return {
+        id,
+        ...limits,
+        categories: [
+            {
+                id: `${id}-cat`,
+                rule: { type: 'flat', pointsPerUnit: 1 },
+                documents: Array.from({ length: points }, (_, i) => ({ id: `${id}-d${i}` })),
+            },
+        ],
+    }
+}
+
+describe('group level', () => {
+    it('sums its subgroups into the group total', () => {
+        const group = computeGroupScore({
+            id: 'grp',
+            subgroups: [subgroupWorth('a', 10), subgroupWorth('b', 7)],
+        })
+        expect(group.rawTotal).toBe(17)
+        expect(group.total).toBe(17)
+    })
+
+    it('has no completion state and no bonus when nothing is configured (NFR-07-07)', () => {
+        const group = computeGroupScore({ id: 'grp', subgroups: [subgroupWorth('a', 10)] })
+        expect(group.completion).toBe(null)
+        expect(group.bonus).toBe(null)
+    })
+
+    it('handles a group with no subgroups', () => {
+        const group = computeGroupScore({ id: 'grp', minPoints: 5, subgroups: [] })
+        expect(group.total).toBe(0)
+        expect(group.completion).toBe('incomplete')
+    })
+
+    it('adds each subgroup AFTER its own cap is applied', () => {
+        // Subgroup capped at 12 (like Subgrupo I3) earns 20 raw — only 12 reach the group.
+        const group = computeGroupScore({
+            id: 'grp',
+            subgroups: [subgroupWorth('capped', 20, { maxPoints: 12 }), subgroupWorth('free', 5)],
+        })
+        expect(group.subgroups[0].total).toBe(12)
+        expect(group.total).toBe(17)
+    })
+
+    describe('maxPoints', () => {
+        const group = computeGroupScore({
+            id: 'grp',
+            maxPoints: 15,
+            subgroups: [subgroupWorth('a', 12), subgroupWorth('b', 8)],
+        })
+
+        it('clamps the total but keeps the unclamped rawTotal', () => {
+            expect(group.rawTotal).toBe(20)
+            expect(group.total).toBe(15)
+        })
+
+        it('reports exceeded, derived from rawTotal', () => {
+            expect(group.completion).toBe('exceeded')
+        })
+
+        it('only the clamped total reaches the collection total', () => {
+            const collection = computeCollectionScore({
+                id: 'col',
+                groups: [
+                    { id: 'capped', maxPoints: 15, subgroups: [subgroupWorth('a', 12), subgroupWorth('b', 8)] },
+                    { id: 'other', subgroups: [subgroupWorth('c', 4)] },
+                ],
+            })
+            expect(collection.groups.map((g) => g.total)).toEqual([15, 4])
+            expect(collection.total).toBe(19)
+        })
+    })
+
+    describe('completion across subgroups (group-spanning minimum)', () => {
+        // Like Grupo I: 32 points required across all its subgroups together.
+        it('is incomplete when the subgroups together fall short', () => {
+            const group = computeGroupScore({
+                id: 'grp',
+                minPoints: 32,
+                subgroups: [subgroupWorth('a', 20), subgroupWorth('b', 10)],
+            })
+            expect(group.completion).toBe('incomplete')
+        })
+
+        it('is complete when the subgroups together reach the minimum', () => {
+            const group = computeGroupScore({
+                id: 'grp',
+                minPoints: 32,
+                subgroups: [subgroupWorth('a', 20), subgroupWorth('b', 12)],
+            })
+            expect(group.completion).toBe('complete')
+        })
+    })
+
+    describe('surplus bonus (bonusRate)', () => {
+        it('values the points above minPoints at bonusRate, separately from the total', () => {
+            const group = computeGroupScore({
+                id: 'grp',
+                minPoints: 32,
+                bonusRate: 0.5,
+                subgroups: [subgroupWorth('a', 30), subgroupWorth('b', 10)],
+            })
+            expect(group.total).toBe(40) // bonus is never added into the total
+            expect(group.bonus).toBe(4) // (40 - 32) × 0.5
+        })
+
+        it('is 0, not null, when the group is at or below its minimum', () => {
+            const atMin = computeGroupScore({ id: 'g', minPoints: 10, bonusRate: 0.5, subgroups: [subgroupWorth('a', 10)] })
+            const below = computeGroupScore({ id: 'g', minPoints: 10, bonusRate: 0.5, subgroups: [subgroupWorth('a', 6)] })
+            expect(atMin.bonus).toBe(0)
+            expect(below.bonus).toBe(0)
+        })
+
+        it('is null when bonusRate or minPoints is not configured', () => {
+            const noRate = computeGroupScore({ id: 'g', minPoints: 10, subgroups: [subgroupWorth('a', 20)] })
+            const noMin = computeGroupScore({ id: 'g', bonusRate: 0.5, subgroups: [subgroupWorth('a', 20)] })
+            expect(noRate.bonus).toBe(null)
+            expect(noMin.bonus).toBe(null)
+        })
+
+        it('is computed from the clamped total, not from points already capped away', () => {
+            const group = computeGroupScore({
+                id: 'grp',
+                minPoints: 32,
+                maxPoints: 40,
+                bonusRate: 0.5,
+                subgroups: [subgroupWorth('a', 50)],
+            })
+            expect(group.rawTotal).toBe(50)
+            expect(group.total).toBe(40)
+            expect(group.bonus).toBe(4) // (40 - 32) × 0.5, not (50 - 32) × 0.5
+        })
+
+        it('does not change the collection total', () => {
+            const collection = computeCollectionScore({
+                id: 'col',
+                groups: [{ id: 'g', minPoints: 10, bonusRate: 1, subgroups: [subgroupWorth('a', 15)] }],
+            })
+            expect(collection.groups[0].bonus).toBe(5)
+            expect(collection.total).toBe(15)
+        })
     })
 })
 
