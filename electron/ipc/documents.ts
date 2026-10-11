@@ -1,7 +1,7 @@
 import { ipcMain } from 'electron'
 import { getDb } from '../db'
 import { randomUUID } from 'node:crypto'
-import { adoptDroppedFile } from '../fileHandler'
+import { adoptDroppedFile, deleteDocumentWithFile } from '../fileHandler'
 
 interface DocumentInput {
     title: string
@@ -88,7 +88,7 @@ export function registerDocumentHandlers() {
             const adopted = adoptDroppedFile(id, item.fileName)
 
             if (!adopted.ok) {
-                getDb().prepare('DELETE FROM documents WHERE id = ?').run(id)
+                deleteDocumentWithFile(id)
                 results.push({ fileName: item.fileName, ok: false, error: adopted.error })
                 continue
             }
@@ -118,9 +118,6 @@ export function registerDocumentHandlers() {
     })
 
     ipcMain.handle('documents:delete', (_event, id: string) => {
-        // Cascades document_tags and document_category_links.
-        // File deletion (native fs) is a separate concern — wire in once
-        // the FileHandler service exists.
-        getDb().prepare('DELETE FROM documents WHERE id = ?').run(id)
+        deleteDocumentWithFile(id)
     })
 }

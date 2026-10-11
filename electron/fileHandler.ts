@@ -212,6 +212,31 @@ export function removeFileFromDocument(documentId: string) {
     db.prepare(`UPDATE documents SET file_path = NULL, file_status = 'pending' WHERE id = ?`).run(documentId)
 }
 
+/**
+ * Deletes a document and its attached file (NFR-05-05). Each stored file
+ * belongs to exactly one document (`<documentId>-<uuid>.ext`), so removing
+ * it can't break another record. The row goes first: if the file can't be
+ * deleted afterwards, it's only an orphan that detectOrphans still reports,
+ * never a document pointing at a missing file.
+ */
+export function deleteDocumentWithFile(documentId: string) {
+    const db = getDb()
+    const row = db.prepare('SELECT file_path FROM documents WHERE id = ?').get(documentId) as
+        | { file_path: string | null }
+        | undefined
+
+    // Cascades document_tags and document_category_links.
+    db.prepare('DELETE FROM documents WHERE id = ?').run(documentId)
+
+    if (row?.file_path) {
+        try {
+            fs.rmSync(row.file_path, { force: true })
+        } catch (err) {
+            console.warn(`[files] could not delete ${row.file_path}:`, err)
+        }
+    }
+}
+
 export function openDocumentFile(documentId: string) {
     const row = getDb().prepare('SELECT file_path FROM documents WHERE id = ?').get(documentId) as
         | { file_path: string | null }

@@ -1,13 +1,25 @@
 import Store from 'electron-store'
 import fs from 'node:fs'
 import path from 'node:path'
-import { app } from 'electron'
+import { app, safeStorage } from 'electron'
 
 export interface SessionRecord {
     user: { id: string; email: string; name: string | null }
     token: string
     issuedAt: number
     expiresAt: number
+    isGuest?: boolean
+}
+
+/**
+ * What actually lands in global-config.json: the token is encrypted with the
+ * OS keychain via safeStorage (NFR-14-05). `token` (plain text) is only
+ * written when the OS offers no encryption at all, and is read for
+ * compatibility with records saved before encryption existed.
+ */
+interface StoredSession extends Omit<SessionRecord, 'token'> {
+    tokenEnc?: string // base64 of safeStorage.encryptString(token)
+    token?: string
 }
 
 export interface Preferences {
@@ -28,15 +40,72 @@ const DEFAULT_PREFERENCES: Preferences = {
 // isolation "full" rather than "mostly". In particular, `storageFolder`
 // is NOT here: it's a per-user choice (see below), not a device setting.
 interface GlobalStoreSchema {
-    session: SessionRecord | null
+    session: StoredSession | null
 }
 
-export const globalStore = new Store<GlobalStoreSchema>({
+const globalStore = new Store<GlobalStoreSchema>({
     name: 'global-config',
     defaults: {
         session: null,
     },
 })
+
+let warnedWeakEncryption = false
+
+function canEncrypt(): boolean {
+    if (!safeStorage.isEncryptionAvailable()) return false
+    // Linux without a keyring falls back to a hardcoded key: still better
+    // than plain text, but worth flagging once.
+    if (process.platform === 'linux' && !warnedWeakEncryption) {
+        const backend = safeStorage.getSelectedStorageBackend()
+        if (backend === 'basic_text' || backend === 'unknown') {
+            console.warn(`[session] no OS keyring (backend: ${backend}) — token encryption is weak.`)
+            warnedWeakEncryption = true
+        }
+    }
+    return true
+}
+
+export function saveSession(session: SessionRecord | null): void {
+    if (!session) {
+        globalStore.set('session', null)
+        return
+    }
+
+    const { token, ...rest } = session
+    if (canEncrypt()) {
+        globalStore.set('session', { ...rest, tokenEnc: safeStorage.encryptString(token).toString('base64') })
+    } else {
+        console.warn('[session] OS encryption unavailable — storing the session token in plain text.')
+        globalStore.set('session', { ...rest, token })
+    }
+}
+
+export function loadSession(): SessionRecord | null {
+    const stored = globalStore.get('session')
+    if (!stored) return null
+
+    const { tokenEnc, token: plainToken, ...rest } = stored
+
+    if (tokenEnc) {
+        try {
+            const token = safeStorage.decryptString(Buffer.from(tokenEnc, 'base64'))
+            return { ...rest, token }
+        } catch (err) {
+            // Keyring changed or reset: keep the user and their local data,
+            // drop the unusable token. The server refresh then answers 401,
+            // the app shows "session expired", and re-auth issues a new one.
+            console.warn('[session] could not decrypt the stored token:', err)
+            return { ...rest, token: '' }
+        }
+    }
+
+    const session = { ...rest, token: plainToken ?? '' }
+    // Record from before encryption (or saved while it was unavailable):
+    // upgrade it in place as soon as encryption works.
+    if (plainToken && canEncrypt()) saveSession(session)
+    return session
+}
 
 // --- Device preferences store ------------------------------------------
 // Language/theme are a device setting, not a per-user one: they must be

@@ -1,11 +1,11 @@
 import { ipcMain } from 'electron'
-import { globalStore, openUserStore, closeUserStore, migrateLegacyPreferences, type SessionRecord } from '../store'
+import { loadSession, saveSession, openUserStore, closeUserStore, migrateLegacyPreferences, type SessionRecord } from '../store'
 import { openUserDb, closeUserDb, getActiveUserId } from '../db'
 import { detectOrphans } from '../fileHandler'
 
 export function registerSessionHandlers() {
     ipcMain.handle('session:get', () => {
-        const session = globalStore.get('session')
+        const session = loadSession()
         if (!session || getActiveUserId() === session.user.id) return session
 
         // Startup restore failed (see restoreActiveSession) — retry once so a
@@ -16,7 +16,7 @@ export function registerSessionHandlers() {
     })
 
     ipcMain.handle('session:set', (_event, session: SessionRecord) => {
-        globalStore.set('session', session)
+        saveSession(session)
 
         // This is the isolation boundary: everything after this line reads
         // from and writes to users/<session.user.id>/ only.
@@ -34,11 +34,11 @@ export function registerSessionHandlers() {
         if (session.user.id !== getActiveUserId()) {
             throw new Error('session:update can only change the active user\'s session.')
         }
-        globalStore.set('session', session)
+        saveSession(session)
     })
 
     ipcMain.handle('session:clear', () => {
-        globalStore.set('session', null)
+        saveSession(null)
         closeUserDb()
         closeUserStore()
     })
@@ -51,7 +51,7 @@ export function registerSessionHandlers() {
  * like detectOrphans() that require an active user.
  */
 export function restoreActiveSession(): SessionRecord | null {
-    const session = globalStore.get('session')
+    const session = loadSession()
     if (!session) return null
 
     migrateLegacyPreferences(session.user.id)

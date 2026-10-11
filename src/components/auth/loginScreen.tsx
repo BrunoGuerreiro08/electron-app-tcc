@@ -91,7 +91,11 @@ export function LoginScreen() {
                     value={emailInput}
                     onChange={(e) => setEmailInput(e.target.value)}
                     autoFocus
+                    aria-describedby="email-hint"
                   />
+                  <p id="email-hint" className="text-xs text-muted-foreground">
+                    {t('login.emailStep.hint')}
+                  </p>
                 </div>
                 {error && <p className="text-sm text-destructive">{error}</p>}
 

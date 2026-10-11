@@ -6,13 +6,15 @@
         "strict": true,
         "esModuleInterop": true,
         "skipLibCheck": true,
-        "rootDir": "./src",
+        "rootDir": "..",
         "outDir": "./dist",
         "types": [
             "node"
         ]
     },
     "include": [
-        "src"
+        "src",
+        "scripts",
+        "../shared"
     ]
 }

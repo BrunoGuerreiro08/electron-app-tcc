@@ -14,10 +14,12 @@ import {
 import { clearCode, clearOtp, emailChangeKey, getCode, getOtp, storeCode, storeOtp } from '../redis.js'
 import { sendOtpEmail } from '../mailer.js'
 import { requireAuth, type AuthedVariables } from '../middleware.js'
+import { DOMAIN_ERROR, isAllowedEmail } from '../emailPolicy.js'
 
 export const authRoutes = new Hono<{ Variables: AuthedVariables }>()
 
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
+
 // Sliding: every successful /session/refresh pushes expiry out again, so a
 // user who comes online at least once every 15 days never has to log in again.
 const SESSION_TTL_MS = 15 * 24 * 60 * 60 * 1000 // 15 days
@@ -32,6 +34,9 @@ authRoutes.post('/request-otp', async (c) => {
 
     if (!email || !EMAIL_RE.test(email)) {
         return c.json({ error: 'Enter a valid email address.' }, 400)
+    }
+    if (!isAllowedEmail(email)) {
+        return c.json({ error: DOMAIN_ERROR }, 403)
     }
 
     const acceptLang = c.req.header('accept-language') ?? ''
@@ -52,6 +57,9 @@ authRoutes.post('/verify-otp', async (c) => {
 
     if (!email || !code) {
         return c.json({ error: 'Email and code are required.' }, 400)
+    }
+    if (!isAllowedEmail(email)) {
+        return c.json({ error: DOMAIN_ERROR }, 403)
     }
 
     const stored = await getOtp(email)
@@ -129,6 +137,9 @@ authRoutes.post('/request-email-change', requireAuth, async (c) => {
     if (!newEmail || !EMAIL_RE.test(newEmail)) {
         return c.json({ error: 'Enter a valid email address.' }, 400)
     }
+    if (!isAllowedEmail(newEmail)) {
+        return c.json({ error: DOMAIN_ERROR }, 403)
+    }
     if (newEmail === user.email) {
         return c.json({ error: 'This is already your email address.' }, 400)
     }
@@ -152,6 +163,9 @@ authRoutes.post('/confirm-email-change', requireAuth, async (c) => {
 
     if (!newEmail || !code) {
         return c.json({ error: 'Email and code are required.' }, 400)
+    }
+    if (!isAllowedEmail(newEmail)) {
+        return c.json({ error: DOMAIN_ERROR }, 403)
     }
 
     const key = emailChangeKey(user.id, newEmail)

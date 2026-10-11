@@ -58,8 +58,8 @@
         },
         "delete": {
             "title": "Delete \"{{title}}\"?",
-            "description_one": "This removes the document, its tags, and unlinks it from {{count}} category. This can't be undone.",
-            "description_other": "This removes the document, its tags, and unlinks it from {{count}} categories. This can't be undone.",
+            "description_one": "This removes the document, its attached file, its tags, and unlinks it from {{count}} category. This can't be undone.",
+            "description_other": "This removes the document, its attached file, its tags, and unlinks it from {{count}} categories. This can't be undone.",
             "cancel": "Cancel",
             "confirm": "Delete"
         }

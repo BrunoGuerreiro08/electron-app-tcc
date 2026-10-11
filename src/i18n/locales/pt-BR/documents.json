@@ -58,8 +58,8 @@
         },
         "delete": {
             "title": "Excluir \"{{title}}\"?",
-            "description_one": "Isso remove o documento, suas tags e o desvincula de {{count}} categoria. Essa ação não pode ser desfeita.",
-            "description_other": "Isso remove o documento, suas tags e o desvincula de {{count}} categorias. Essa ação não pode ser desfeita.",
+            "description_one": "Isso remove o documento, o arquivo anexado, suas tags e o desvincula de {{count}} categoria. Essa ação não pode ser desfeita.",
+            "description_other": "Isso remove o documento, o arquivo anexado, suas tags e o desvincula de {{count}} categorias. Essa ação não pode ser desfeita.",
             "cancel": "Cancelar",
             "confirm": "Excluir"
         }
