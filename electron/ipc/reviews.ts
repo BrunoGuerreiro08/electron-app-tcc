@@ -2,6 +2,7 @@ import { app, ipcMain } from 'electron'
 import { promises as fs } from 'node:fs'
 import path from 'node:path'
 import { randomUUID } from 'node:crypto'
+import { getActiveUserId } from '../db'
 
 /**
  * Storage for imported, READ-ONLY review snapshots.
@@ -11,12 +12,20 @@ import { randomUUID } from 'node:crypto'
  * user's own collections. Main process treats `data` as an opaque payload — the
  * renderer validates/normalises it — and only guards what is its own job:
  * paths, sizes, and atomic writes.
+ *
+ * Per user, like everything else: users/<userId>/reviews/. A review belongs
+ * to the account that imported it and is never visible to other accounts
+ * (or to guest mode) on the same computer.
  */
 
 const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i
 const MAX_BYTES = 12 * 1024 * 1024
 
-const reviewsDir = () => path.join(app.getPath('userData'), 'reviews')
+function reviewsDir(): string {
+    const userId = getActiveUserId()
+    if (!userId) throw new Error('No active user — reviews are only available after login.')
+    return path.join(app.getPath('userData'), 'users', userId, 'reviews')
+}
 const fileFor = (id: string) => path.join(reviewsDir(), `${id}.json`)
 
 function assertId(id: unknown): asserts id is string {
