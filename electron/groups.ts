@@ -1,5 +1,6 @@
 import { randomUUID } from 'node:crypto'
 import { getDb } from './db'
+import { getPreferences } from './store'
 
 export interface GroupRecord {
     id: string
@@ -76,10 +77,18 @@ export function listGroupsByCollection(collectionId: string): GroupRecord[] {
  * a different pattern just for groups.
  */
 export function createGroup(collectionId: string, input: GroupCreateInput): string {
+    const db = getDb()
     const id = randomUUID()
-    getDb()
-        .prepare(`INSERT INTO groups (id, collection_id, name, display_order) VALUES (?, ?, ?, ?)`)
-        .run(id, collectionId, input.name, input.displayOrder ?? 0)
+    db.transaction(() => {
+        db.prepare(`INSERT INTO groups (id, collection_id, name, display_order) VALUES (?, ?, ?, ?)`).run(
+            id,
+            collectionId,
+            input.name,
+            input.displayOrder ?? 0
+        )
+        // A group is never without a subgroup, from the moment it exists.
+        ensureDefaultSubgroupIfNone(collectionId, id)
+    })()
 
     return id
 }
@@ -107,12 +116,33 @@ export function updateGroup(id: string, updates: GroupUpdateInput): void {
     )
 }
 
+/**
+ * Name for the auto-created default group/subgroup, in the app's current
+ * language (device preference, readable without a renderer round-trip).
+ */
+export function defaultStructureName(): string {
+    return getPreferences().language === 'en' ? 'General' : 'Geral'
+}
+
 export function deleteGroup(id: string): void {
-    // Cascades to subgroups -> categories -> document_category_links via
-    // ON DELETE CASCADE (db.ts). Never touches documents themselves or
-    // their files — same "unlink, don't delete" philosophy already
-    // applied to document_category_links elsewhere in the schema.
-    getDb().prepare('DELETE FROM groups WHERE id = ?').run(id)
+    const db = getDb()
+    db.transaction(() => {
+        const row = db.prepare('SELECT collection_id FROM groups WHERE id = ?').get(id) as
+            | { collection_id: string }
+            | undefined
+        if (!row) return
+
+        // Cascades to subgroups -> categories -> document_category_links via
+        // ON DELETE CASCADE (db.ts). Never touches documents themselves or
+        // their files — same "unlink, don't delete" philosophy already
+        // applied to document_category_links elsewhere in the schema.
+        db.prepare('DELETE FROM groups WHERE id = ?').run(id)
+
+        // A collection is never left without a group (and that group never
+        // without a subgroup): deleting the last one recreates the default.
+        const groupId = ensureDefaultGroupIfNone(row.collection_id)
+        if (groupId) ensureDefaultSubgroupIfNone(row.collection_id, groupId)
+    })()
 }
 
 /**
@@ -141,9 +171,27 @@ export function ensureDefaultGroupIfNone(collectionId: string): string | null {
     if (n > 0) return null
 
     const id = randomUUID()
-    db.prepare(`INSERT INTO groups (id, collection_id, name, display_order) VALUES (?, ?, 'Geral', 0)`).run(
+    db.prepare(`INSERT INTO groups (id, collection_id, name, display_order) VALUES (?, ?, ?, 0)`).run(
         id,
-        collectionId
+        collectionId,
+        defaultStructureName()
     )
+    return id
+}
+
+/**
+ * Same idea one level down: gives `groupId` a default subgroup, but only if
+ * it has none. Returns the new subgroup's id, or null if it already had one.
+ */
+export function ensureDefaultSubgroupIfNone(collectionId: string, groupId: string): string | null {
+    const db = getDb()
+    const { n } = db.prepare('SELECT COUNT(*) as n FROM subgroups WHERE group_id = ?').get(groupId) as { n: number }
+
+    if (n > 0) return null
+
+    const id = randomUUID()
+    db.prepare(
+        'INSERT INTO subgroups (id, collection_id, group_id, name, display_order) VALUES (?, ?, ?, ?, 0)'
+    ).run(id, collectionId, groupId, defaultStructureName())
     return id
 }

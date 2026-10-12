@@ -1,6 +1,7 @@
 import { ipcMain } from 'electron'
 import { getDb } from '../db'
 import { randomUUID } from 'node:crypto'
+import { ensureDefaultSubgroupIfNone } from '../groups'
 
 export function registerSubgroupHandlers() {
     ipcMain.handle('subgroups:listByCollection', (_event, collectionId: string) => {
@@ -60,6 +61,18 @@ export function registerSubgroupHandlers() {
     )
 
     ipcMain.handle('subgroups:delete', (_event, id: string) => {
-        getDb().prepare('DELETE FROM subgroups WHERE id = ?').run(id)
+        const db = getDb()
+        db.transaction(() => {
+            const row = db.prepare('SELECT collection_id, group_id FROM subgroups WHERE id = ?').get(id) as
+                | { collection_id: string; group_id: string | null }
+                | undefined
+            if (!row) return
+
+            db.prepare('DELETE FROM subgroups WHERE id = ?').run(id)
+            // A group is never left without a subgroup: deleting the last
+            // one recreates the default "Geral"/"General". (group_id is only
+            // null on pre-Group legacy rows, which have no group to refill.)
+            if (row.group_id) ensureDefaultSubgroupIfNone(row.collection_id, row.group_id)
+        })()
     })
 }

@@ -1,7 +1,7 @@
 import { ipcMain } from 'electron'
 import { getDb } from '../db'
 import { randomUUID } from 'node:crypto'
-import { ensureDefaultGroupIfNone } from '../groups'
+import { ensureDefaultGroupIfNone, ensureDefaultSubgroupIfNone } from '../groups'
 
 export function registerCollectionHandlers() {
     ipcMain.handle('collections:get', (_event, id: string) => {
@@ -17,14 +17,10 @@ export function registerCollectionHandlers() {
         const createCollection = getDb().prepare(
             'INSERT INTO collections (id, name, color) VALUES (?, ?, ?)'
         )
-        const createDefaultSubgroup = getDb().prepare(
-            'INSERT INTO subgroups (id, collection_id, group_id, name, display_order) VALUES (?, ?, ?, ?, 0)'
-        )
-
         const tx = getDb().transaction(() => {
             createCollection.run(id, name, color ?? null)
             const defaultGroupId = ensureDefaultGroupIfNone(id)
-            createDefaultSubgroup.run(randomUUID(), id, defaultGroupId, 'Geral')
+            if (defaultGroupId) ensureDefaultSubgroupIfNone(id, defaultGroupId)
         })
         tx()
 
