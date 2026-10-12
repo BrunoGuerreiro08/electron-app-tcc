@@ -4,6 +4,7 @@ import path from 'node:path'
 import { createHash, randomUUID } from 'node:crypto'
 import { app, dialog, type BrowserWindow } from 'electron'
 import { getDb, getActiveUserId } from './db'
+import { hasAccountSession } from './store'
 import { adoptDroppedFile, writeTempDroppedFile } from './fileHandler'
 import { matchTemplateDocuments, type DocumentMatch, type DocumentMatchSummary } from './templateDocumentMatch'
 import {
@@ -101,6 +102,10 @@ function listTemplatesIn(dir: string, source: 'official' | 'imported'): Template
 }
 
 export function listOfficialTemplates(): TemplateSummary[] {
+    // Official templates are institutional content: not shown to guests,
+    // even when another user's sync left them cached on this device.
+    if (!hasAccountSession()) return []
+
     const { entries } = readOfficialIndex()
     const badgeCutoff = Date.now() - CHANGE_BADGE_MS
     return listTemplatesIn(getOfficialTemplatesDir(), 'official').map((summary) => {
@@ -244,8 +249,15 @@ async function runOfficialSync(): Promise<OfficialSyncResult> {
 
 let syncInFlight: Promise<OfficialSyncResult> | null = null
 
-/** Never throws: on any failure the cached templates stay as they were. */
+/**
+ * Never throws: on any failure the cached templates stay as they were.
+ * Only runs for an institutional account — no request at all is made with
+ * no session (login screen) or in guest mode.
+ */
 export function syncOfficialTemplates(): Promise<OfficialSyncResult> {
+    if (!hasAccountSession()) {
+        return Promise.resolve({ ok: false, lastSyncedAt: readOfficialIndex().lastSyncedAt })
+    }
     syncInFlight ??= runOfficialSync()
         .catch((err): OfficialSyncResult => {
             console.error('[templates] official sync failed:', err)
@@ -308,6 +320,17 @@ export function deleteImportedTemplate(fileName: string): void {
     if (fs.existsSync(filePath)) fs.unlinkSync(filePath)
 }
 
+function resolveTemplatePath(source: { kind: 'official' | 'imported'; fileName: string }): string {
+    if (source.fileName !== path.basename(source.fileName)) {
+        throw new Error('Invalid template file name.')
+    }
+    if (source.kind === 'official') {
+        if (!hasAccountSession()) throw new Error('Official templates are not available in guest mode.')
+        return path.join(getOfficialTemplatesDir(), source.fileName)
+    }
+    return path.join(getImportedTemplatesDir(), source.fileName)
+}
+
 // --- Document matching (template + ZIP) --------------------------------
 
 /** Opens a native file picker filtered to .zip — the documents bundle paired with a template. */
@@ -332,8 +355,7 @@ export function previewDocumentMatch(
     source: { kind: 'official' | 'imported'; fileName: string },
     zipPath: string
 ): PreviewResult {
-    const dir = source.kind === 'official' ? getOfficialTemplatesDir() : getImportedTemplatesDir()
-    const filePath = path.join(dir, source.fileName)
+    const filePath = resolveTemplatePath(source)
 
     const validation = readAndValidate(filePath)
     if (!validation.ok || !validation.template) {
@@ -438,8 +460,7 @@ export function applyTemplate(
     color: string | null,
     zipPath: string | null = null
 ): ApplyTemplateResult {
-    const dir = source.kind === 'official' ? getOfficialTemplatesDir() : getImportedTemplatesDir()
-    const filePath = path.join(dir, source.fileName)
+    const filePath = resolveTemplatePath(source)
 
     const validation = readAndValidate(filePath)
     if (!validation.ok || !validation.template) {

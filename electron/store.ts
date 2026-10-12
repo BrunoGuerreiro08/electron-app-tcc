@@ -81,6 +81,16 @@ export function saveSession(session: SessionRecord | null): void {
     }
 }
 
+/**
+ * True only for a signed-in institutional account. Guest mode is local-only
+ * and has no relationship with the institution's server, so anything that
+ * talks to that server (or shows its content) checks this first.
+ */
+export function hasAccountSession(): boolean {
+    const stored = globalStore.get('session')
+    return stored != null && stored.isGuest !== true
+}
+
 export function loadSession(): SessionRecord | null {
     const stored = globalStore.get('session')
     if (!stored) return null

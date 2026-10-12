@@ -2,6 +2,7 @@ import { ipcMain } from 'electron'
 import { loadSession, saveSession, openUserStore, closeUserStore, migrateLegacyPreferences, type SessionRecord } from '../store'
 import { openUserDb, closeUserDb, getActiveUserId } from '../db'
 import { detectOrphans } from '../fileHandler'
+import { syncOfficialTemplates } from '../templates'
 
 export function registerSessionHandlers() {
     ipcMain.handle('session:get', () => {
@@ -26,6 +27,10 @@ export function registerSessionHandlers() {
         // Re-run orphan detection against the newly active user's files/ dir —
         // relevant on account switch, not just first login.
         detectOrphans()
+
+        // First chance to fetch official templates when the app started on
+        // the login screen. Skipped internally for guest sessions.
+        void syncOfficialTemplates()
     })
 
     // Token refresh / profile edit for the user who is already active: only

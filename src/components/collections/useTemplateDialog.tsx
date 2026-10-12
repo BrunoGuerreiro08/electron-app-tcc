@@ -15,6 +15,7 @@ import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { templateRepository } from '@/repository/templateRepository'
 import type { TemplateSummary, DocumentMatchSummary, TemplateError } from '@/types/entities'
 import { translateTemplateErrors } from '@/lib/translateTemplateErrors'
+import { useAuthStore } from '@/store/authStore'
 import { Upload, FileWarning, FileArchive, RefreshCw, CloudOff } from 'lucide-react'
 
 type Tab = 'official' | 'imported'
@@ -28,6 +29,9 @@ interface Props {
 
 export function UseTemplateDialog({ open, onOpenChange, onCreated }: Props) {
     const { t, i18n } = useTranslation('collections')
+    // Guest mode is outside the institution: no official templates (not
+    // even cached ones) and no requests to the server for them.
+    const isGuest = useAuthStore((s) => s.session?.isGuest === true)
     const [tab, setTab] = useState<Tab>('official')
     const [official, setOfficial] = useState<TemplateSummary[]>([])
     const [imported, setImported] = useState<TemplateSummary[]>([])
@@ -75,19 +79,18 @@ export function UseTemplateDialog({ open, onOpenChange, onCreated }: Props) {
     useEffect(() => {
         if (open) {
             refreshLists()
-            syncOfficial()
+            if (!isGuest) syncOfficial()
             setSelected(null)
             setCollectionName('')
             setImportErrors(null)
             setZipPath(null)
             setMatchSummary(null)
             setMatchErrors(null)
-            // Bundled templates take priority as the default tab if any
-            // exist; otherwise land on Imported so a first-time user
-            // isn't staring at an empty Official list.
-            setTab('official')
+            // Official first for institutional users; guests only have
+            // their own imported templates.
+            setTab(isGuest ? 'imported' : 'official')
         }
-    }, [open])
+    }, [open, isGuest])
 
     const list = tab === 'official' ? official : imported
 
@@ -175,9 +178,11 @@ export function UseTemplateDialog({ open, onOpenChange, onCreated }: Props) {
                     <div className="flex items-center justify-between">
                         <Tabs value={tab} onValueChange={(v) => setTab(v as Tab)}>
                             <TabsList>
-                                <TabsTrigger value="official">
-                                    {t('useTemplateDialog.tabs.official', { count: official.length })}
-                                </TabsTrigger>
+                                {!isGuest && (
+                                    <TabsTrigger value="official">
+                                        {t('useTemplateDialog.tabs.official', { count: official.length })}
+                                    </TabsTrigger>
+                                )}
                                 <TabsTrigger value="imported">
                                     {t('useTemplateDialog.tabs.imported', { count: imported.length })}
                                 </TabsTrigger>
@@ -189,7 +194,7 @@ export function UseTemplateDialog({ open, onOpenChange, onCreated }: Props) {
                         </Button>
                     </div>
 
-                    {tab === 'official' && (
+                    {tab === 'official' && !isGuest && (
                         <OfficialSyncStatus
                             state={syncState}
                             lastSyncedAt={lastSyncedAt}

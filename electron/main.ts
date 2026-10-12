@@ -92,7 +92,9 @@ app.whenReady().then(() => {
     createWindow()
 
     // Refresh the local copy of the official templates in the background;
-    // offline, the cached ones are used as-is.
+    // offline, the cached ones are used as-is. A no-op without an
+    // institutional session (login screen, guest mode) — session:set
+    // triggers it after login instead.
     void syncOfficialTemplates()
 })
 
