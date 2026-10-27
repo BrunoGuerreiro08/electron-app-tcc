@@ -139,6 +139,10 @@
             "updated": "Updated"
         },
         "emptyImported": "No imported templates yet — use \"Import template\" above.",
+        "deleteConfirm": {
+            "title": "Delete \"{{name}}\"?",
+            "description": "The template file is removed from this app. Collections already created from it are not affected."
+        },
         "summary": {
             "groups_one": "{{count}} group",
             "groups_other": "{{count}} groups",

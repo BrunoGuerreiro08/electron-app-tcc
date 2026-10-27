@@ -12,11 +12,21 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Badge } from '@/components/ui/badge'
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs'
+import {
+    AlertDialog,
+    AlertDialogAction,
+    AlertDialogCancel,
+    AlertDialogContent,
+    AlertDialogDescription,
+    AlertDialogFooter,
+    AlertDialogHeader,
+    AlertDialogTitle,
+} from '@/components/ui/alert-dialog'
 import { templateRepository } from '@/repository/templateRepository'
 import type { TemplateSummary, DocumentMatchSummary, TemplateError } from '@/types/entities'
 import { translateTemplateErrors } from '@/lib/translateTemplateErrors'
 import { useAuthStore } from '@/store/authStore'
-import { Upload, FileWarning, FileArchive, RefreshCw, CloudOff } from 'lucide-react'
+import { Upload, FileWarning, FileArchive, RefreshCw, CloudOff, Trash2 } from 'lucide-react'
 
 type Tab = 'official' | 'imported'
 type SyncState = 'syncing' | 'synced' | 'failed'
@@ -28,7 +38,7 @@ interface Props {
 }
 
 export function UseTemplateDialog({ open, onOpenChange, onCreated }: Props) {
-    const { t, i18n } = useTranslation('collections')
+    const { t, i18n } = useTranslation(['collections', 'common'])
     // Guest mode is outside the institution: no official templates (not
     // even cached ones) and no requests to the server for them.
     const isGuest = useAuthStore((s) => s.session?.isGuest === true)
@@ -46,6 +56,7 @@ export function UseTemplateDialog({ open, onOpenChange, onCreated }: Props) {
     const [matching, setMatching] = useState(false)
     const [syncState, setSyncState] = useState<SyncState>('syncing')
     const [lastSyncedAt, setLastSyncedAt] = useState<number | null>(null)
+    const [pendingDelete, setPendingDelete] = useState<TemplateSummary | null>(null)
 
     const refreshLists = async () => {
         setLoading(true)
@@ -101,9 +112,9 @@ export function UseTemplateDialog({ open, onOpenChange, onCreated }: Props) {
             g.subgroups.some((sg) => sg.categories.some((cat) => (cat.documents?.length ?? 0) > 0))
         )
 
-    const handleSelect = (tpl: TemplateSummary) => {
+    const handleSelect = (tpl: TemplateSummary | null) => {
         setSelected(tpl)
-        setCollectionName(tpl.template.name)
+        setCollectionName(tpl?.template.name ?? '')
         setImportErrors(null)
         setZipPath(null)
         setMatchSummary(null)
@@ -145,6 +156,16 @@ export function UseTemplateDialog({ open, onOpenChange, onCreated }: Props) {
         await refreshLists()
         setTab('imported')
         handleSelect({ fileName: result.fileName, source: 'imported', template: result.template })
+    }
+
+    // Only imported templates can be deleted — official ones are a mirror
+    // of the server and would come back on the next sync anyway.
+    const handleDelete = async (tpl: TemplateSummary) => {
+        await templateRepository.deleteImported(tpl.fileName)
+        if (selected?.source === 'imported' && selected.fileName === tpl.fileName) {
+            handleSelect(null)
+        }
+        await refreshLists()
     }
 
     const handleCreate = async () => {
@@ -236,28 +257,43 @@ export function UseTemplateDialog({ open, onOpenChange, onCreated }: Props) {
                                         0
                                     )
                                     return (
-                                        <button
+                                        <div
                                             key={tpl.fileName}
-                                            onClick={() => handleSelect(tpl)}
-                                            className={`block w-full border-b p-2 text-left text-sm last:border-b-0 hover:bg-muted/60 ${selected?.fileName === tpl.fileName && selected.source === tpl.source
+                                            className={`flex items-center border-b last:border-b-0 hover:bg-muted/60 ${selected?.fileName === tpl.fileName && selected.source === tpl.source
                                                     ? 'bg-muted'
                                                     : ''
                                                 }`}
                                         >
-                                            <div className="flex items-center gap-2">
-                                                <p className="font-medium">{tpl.template.name}</p>
-                                                {tpl.change && (
-                                                    <Badge variant="secondary" className="shrink-0 text-xs">
-                                                        {t(`useTemplateDialog.badges.${tpl.change}`)}
-                                                    </Badge>
-                                                )}
-                                            </div>
-                                            <p className="text-xs text-muted-foreground">
-                                                {t('useTemplateDialog.summary.groups', { count: tpl.template.groups.length })} ·{' '}
-                                                {t('useTemplateDialog.summary.subgroups', { count: subgroupCount })} ·{' '}
-                                                {t('useTemplateDialog.summary.categories', { count: categoryCount })}
-                                            </p>
-                                        </button>
+                                            <button
+                                                onClick={() => handleSelect(tpl)}
+                                                className="block min-w-0 flex-1 p-2 text-left text-sm"
+                                            >
+                                                <div className="flex items-center gap-2">
+                                                    <p className="font-medium">{tpl.template.name}</p>
+                                                    {tpl.change && (
+                                                        <Badge variant="secondary" className="shrink-0 text-xs">
+                                                            {t(`useTemplateDialog.badges.${tpl.change}`)}
+                                                        </Badge>
+                                                    )}
+                                                </div>
+                                                <p className="text-xs text-muted-foreground">
+                                                    {t('useTemplateDialog.summary.groups', { count: tpl.template.groups.length })} ·{' '}
+                                                    {t('useTemplateDialog.summary.subgroups', { count: subgroupCount })} ·{' '}
+                                                    {t('useTemplateDialog.summary.categories', { count: categoryCount })}
+                                                </p>
+                                            </button>
+                                            {tpl.source === 'imported' && (
+                                                <Button
+                                                    variant="ghost"
+                                                    size="icon"
+                                                    className="mr-1 h-7 w-7 shrink-0 text-destructive"
+                                                    aria-label={t('common:actions.delete')}
+                                                    onClick={() => setPendingDelete(tpl)}
+                                                >
+                                                    <Trash2 className="h-3.5 w-3.5" />
+                                                </Button>
+                                            )}
+                                        </div>
                                     )
                                 })
                             )}
@@ -378,6 +414,25 @@ export function UseTemplateDialog({ open, onOpenChange, onCreated }: Props) {
                     </Button>
                 </DialogFooter>
             </DialogContent>
+
+            <AlertDialog open={pendingDelete !== null} onOpenChange={(o) => !o && setPendingDelete(null)}>
+                <AlertDialogContent>
+                    <AlertDialogHeader>
+                        <AlertDialogTitle>
+                            {t('useTemplateDialog.deleteConfirm.title', { name: pendingDelete?.template.name })}
+                        </AlertDialogTitle>
+                        <AlertDialogDescription>
+                            {t('useTemplateDialog.deleteConfirm.description')}
+                        </AlertDialogDescription>
+                    </AlertDialogHeader>
+                    <AlertDialogFooter>
+                        <AlertDialogCancel>{t('common:actions.cancel')}</AlertDialogCancel>
+                        <AlertDialogAction onClick={() => pendingDelete && handleDelete(pendingDelete)}>
+                            {t('common:actions.delete')}
+                        </AlertDialogAction>
+                    </AlertDialogFooter>
+                </AlertDialogContent>
+            </AlertDialog>
         </Dialog>
     )
 }

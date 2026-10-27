@@ -139,6 +139,10 @@
             "updated": "Atualizado"
         },
         "emptyImported": "Nenhum modelo importado ainda — use \"Importar modelo\" acima.",
+        "deleteConfirm": {
+            "title": "Excluir \"{{name}}\"?",
+            "description": "O arquivo do modelo é removido do aplicativo. Coleções já criadas a partir dele não são afetadas."
+        },
         "summary": {
             "groups_one": "{{count}} grupo",
             "groups_other": "{{count}} grupos",
