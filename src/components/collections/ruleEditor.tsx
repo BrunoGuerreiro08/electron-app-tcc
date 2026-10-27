@@ -35,9 +35,29 @@ function InnerRuleEditor({ inner, onChange }: InnerRuleEditorProps) {
 
     return (
         <div className="w-full min-w-0 space-y-3">
-            <Label className="text-xs font-medium text-muted-foreground block">
-                {t('rule.innerRuleTypeLabel')}
-            </Label>
+            <div className="flex flex-col gap-1.5 w-full min-w-0">
+                <Label className="text-xs font-medium text-muted-foreground">
+                    {t('rule.innerRuleTypeLabel')}
+                </Label>
+                <Select
+                    value={inner.type}
+                    onValueChange={(v) =>
+                        onChange(
+                            v === 'flat'
+                                ? { type: 'flat', pointsPerUnit: 1 }
+                                : { type: 'hours', pointsPerUnit: 1, unitSize: 1 }
+                        )
+                    }
+                >
+                    <SelectTrigger className="w-full min-w-0">
+                        <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                        <SelectItem value="flat">{t('rule.innerType.flat')}</SelectItem>
+                        <SelectItem value="hours">{t('rule.innerType.hours')}</SelectItem>
+                    </SelectContent>
+                </Select>
+            </div>
 
             {inner.type === 'flat' && (
                 <div className="space-y-2 w-full min-w-0">
