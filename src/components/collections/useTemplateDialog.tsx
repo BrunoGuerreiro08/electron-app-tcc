@@ -25,6 +25,7 @@ import {
 import { templateRepository } from '@/repository/templateRepository'
 import type { TemplateSummary, DocumentMatchSummary, TemplateError } from '@/types/entities'
 import { translateTemplateErrors } from '@/lib/translateTemplateErrors'
+import { ruleSummary } from '@/lib/ruleSummary'
 import { useAuthStore } from '@/store/authStore'
 import { Upload, FileWarning, FileArchive, RefreshCw, CloudOff, Trash2 } from 'lucide-react'
 
@@ -38,7 +39,7 @@ interface Props {
 }
 
 export function UseTemplateDialog({ open, onOpenChange, onCreated }: Props) {
-    const { t, i18n } = useTranslation(['collections', 'common'])
+    const { t, i18n } = useTranslation(['collections', 'categories', 'common'])
     // Guest mode is outside the institution: no official templates (not
     // even cached ones) and no requests to the server for them.
     const isGuest = useAuthStore((s) => s.session?.isGuest === true)
@@ -343,7 +344,7 @@ export function UseTemplateDialog({ open, onOpenChange, onCreated }: Props) {
                                                     <ul className="space-y-0.5 pl-3 text-xs text-muted-foreground">
                                                         {sg.categories.map((cat, ci) => (
                                                             <li key={ci}>
-                                                                {cat.name} · {cat.rule.type}
+                                                                {cat.name} · {ruleSummary(cat.rule, t)}
                                                             </li>
                                                         ))}
                                                     </ul>

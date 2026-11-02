@@ -9,7 +9,7 @@ import { subgroupRepository } from '@/repository/subgroupRepository'
 import { categoryRepository } from '@/repository/categoryRepository'
 import { templateRepository } from '@/repository/templateRepository'
 import { formatPoints } from '@/lib/formatPoints'
-import type { Rule } from '@/services/scoringEngine/types'
+import { ruleSummary } from '@/lib/ruleSummary'
 import type { Category, Collection } from '@/types/entities'
 import { EditGroupDialog } from './editGroupDialog'
 import { EditSubgroupDialog } from './editSubgroupDialog'
@@ -50,22 +50,6 @@ const COMPLETION_STYLES: Record<string, string> = {
     incomplete: 'bg-amber-100 text-amber-800 dark:bg-amber-950 dark:text-amber-300',
     complete: 'bg-emerald-100 text-emerald-800 dark:bg-emerald-950 dark:text-emerald-300',
     exceeded: 'bg-blue-100 text-blue-800 dark:bg-blue-950 dark:text-blue-300',
-}
-
-function ruleSummary(rule: Rule, t: (key: string, opts?: Record<string, unknown>) => string): string {
-    if (rule.type === 'flat') {
-        return t('categories:summary.flatPoints', { count: rule.pointsPerUnit })
-    }
-    if (rule.type === 'hours') {
-        return t('categories:summary.hoursPoints', { count: rule.pointsPerUnit, unitSize: rule.unitSize })
-    }
-    if (rule.type === 'cappedPerDocument') {
-        return t('categories:summary.cappedPerDocumentAt', {
-            inner: ruleSummary(rule.inner, t),
-            cap: rule.capPerDocument,
-        })
-    }
-    return t('categories:summary.cappedAt', { inner: ruleSummary(rule.inner, t), cap: rule.cap })
 }
 
 export function CollectionDetailScreen() {
