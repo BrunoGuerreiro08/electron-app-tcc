@@ -16,10 +16,8 @@
     "changeFolder": "Alterar pasta",
     "logout": "Sair",
     "backToCollection": "Voltar para a Coleção",
-    "exportDossier": "Exportar Dossiê (.pdf)",
     "exportDocsStitched": "Exportar documentos (Unidos)",
     "exportDocsIndividual": "Exportar documentos (Individuais)",
-    "generatingDossier": "Gerando Dossiê…",
     "exportXlsx": "Excel (.xlsx)",
     "exportCsv": "CSV",
     "exportJson": "JSON"
