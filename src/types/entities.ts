@@ -52,7 +52,9 @@ export interface Document {
     hours: number | null
     notes: string | null
     file_path: string | null
-    file_status: 'pending' | 'ready' | 'orphaned'
+    /** missing_local: the file is on another device (synced file_hash, no file here yet). */
+    file_status: 'pending' | 'ready' | 'orphaned' | 'missing_local'
+    file_hash: string | null
 }
 
 export interface Tag {

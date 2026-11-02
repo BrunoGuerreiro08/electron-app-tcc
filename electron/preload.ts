@@ -83,6 +83,8 @@ contextBridge.exposeInMainWorld('api', {
     },
     files: {
         pick: () => ipcRenderer.invoke('files:pick'),
+        locate: (documentId: string, sourcePath: string, force: boolean) =>
+            ipcRenderer.invoke('files:locate', documentId, sourcePath, force),
         attach: (documentId: string, sourcePath: string) =>
             ipcRenderer.invoke('files:attach', documentId, sourcePath),
         remove: (documentId: string) => ipcRenderer.invoke('files:remove', documentId),

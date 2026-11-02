@@ -25,7 +25,7 @@ import { LinkCategoriesDialog } from './linkCategoriesDialog'
 import { BulkTagsDialog } from './bulkTagsDialog'
 import { BulkLinkCategoriesDialog } from './bulkLinkCategoriesDialog'
 import { fileRepository } from '@/repository/fileRepository'
-import { Paperclip, ExternalLink, XCircle } from 'lucide-react'
+import { Paperclip, ExternalLink, XCircle, FileSearch, CloudDownload } from 'lucide-react'
 import { DocumentFormDialog } from './documentFormDialog'
 import { NewFilesDialog } from './newFilesDialog'
 import { ManageTagsDialog } from './manageTagsDialog'
@@ -132,6 +132,8 @@ export function DocumentLibraryScreen() {
     }
 
     const [fileError, setFileError] = useState<string | null>(null)
+    // A located file that differs from the one on the other device, awaiting confirmation.
+    const [locateMismatch, setLocateMismatch] = useState<{ documentId: string; path: string } | null>(null)
 
     const handleAttach = async (documentId: string) => {
         setFileError(null)
@@ -147,6 +149,29 @@ export function DocumentLibraryScreen() {
             setFileError(attached.error)
             return
         }
+        refresh()
+    }
+
+    const handleLocate = async (documentId: string, force = false, path?: string) => {
+        setFileError(null)
+        let sourcePath = path
+        if (!sourcePath) {
+            const picked = await fileRepository.pick()
+            if (!picked) return
+            if (!picked.ok) {
+                setFileError(picked.error)
+                return
+            }
+            sourcePath = picked.path
+        }
+
+        const located = await fileRepository.locate(documentId, sourcePath, force)
+        if (!located.ok) {
+            if ('mismatch' in located) setLocateMismatch({ documentId, path: sourcePath })
+            else setFileError(located.error)
+            return
+        }
+        setLocateMismatch(null)
         refresh()
     }
 
@@ -494,6 +519,26 @@ export function DocumentLibraryScreen() {
                                                     <XCircle className="h-3.5 w-3.5" />
                                                 </Button>
                                             </>
+                                        ) : doc.file_status === 'missing_local' ? (
+                                            <>
+                                                <Badge
+                                                    variant="outline"
+                                                    className="gap-1 text-xs font-normal text-amber-700 dark:text-amber-400"
+                                                    title={t('library.missingLocal.tooltip')}
+                                                >
+                                                    <CloudDownload className="h-3 w-3" />
+                                                    {t('library.missingLocal.badge')}
+                                                </Badge>
+                                                <Button
+                                                    variant="ghost"
+                                                    size="sm"
+                                                    className="h-6 gap-1 px-2 text-xs text-muted-foreground"
+                                                    onClick={() => handleLocate(doc.id)}
+                                                >
+                                                    <FileSearch className="h-3 w-3" />
+                                                    {t('library.actions.locate')}
+                                                </Button>
+                                            </>
                                         ) : (
                                             <Button
                                                 variant="ghost"
@@ -586,6 +631,24 @@ export function DocumentLibraryScreen() {
                 onOpenChange={setManageTagsOpen}
                 onChanged={refresh}
             />
+            <AlertDialog open={locateMismatch !== null} onOpenChange={(open) => !open && setLocateMismatch(null)}>
+                <AlertDialogContent>
+                    <AlertDialogHeader>
+                        <AlertDialogTitle>{t('library.locateMismatch.title')}</AlertDialogTitle>
+                        <AlertDialogDescription>{t('library.locateMismatch.description')}</AlertDialogDescription>
+                    </AlertDialogHeader>
+                    <AlertDialogFooter>
+                        <AlertDialogCancel>{t('library.delete.cancel')}</AlertDialogCancel>
+                        <AlertDialogAction
+                            onClick={() =>
+                                locateMismatch && handleLocate(locateMismatch.documentId, true, locateMismatch.path)
+                            }
+                        >
+                            {t('library.locateMismatch.confirm')}
+                        </AlertDialogAction>
+                    </AlertDialogFooter>
+                </AlertDialogContent>
+            </AlertDialog>
             <NewFilesDialog
                 open={reviewDialogOpen}
                 onOpenChange={setReviewDialogOpen}

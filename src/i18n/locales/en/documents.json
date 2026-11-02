@@ -54,7 +54,8 @@
             "link": "Link",
             "selectAll": "Select all",
             "manageTags": "Manage tags",
-            "removeFilter": "Remove filter"
+            "removeFilter": "Remove filter",
+            "locate": "Locate file…"
         },
         "delete": {
             "title": "Delete \"{{title}}\"?",
@@ -62,6 +63,15 @@
             "description_other": "This removes the document, its attached file, its tags, and unlinks it from {{count}} categories. This can't be undone.",
             "cancel": "Cancel",
             "confirm": "Delete"
+        },
+        "missingLocal": {
+            "badge": "On another device",
+            "tooltip": "This document has a file on another device, but not on this one. Put it in your document folder, or locate it."
+        },
+        "locateMismatch": {
+            "title": "Use a different file?",
+            "description": "This file is not the same as the one attached on your other device. Using it replaces that file on all your devices.",
+            "confirm": "Use this file"
         }
     },
     "linkCategories": {

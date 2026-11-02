@@ -77,6 +77,12 @@ declare global {
                 pick: () => Promise<{ ok: true; path: string; size: number } | { ok: false; error: string } | null>
                 attach: (documentId: string, sourcePath: string) =>
                     Promise<{ ok: true; filePath: string } | { ok: false; error: string }>
+                locate: (documentId: string, sourcePath: string, force: boolean) =>
+                    Promise<
+                        | { ok: true; filePath: string }
+                        | { ok: false; error: string }
+                        | { ok: false; mismatch: true }
+                    >
                 remove: (documentId: string) => Promise<void>
                 open: (documentId: string) => Promise<void>
                 detectOrphans: () => Promise<{ orphanedFiles: string[]; missingFiles: string[] }>

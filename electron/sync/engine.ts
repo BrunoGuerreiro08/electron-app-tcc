@@ -2,7 +2,7 @@ import { randomUUID } from 'node:crypto'
 import { BrowserWindow } from 'electron'
 import { getActiveUserId, getDb } from '../db'
 import { loadSession } from '../store'
-import { getOrBackfillHash } from '../fileHandler'
+import { getOrBackfillHash, reconcileSyncedFile, relinkMissingFilesByHash } from '../fileHandler'
 import {
     SYNC_APPLY_ORDER,
     SYNC_ENTITIES,
@@ -196,6 +196,7 @@ function applyUpsert(
         )
 
         relinkTag(keys[0], relinkDocs)
+        if (type === 'document') reconcileSyncedFile(keys[0], undefined)
         return true
     }
 
@@ -210,6 +211,7 @@ function applyUpsert(
     if (type === 'collection' && mode === 'create') sets.push('sync_enabled = 1')
     if (sets.length === 0) return false
     db.prepare(`UPDATE ${def.table} SET ${sets.join(', ')} WHERE ${where}`).run(...values, ...keys)
+    if (type === 'document') reconcileSyncedFile(keys[0], { file_path: local.file_path, file_hash: local.file_hash })
     return true
 }
 
@@ -339,6 +341,14 @@ async function runSync(): Promise<void> {
         const deviceId = readMeta('device_id') as string
         await pushAll(session.token, deviceId, assertUser)
         const changed = await pullAll(session.token, deviceId, assertUser)
+        // Files of newly pulled documents may already be in the storage folder.
+        if (changed) {
+            try {
+                relinkMissingFilesByHash()
+            } catch (err) {
+                console.warn('[sync] could not scan the storage folder for missing files:', err)
+            }
+        }
         setStatus({ state: 'idle', lastSyncedAt: Date.now() })
         if (changed) broadcast('sync:applied')
     } catch (err) {
