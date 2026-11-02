@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react'
 import { useLocation, matchPath } from 'react-router-dom'
+import { useTranslation } from 'react-i18next'
 import { collectionRepository } from '@/repository/collectionRepository'
 
 export interface Breadcrumb {
@@ -7,15 +8,20 @@ export interface Breadcrumb {
     path?: string
 }
 
-const STATIC_LABELS: Record<string, string> = {
-    documents: 'Documents',
-    settings: 'Settings',
-    report: 'Report',
+const STATIC_LABEL_KEYS: Record<string, string> = {
+    documents: 'nav.documents',
+    settings: 'nav.settings',
+    profile: 'nav.profile',
+    preferences: 'nav.preferences',
+    reviews: 'nav.review',
+    export: 'nav.export',
+    report: 'nav.export',
 }
 
 const SKIP_AS_CRUMB = new Set(['collections'])
 
 export function useBreadcrumbs(): Breadcrumb[] {
+    const { t } = useTranslation('common')
     const location = useLocation()
     const [collectionName, setCollectionName] = useState<string | null>(null)
 
@@ -42,10 +48,10 @@ export function useBreadcrumbs(): Breadcrumb[] {
     const segments = location.pathname.split('/').filter(Boolean)
 
     if (segments.length === 0) {
-        return [{ label: 'Home' }]
+        return [{ label: t('nav.home') }]
     }
 
-    const crumbs: Breadcrumb[] = [{ label: 'Home', path: '/' }]
+    const crumbs: Breadcrumb[] = [{ label: t('nav.home'), path: '/' }]
     let accumulated = ''
 
     segments.forEach((seg, i) => {
@@ -56,13 +62,14 @@ export function useBreadcrumbs(): Breadcrumb[] {
 
         if (seg === collectionId) {
             crumbs.push({
-                label: collectionName ?? 'Loading…',
+                label: collectionName ?? t('states.loading'),
                 path: isLast ? undefined : accumulated,
             })
             return
         }
 
-        crumbs.push({ label: STATIC_LABELS[seg] ?? seg, path: isLast ? undefined : accumulated })
+        const labelKey = STATIC_LABEL_KEYS[seg]
+        crumbs.push({ label: labelKey ? t(labelKey) : seg, path: isLast ? undefined : accumulated })
     })
 
     return crumbs
