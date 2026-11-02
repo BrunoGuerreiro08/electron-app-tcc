@@ -2,7 +2,7 @@
   "profile": {
     "title": "Perfil",
     "description": "Seus dados de cadastro e onde seus documentos ficam guardados.",
-    "guestNotice": "Você está usando o modo visitante. Para editar nome e e-mail, entre com seu e-mail institucional.",
+    "guestNotice": "Você está usando o modo convidado. Para editar nome e e-mail, entre com seu e-mail institucional.",
     "offlineNotice": "Sem conexão com o servidor. Nome e e-mail poderão ser alterados quando a conexão voltar.",
     "expiredNotice": "Sua sessão expirou. Use \"Entrar novamente\" no menu lateral para editar nome e e-mail.",
     "name": {

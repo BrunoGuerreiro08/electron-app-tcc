@@ -21,7 +21,7 @@
             "hours": "Horas"
         },
         "maxTotalPoints": "Pontuação máxima total",
-        "maxTotalPointsHint": "Aplicado a soma de todos os documentos combinados.",
+        "maxTotalPointsHint": "Aplicado à soma de todos os documentos combinados.",
         "maxPerDocumentPoints": "Pontuação máxima por documento.",
         "maxPerDocumentHint": "Cada documento é limitado individualmente — registrar mais documentos ainda soma.",
         "errors": {

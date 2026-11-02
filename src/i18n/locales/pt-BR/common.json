@@ -59,7 +59,7 @@
     "checking": "Verificando sessão…",
     "expired": "Sessão expirada",
     "expiredTooltip": "O servidor não reconhece mais esta sessão. Você pode continuar usando o app; entre novamente para editar o perfil.",
-    "guest": "Modo visitante (somente local)",
+    "guest": "Modo convidado (somente local)",
     "guestTooltip": "Sem conta no servidor — seus dados ficam apenas neste computador.",
     "reauth": {
       "button": "Entrar novamente",
@@ -78,7 +78,7 @@
     "tooltip": "Alterar Tema"
   },
   "user": {
-    "guest": "Visitante"
+    "guest": "Convidado"
   },
   "fields": {
     "name": "Nome"
