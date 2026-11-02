@@ -3,6 +3,7 @@ import { getDb } from '../db'
 import { randomUUID } from 'node:crypto'
 import { validateRule } from '../../src/services/scoringEngine/validateRule'
 import type { Rule } from '../../src/services/scoringEngine/types'
+import { recordDelete, recordUpsert } from '../sync/recorder'
 
 export function registerCategoryHandlers() {
     ipcMain.handle('categories:listBySubgroup', (_event, subgroupId: string) => {
@@ -28,9 +29,12 @@ export function registerCategoryHandlers() {
                     .prepare('SELECT COALESCE(MAX(display_order), -1) + 1 AS next FROM categories WHERE subgroup_id = ?')
                     .get(subgroupId) as { next: number }).next
             const id = randomUUID()
-            db.prepare(
-                'INSERT INTO categories (id, subgroup_id, name, rule, display_order) VALUES (?, ?, ?, ?, ?)'
-            ).run(id, subgroupId, name, JSON.stringify(rule), order)
+            db.transaction(() => {
+                db.prepare(
+                    'INSERT INTO categories (id, subgroup_id, name, rule, display_order) VALUES (?, ?, ?, ?, ?)'
+                ).run(id, subgroupId, name, JSON.stringify(rule), order)
+                recordUpsert('category', id, 'create')
+            })()
             return id
         }
     )
@@ -39,7 +43,10 @@ export function registerCategoryHandlers() {
         const db = getDb()
         const update = db.prepare('UPDATE categories SET display_order = ? WHERE id = ?')
         db.transaction(() => {
-            orderedIds.forEach((id, index) => update.run(index, id))
+            orderedIds.forEach((id, index) => {
+                update.run(index, id)
+                recordUpsert('category', id, 'update')
+            })
         })()
     })
 
@@ -58,16 +65,20 @@ export function registerCategoryHandlers() {
                 ruleJson = JSON.stringify(updates.rule)
             }
 
-            getDb().prepare('UPDATE categories SET name = ?, rule = ? WHERE id = ?').run(
-                name,
-                ruleJson,
-                id
-            )
+            const db = getDb()
+            db.transaction(() => {
+                db.prepare('UPDATE categories SET name = ?, rule = ? WHERE id = ?').run(name, ruleJson, id)
+                recordUpsert('category', id, 'update')
+            })()
         }
     )
 
     ipcMain.handle('categories:delete', (_event, id: string) => {
         // Cascades document_category_links only — documents are untouched.
-        getDb().prepare('DELETE FROM categories WHERE id = ?').run(id)
+        const db = getDb()
+        db.transaction(() => {
+            recordDelete('category', id)
+            db.prepare('DELETE FROM categories WHERE id = ?').run(id)
+        })()
     })
 }

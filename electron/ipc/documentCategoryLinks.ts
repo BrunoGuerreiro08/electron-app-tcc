@@ -1,6 +1,7 @@
 import { ipcMain } from 'electron'
 import { getDb } from '../db'
 import { randomUUID } from 'node:crypto'
+import { recordDelete, recordUpsert } from '../sync/recorder'
 
 export function registerDocumentCategoryLinkHandlers() {
     // Feeds the scoring engine directly — returns rows shaped close to
@@ -31,19 +32,29 @@ export function registerDocumentCategoryLinkHandlers() {
     ipcMain.handle(
         'documentCategoryLinks:link',
         (_event, documentId: string, categoryId: string) => {
-            const id = randomUUID()
-            getDb().prepare(
-                'INSERT OR IGNORE INTO document_category_links (id, document_id, category_id) VALUES (?, ?, ?)'
-            ).run(id, documentId, categoryId)
+            const db = getDb()
+            db.transaction(() => {
+                const { changes } = db
+                    .prepare('INSERT OR IGNORE INTO document_category_links (id, document_id, category_id) VALUES (?, ?, ?)')
+                    .run(randomUUID(), documentId, categoryId)
+                if (changes > 0) {
+                    recordUpsert('document_category_link', { document_id: documentId, category_id: categoryId }, 'create')
+                }
+            })()
         }
     )
 
     ipcMain.handle(
         'documentCategoryLinks:unlink',
         (_event, documentId: string, categoryId: string) => {
-            getDb().prepare(
-                'DELETE FROM document_category_links WHERE document_id = ? AND category_id = ?'
-            ).run(documentId, categoryId)
+            const db = getDb()
+            db.transaction(() => {
+                recordDelete('document_category_link', { document_id: documentId, category_id: categoryId })
+                db.prepare('DELETE FROM document_category_links WHERE document_id = ? AND category_id = ?').run(
+                    documentId,
+                    categoryId
+                )
+            })()
         }
     )
 }

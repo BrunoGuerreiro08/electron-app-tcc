@@ -4,6 +4,7 @@ import path from 'node:path'
 import { createHash, randomUUID } from 'node:crypto'
 import { app, dialog, type BrowserWindow } from 'electron'
 import { getDb, getActiveUserId } from './db'
+import { recordUpsert } from './sync/recorder'
 import { hasAccountSession } from './store'
 import { adoptDroppedFile, writeTempDroppedFile } from './fileHandler'
 import { matchTemplateDocuments, type DocumentMatch, type DocumentMatchSummary } from './templateDocumentMatch'
@@ -389,19 +390,14 @@ function attachMatchedDocument(categoryId: string, match: DocumentMatch): void {
                 `INSERT INTO documents (id, title, issued_at, quantity, hours, file_status) VALUES (?, ?, ?, ?, ?, 'pending')`
             )
             .run(documentId, match.title, match.issued_at, match.quantity, match.hours)
+        recordUpsert('document', documentId, 'create')
 
-        getDb()
-            .prepare(`INSERT OR IGNORE INTO document_category_links (id, document_id, category_id) VALUES (?, ?, ?)`)
-            .run(randomUUID(), documentId, categoryId)
+        linkDocument(documentId, categoryId)
         return
     }
 
     if (match.status === 'existing') {
-        getDb()
-            .prepare(
-                `INSERT OR IGNORE INTO document_category_links (id, document_id, category_id) VALUES (?, ?, ?)`
-            )
-            .run(randomUUID(), match.existingDocumentId, categoryId)
+        if (match.existingDocumentId) linkDocument(match.existingDocumentId, categoryId)
         return
     }
 
@@ -422,10 +418,16 @@ function attachMatchedDocument(categoryId: string, match: DocumentMatch): void {
         getDb().prepare('DELETE FROM documents WHERE id = ?').run(documentId)
         return
     }
+    recordUpsert('document', documentId, 'create')
 
-    getDb()
+    linkDocument(documentId, categoryId)
+}
+
+function linkDocument(documentId: string, categoryId: string): void {
+    const { changes } = getDb()
         .prepare(`INSERT OR IGNORE INTO document_category_links (id, document_id, category_id) VALUES (?, ?, ?)`)
         .run(randomUUID(), documentId, categoryId)
+    if (changes > 0) recordUpsert('document_category_link', { document_id: documentId, category_id: categoryId }, 'create')
 }
 
 export interface ApplyTemplateResult {
@@ -477,6 +479,7 @@ export function applyTemplate(
             collectionName,
             color
         )
+        recordUpsert('collection', collectionId, 'create')
 
         let categoryIndex = 0
 
@@ -494,6 +497,7 @@ export function applyTemplate(
                 grp.max_points ?? null,
                 grp.bonus_rate ?? null
             )
+            recordUpsert('group', groupId, 'create')
 
             for (const sg of grp.subgroups) {
                 const subgroupId = randomUUID()
@@ -509,6 +513,7 @@ export function applyTemplate(
                     sg.min_points ?? null,
                     sg.max_points ?? null
                 )
+                recordUpsert('subgroup', subgroupId, 'create')
 
                 for (const cat of sg.categories) {
                     const categoryId = randomUUID()
@@ -516,6 +521,7 @@ export function applyTemplate(
                         `INSERT INTO categories (id, subgroup_id, name, rule, display_order)
                          VALUES (?, ?, ?, ?, ?)`
                     ).run(categoryId, subgroupId, cat.name, JSON.stringify(cat.rule), cat.display_order)
+                    recordUpsert('category', categoryId, 'create')
 
                     const matches = matchResult?.categoryMatches[categoryIndex] ?? []
                     for (const match of matches) {

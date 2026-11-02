@@ -2,6 +2,7 @@ import { ipcMain } from 'electron'
 import { getDb } from '../db'
 import { randomUUID } from 'node:crypto'
 import { ensureDefaultSubgroupIfNone } from '../groups'
+import { recordDelete, recordUpsert } from '../sync/recorder'
 
 export function registerSubgroupHandlers() {
     ipcMain.handle('subgroups:listByCollection', (_event, collectionId: string) => {
@@ -21,9 +22,12 @@ export function registerSubgroupHandlers() {
                     .prepare('SELECT COALESCE(MAX(display_order), -1) + 1 AS next FROM subgroups WHERE group_id = ?')
                     .get(groupId) as { next: number }).next
             const id = randomUUID()
-            db.prepare(
-                'INSERT INTO subgroups (id, collection_id, group_id, name, display_order) VALUES (?, ?, ?, ?, ?)'
-            ).run(id, collectionId, groupId, name, order)
+            db.transaction(() => {
+                db.prepare(
+                    'INSERT INTO subgroups (id, collection_id, group_id, name, display_order) VALUES (?, ?, ?, ?, ?)'
+                ).run(id, collectionId, groupId, name, order)
+                recordUpsert('subgroup', id, 'create')
+            })()
             return id
         }
     )
@@ -32,7 +36,10 @@ export function registerSubgroupHandlers() {
         const db = getDb()
         const update = db.prepare('UPDATE subgroups SET display_order = ? WHERE id = ?')
         db.transaction(() => {
-            orderedIds.forEach((id, index) => update.run(index, id))
+            orderedIds.forEach((id, index) => {
+                update.run(index, id)
+                recordUpsert('subgroup', id, 'update')
+            })
         })()
     })
 
@@ -54,9 +61,16 @@ export function registerSubgroupHandlers() {
                 throw new Error('max_points must be greater than min_points')
             }
 
-            getDb().prepare(
-                'UPDATE subgroups SET name = ?, min_points = ?, max_points = ? WHERE id = ?'
-            ).run(name, minPoints, maxPoints, id)
+            const db = getDb()
+            db.transaction(() => {
+                db.prepare('UPDATE subgroups SET name = ?, min_points = ?, max_points = ? WHERE id = ?').run(
+                    name,
+                    minPoints,
+                    maxPoints,
+                    id
+                )
+                recordUpsert('subgroup', id, 'update')
+            })()
         }
     )
 
@@ -68,6 +82,7 @@ export function registerSubgroupHandlers() {
                 | undefined
             if (!row) return
 
+            recordDelete('subgroup', id)
             db.prepare('DELETE FROM subgroups WHERE id = ?').run(id)
             // A group is never left without a subgroup: deleting the last
             // one recreates the default "Geral"/"General". (group_id is only

@@ -4,6 +4,7 @@ import { randomUUID, createHash } from 'node:crypto'
 import { dialog, shell, type BrowserWindow } from 'electron'
 import { getStorageRoot } from './fileStorage'
 import { getDb } from './db'
+import { recordDelete, recordUpsert } from './sync/recorder'
 
 const ALLOWED_EXTENSIONS = ['.pdf', '.jpg', '.jpeg', '.png']
 const MAX_SIZE_BYTES = 20 * 1024 * 1024 // 20 MB
@@ -60,7 +61,10 @@ export function getOrBackfillHash(documentId: string): string | null {
 
     if (!fs.existsSync(row.file_path)) return null
     const hash = sha256File(row.file_path)
-    getDb().prepare('UPDATE documents SET file_hash = ? WHERE id = ?').run(hash, documentId)
+    getDb().transaction(() => {
+        getDb().prepare('UPDATE documents SET file_hash = ? WHERE id = ?').run(hash, documentId)
+        recordUpsert('document', documentId, 'update')
+    })()
     return hash
 }
 
@@ -131,11 +135,12 @@ export function attachFileToDocument(documentId: string, sourcePath: string): At
     const hash = sha256File(destination)
 
     try {
-        getDb().prepare(`UPDATE documents SET file_path = ?, file_status = 'ready', file_hash = ? WHERE id = ?`).run(
-            destination,
-            hash,
-            documentId
-        )
+        getDb().transaction(() => {
+            getDb()
+                .prepare(`UPDATE documents SET file_path = ?, file_status = 'ready', file_hash = ? WHERE id = ?`)
+                .run(destination, hash, documentId)
+            recordUpsert('document', documentId, 'update')
+        })()
     } catch (err) {
         fs.unlinkSync(destination)
         // A DB write failing after a successful copy is genuinely
@@ -184,11 +189,12 @@ export function adoptDroppedFile(documentId: string, fileName: string): AttachRe
     const hash = sha256File(destination)
 
     try {
-        getDb().prepare(`UPDATE documents SET file_path = ?, file_status = 'ready', file_hash = ? WHERE id = ?`).run(
-            destination,
-            hash,
-            documentId
-        )
+        getDb().transaction(() => {
+            getDb()
+                .prepare(`UPDATE documents SET file_path = ?, file_status = 'ready', file_hash = ? WHERE id = ?`)
+                .run(destination, hash, documentId)
+            recordUpsert('document', documentId, 'update')
+        })()
     } catch (err) {
         // Rename it back rather than leaving it stranded under a
         // generated name with nothing pointing at it.
@@ -209,7 +215,13 @@ export function removeFileFromDocument(documentId: string) {
         fs.unlinkSync(row.file_path)
     }
 
-    db.prepare(`UPDATE documents SET file_path = NULL, file_status = 'pending' WHERE id = ?`).run(documentId)
+    // The hash goes too: other devices read a hash as "this document has a file".
+    db.transaction(() => {
+        db.prepare(`UPDATE documents SET file_path = NULL, file_status = 'pending', file_hash = NULL WHERE id = ?`).run(
+            documentId
+        )
+        recordUpsert('document', documentId, 'update')
+    })()
 }
 
 /**
@@ -226,7 +238,10 @@ export function deleteDocumentWithFile(documentId: string) {
         | undefined
 
     // Cascades document_tags and document_category_links.
-    db.prepare('DELETE FROM documents WHERE id = ?').run(documentId)
+    db.transaction(() => {
+        recordDelete('document', documentId)
+        db.prepare('DELETE FROM documents WHERE id = ?').run(documentId)
+    })()
 
     if (row?.file_path) {
         try {

@@ -1,7 +1,8 @@
 import { ipcMain } from 'electron'
 import { getDb } from '../db'
 import { randomUUID } from 'node:crypto'
-import { adoptDroppedFile, deleteDocumentWithFile } from '../fileHandler'
+import { adoptDroppedFile, deleteDocumentWithFile, sha256File } from '../fileHandler'
+import { recordUpsert } from '../sync/recorder'
 
 interface DocumentInput {
     title: string
@@ -45,20 +46,28 @@ export function registerDocumentHandlers() {
 
     ipcMain.handle('documents:create', (_event, input: DocumentInput) => {
         const id = randomUUID()
-        getDb().prepare(
-            `INSERT INTO documents (id, title, issuer, issued_at, quantity, hours, notes, file_path, file_status)
-       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`
-        ).run(
-            id,
-            input.title,
-            input.issuer ?? null,
-            input.issuedAt ?? null,
-            input.quantity ?? 1,
-            input.hours ?? null,
-            input.notes ?? null,
-            input.filePath ?? null,
-            input.filePath ? 'ready' : 'pending'
-        )
+        // Hashed up front: the hash is what tells other devices this
+        // document has a file (the file itself never leaves this device).
+        const fileHash = input.filePath ? sha256File(input.filePath) : null
+        const db = getDb()
+        db.transaction(() => {
+            db.prepare(
+                `INSERT INTO documents (id, title, issuer, issued_at, quantity, hours, notes, file_path, file_status, file_hash)
+           VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
+            ).run(
+                id,
+                input.title,
+                input.issuer ?? null,
+                input.issuedAt ?? null,
+                input.quantity ?? 1,
+                input.hours ?? null,
+                input.notes ?? null,
+                input.filePath ?? null,
+                input.filePath ? 'ready' : 'pending',
+                fileHash
+            )
+            recordUpsert('document', id, 'create')
+        })()
         return id
     })
 
@@ -93,6 +102,7 @@ export function registerDocumentHandlers() {
                 continue
             }
 
+            recordUpsert('document', id, 'create')
             results.push({ fileName: item.fileName, ok: true, documentId: id })
         }
 
@@ -103,18 +113,22 @@ export function registerDocumentHandlers() {
         const current = getDb().prepare('SELECT * FROM documents WHERE id = ?').get(id) as any
         if (!current) throw new Error('Document not found')
 
-        getDb().prepare(
-            `UPDATE documents SET title = ?, issuer = ?, issued_at = ?, quantity = ?, hours = ?, notes = ?
-       WHERE id = ?`
-        ).run(
-            updates.title ?? current.title,
-            updates.issuer ?? current.issuer,
-            updates.issuedAt ?? current.issued_at,
-            updates.quantity ?? current.quantity,
-            updates.hours ?? current.hours,
-            updates.notes ?? current.notes,
-            id
-        )
+        const db = getDb()
+        db.transaction(() => {
+            db.prepare(
+                `UPDATE documents SET title = ?, issuer = ?, issued_at = ?, quantity = ?, hours = ?, notes = ?
+           WHERE id = ?`
+            ).run(
+                updates.title ?? current.title,
+                updates.issuer ?? current.issuer,
+                updates.issuedAt ?? current.issued_at,
+                updates.quantity ?? current.quantity,
+                updates.hours ?? current.hours,
+                updates.notes ?? current.notes,
+                id
+            )
+            recordUpsert('document', id, 'update')
+        })()
     })
 
     ipcMain.handle('documents:delete', (_event, id: string) => {

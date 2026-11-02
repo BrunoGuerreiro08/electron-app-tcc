@@ -2,6 +2,7 @@ import { ipcMain } from 'electron'
 import { getDb } from '../db'
 import { randomUUID } from 'node:crypto'
 import { ensureDefaultGroupIfNone, ensureDefaultSubgroupIfNone } from '../groups'
+import { recordDelete, recordUpsert } from '../sync/recorder'
 
 export function registerCollectionHandlers() {
     ipcMain.handle('collections:get', (_event, id: string) => {
@@ -19,6 +20,7 @@ export function registerCollectionHandlers() {
         )
         const tx = getDb().transaction(() => {
             createCollection.run(id, name, color ?? null)
+            recordUpsert('collection', id, 'create')
             const defaultGroupId = ensureDefaultGroupIfNone(id)
             if (defaultGroupId) ensureDefaultSubgroupIfNone(id, defaultGroupId)
         })
@@ -28,14 +30,20 @@ export function registerCollectionHandlers() {
     })
 
     ipcMain.handle('collections:rename', (_event, id: string, name: string) => {
-        getDb().prepare(
-            `UPDATE collections SET name = ?, updated_at = datetime('now') WHERE id = ?`
-        ).run(name, id)
+        const db = getDb()
+        db.transaction(() => {
+            db.prepare(`UPDATE collections SET name = ?, updated_at = datetime('now') WHERE id = ?`).run(name, id)
+            recordUpsert('collection', id, 'update')
+        })()
     })
 
     ipcMain.handle('collections:delete', (_event, id: string) => {
         // ON DELETE CASCADE handles subgroups -> categories -> document_category_links.
         // Documents themselves are never touched.
-        getDb().prepare('DELETE FROM collections WHERE id = ?').run(id)
+        const db = getDb()
+        db.transaction(() => {
+            recordDelete('collection', id)
+            db.prepare('DELETE FROM collections WHERE id = ?').run(id)
+        })()
     })
 }
