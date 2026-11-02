@@ -28,7 +28,7 @@ import { useTranslation } from 'react-i18next'
 import { formatPoints } from '@/lib/formatPoints'
 
 export function ExportScreen() {
-    const { t } = useTranslation(['common', 'reports'])
+    const { t } = useTranslation(['common', 'reports', 'collections'])
     const { collectionId: urlCollectionId } = useParams<{ collectionId?: string }>()
     const navigate = useNavigate()
 
@@ -50,6 +50,9 @@ export function ExportScreen() {
     const [dossierNotice, setDossierNotice] = useState<string | null>(null)
     const [exportError, setExportError] = useState<string | null>(null)
     const isExporting = exporting !== null
+
+    const completionText = (completion: string | null) =>
+        completion ? t(`collections:completion.${completion}`) : t('reports:preview.noGoal')
 
     useEffect(() => {
         loadCollections()
@@ -89,6 +92,9 @@ export function ExportScreen() {
         })),
     }))
 
+    // Guest sessions store a fixed English name; show it in the app's language.
+    const reportUser = session?.isGuest ? { ...session.user, name: t('user.guest') } : session?.user
+
     const reportData =
         currentCollection && score
             ? buildReportData(
@@ -98,7 +104,7 @@ export function ExportScreen() {
                     groups: mappedGroups,
                 },
                 score,
-                session?.user
+                reportUser
             )
             : null
 
@@ -300,7 +306,7 @@ export function ExportScreen() {
                         <div>
                             <CardTitle className="text-lg">{reportData.collectionName}</CardTitle>
                             <p className="text-xs text-muted-foreground mt-1">
-                                {t('reports:professor')}: {reportData.userName} | {t('issuedAt')}: {reportData.generatedAt}
+                                {t('reports:preview.professor')}: {reportData.userName} | {t('reports:preview.issuedAt')}: {reportData.generatedAt}
                             </p>
                         </div>
                         <Badge variant="outline" className="text-base font-bold text-primary px-3 py-1">
@@ -318,7 +324,7 @@ export function ExportScreen() {
                                                 +{formatPoints(group.bonus)} {t('reports:preview.bonus')}
                                             </Badge>
                                         )}
-                                        <Badge variant="secondary">{group.completion || t('reports:preview.noGoal')}</Badge>
+                                        <Badge variant="secondary">{completionText(group.completion)}</Badge>
                                         <span className="font-bold text-sm">
                                             {t('reports:preview.pointsSuffix', { count: formatPoints(group.total) })}
                                         </span>
@@ -331,7 +337,7 @@ export function ExportScreen() {
                                             <div className="flex justify-between items-center bg-muted/40 p-2.5 rounded">
                                                 <span className="font-semibold text-sm">{subgroup.name}</span>
                                                 <div className="flex items-center gap-3">
-                                                    <Badge variant="secondary">{subgroup.completion || t('reports:preview.noGoal')}</Badge>
+                                                    <Badge variant="secondary">{completionText(subgroup.completion)}</Badge>
                                                     <span className="font-bold text-sm">{t('reports:preview.pointsSuffix', { count: formatPoints(subgroup.total) })}</span>
                                                 </div>
                                             </div>

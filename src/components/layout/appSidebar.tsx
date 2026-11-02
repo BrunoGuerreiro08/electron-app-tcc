@@ -109,7 +109,9 @@ export function AppSidebar() {
     // inside the sidebar component:
     const session = useAuthStore((s) => s.session)
 
-    const displayName = session?.user.name ?? session?.user.email ?? 'Guest'
+    const displayName = session?.isGuest
+        ? t('user.guest')
+        : (session?.user.name ?? session?.user.email ?? t('user.guest'))
     const initials = displayName
         .split(' ')
         .filter(Boolean)
