@@ -107,5 +107,17 @@
   "deleteCollection": {
     "warning": "Esta ação não pode ser desfeita. Para confirmar a exclusão, digite o código exato abaixo:",
     "codePlaceholder": "Digite o código de confirmação"
+  },
+  "sync": {
+    "synced": "Tudo sincronizado",
+    "syncing": "Sincronizando…",
+    "pending_one": "{{count}} alteração aguardando sincronização",
+    "pending_other": "{{count}} alterações aguardando sincronização",
+    "error": "Falha ao sincronizar",
+    "errorTooltip": "O servidor não conseguiu aplicar as alterações. Elas continuam salvas aqui e serão reenviadas.",
+    "lastSynced": "Última sincronização às {{time}}",
+    "neverSynced": "Ainda não sincronizado com o servidor",
+    "syncNow": "Sincronizar",
+    "detachedRemotely": "A sincronização foi desativada em outro dispositivo para: {{names}}. Elas continuam aqui como coleções apenas locais."
   }
 }

@@ -201,5 +201,14 @@
         "reset": "Reset",
         "positionLabel": "Position",
         "dragHandle": "Drag to reorder"
+    },
+    "sync": {
+        "enabled": "Synced",
+        "disabled": "Local only",
+        "enabledTooltip": "This collection is saved on the server and shared with your other devices. Click to stop syncing it.",
+        "disabledTooltip": "This collection stays on this computer only. Click to sync it again.",
+        "disableTitle": "Stop syncing this collection?",
+        "disableDescription": "The server copy will be deleted. This device and your other devices keep their copies, but as local-only collections that no longer update each other.",
+        "disableConfirm": "Stop syncing"
     }
 }

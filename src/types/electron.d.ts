@@ -150,6 +150,14 @@ declare global {
                     readOnly?: boolean
                 }): Promise<{ path: string } | null>
             }
+            sync: {
+                status(): Promise<import('../../shared/syncProtocol').SyncStatus>
+                now(): Promise<import('../../shared/syncProtocol').SyncStatus>
+                setCollectionEnabled(collectionId: string, enabled: boolean): Promise<void>
+                clearNotices(): Promise<void>
+                onStatus(listener: (status: import('../../shared/syncProtocol').SyncStatus) => void): () => void
+                onApplied(listener: () => void): () => void
+            }
             dossier: {
                 chooseDestination(args: {
                     outputKind: DossierOutputKind

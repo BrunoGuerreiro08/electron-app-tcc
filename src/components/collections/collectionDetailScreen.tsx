@@ -8,6 +8,9 @@ import { groupRepository } from '@/repository/groupRepository'
 import { subgroupRepository } from '@/repository/subgroupRepository'
 import { categoryRepository } from '@/repository/categoryRepository'
 import { templateRepository } from '@/repository/templateRepository'
+import { syncRepository } from '@/repository/syncRepository'
+import { useSyncStore } from '@/store/syncStore'
+import { useAuthStore } from '@/store/authStore'
 import { formatPoints } from '@/lib/formatPoints'
 import { ruleSummary } from '@/lib/ruleSummary'
 import type { Category, Collection } from '@/types/entities'
@@ -42,7 +45,8 @@ import {
     AlertDialogTitle,
     AlertDialogTrigger,
 } from '@/components/ui/alert-dialog'
-import { Plus, Trash2, Pencil, Check, X, Printer, FileOutput, Link2 } from 'lucide-react'
+import { Plus, Trash2, Pencil, Check, X, Printer, FileOutput, Link2, Cloud, CloudOff } from 'lucide-react'
+import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip'
 import { CategoryFormDialog } from './categoryFormDialog'
 import { DeleteCollectionDialog } from './deleteCollectionDialog'
 
@@ -86,18 +90,23 @@ export function CollectionDetailScreen() {
     const [templateExportError, setTemplateExportError] = useState<string | null>(null)
 
     const [deleteDialogOpen, setDeleteDialogOpen] = useState(false)
+    const [stopSyncOpen, setStopSyncOpen] = useState(false)
 
     const navigate = useNavigate()
+    const isGuest = useAuthStore((s) => s.session?.isGuest === true)
+    const dataVersion = useSyncStore((s) => s.dataVersion)
 
     const loadCollection = async () => {
         const c = await collectionRepository.get(collectionId!)
+        // Deleted on another device while open here.
+        if (!c) return navigate('/')
         setCollection(c)
-        if (c) setNameInput(c.name)
+        setNameInput(c.name)
     }
 
     useEffect(() => {
         loadCollection()
-    }, [collectionId])
+    }, [collectionId, dataVersion])
 
     if (loading || !collection) {
         return <div className="p-6 text-sm text-muted-foreground">{t('common:states.loading')}</div>
@@ -159,6 +168,12 @@ export function CollectionDetailScreen() {
     const handleDeleteCategory = async (id: string) => {
         await categoryRepository.delete(id)
         refresh()
+    }
+
+    const handleSetSync = async (enabled: boolean) => {
+        await syncRepository.setCollectionEnabled(collectionId!, enabled)
+        setStopSyncOpen(false)
+        loadCollection()
     }
 
     // exportCollectionAsTemplate opens its own native save dialog and
@@ -243,6 +258,34 @@ export function CollectionDetailScreen() {
                 </div>
 
                 <div className="flex items-center gap-2">
+                    {!isGuest && (
+                        <Tooltip>
+                            <TooltipTrigger asChild>
+                                <Button
+                                    variant="outline"
+                                    size="sm"
+                                    onClick={() =>
+                                        collection.sync_enabled === 0 ? handleSetSync(true) : setStopSyncOpen(true)
+                                    }
+                                >
+                                    {collection.sync_enabled === 0 ? (
+                                        <CloudOff className="h-4 w-4 mr-1.5" />
+                                    ) : (
+                                        <Cloud className="h-4 w-4 mr-1.5" />
+                                    )}
+                                    {collection.sync_enabled === 0
+                                        ? t('collections:sync.disabled')
+                                        : t('collections:sync.enabled')}
+                                </Button>
+                            </TooltipTrigger>
+                            <TooltipContent className="max-w-64">
+                                {collection.sync_enabled === 0
+                                    ? t('collections:sync.disabledTooltip')
+                                    : t('collections:sync.enabledTooltip')}
+                            </TooltipContent>
+                        </Tooltip>
+                    )}
+
                     <Button
                         variant="outline"
                         size="sm"
@@ -641,6 +684,21 @@ export function CollectionDetailScreen() {
                 subgroupId={categoryDialog?.mode === 'create' ? categoryDialog.subgroupId : undefined}
                 category={categoryDialog?.mode === 'edit' ? categoryDialog.category : undefined}
             />
+            <AlertDialog open={stopSyncOpen} onOpenChange={setStopSyncOpen}>
+                <AlertDialogContent>
+                    <AlertDialogHeader>
+                        <AlertDialogTitle>{t('collections:sync.disableTitle')}</AlertDialogTitle>
+                        <AlertDialogDescription>{t('collections:sync.disableDescription')}</AlertDialogDescription>
+                    </AlertDialogHeader>
+                    <AlertDialogFooter>
+                        <AlertDialogCancel>{t('common:actions.cancel')}</AlertDialogCancel>
+                        <AlertDialogAction onClick={() => handleSetSync(false)}>
+                            {t('collections:sync.disableConfirm')}
+                        </AlertDialogAction>
+                    </AlertDialogFooter>
+                </AlertDialogContent>
+            </AlertDialog>
+
             <DeleteCollectionDialog
                 open={deleteDialogOpen}
                 onOpenChange={setDeleteDialogOpen}

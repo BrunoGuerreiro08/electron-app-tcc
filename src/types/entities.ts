@@ -10,6 +10,8 @@ export interface Collection {
     color: string | null
     created_at: string
     updated_at: string
+    /** 0 = local-only: this collection is not sent to the server. */
+    sync_enabled: number
 }
 
 export interface Group {

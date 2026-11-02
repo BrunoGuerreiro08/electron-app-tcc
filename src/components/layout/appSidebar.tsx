@@ -50,6 +50,8 @@ import {
 } from "@/components/ui/alert-dialog"
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible"
 import { AuthStatusIndicator } from "./authStatusIndicator"
+import { SyncStatusIndicator } from "./syncStatusIndicator"
+import { useSyncStore } from "@/store/syncStore"
 import { useCollectionsStore } from "@/store/collectionsStore"
 import { useEffect, useState } from "react"
 import { DialogContent, DialogHeader, DialogTitle, DialogFooter, Dialog } from "@/components/ui/dialog"
@@ -94,9 +96,11 @@ export function AppSidebar() {
         if (isCollapsed) toggleSidebar()
     }
 
+    const dataVersion = useSyncStore((s) => s.dataVersion)
+
     useEffect(() => {
         load()
-    }, [load])
+    }, [load, dataVersion])
 
     const handleCreate = async () => {
         if (!newName.trim()) return
@@ -382,6 +386,7 @@ export function AppSidebar() {
 
             <SidebarFooter className="p-2 border-t border-border/50">
                 <AuthStatusIndicator variant={state === "collapsed" ? "icon" : "full"} />
+                <SyncStatusIndicator variant={state === "collapsed" ? "icon" : "full"} />
                 <SidebarMenu>
                     <SidebarMenuItem>
                         <SidebarMenuButton onClick={cycleTheme} tooltip={t('theme.tooltip')}>

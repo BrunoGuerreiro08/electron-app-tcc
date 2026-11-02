@@ -17,6 +17,8 @@ import { registerReviewHandlers } from './ipc/reviews'
 import { registerPreferencesHandlers } from './ipc/preferences'
 import { registerTemplateHandlers } from './ipc/templates'
 import { syncOfficialTemplates } from './templates'
+import { registerSyncHandlers } from './ipc/sync'
+import { startSyncEngine, syncNow } from './sync/engine'
 import { registerDossierHandlers } from './ipc/dossier'
 import { registerExportFileHandlers } from './ipc/exportFiles'
 
@@ -82,6 +84,7 @@ app.whenReady().then(() => {
     registerReviewHandlers()
     registerDossierHandlers()
     registerExportFileHandlers()
+    registerSyncHandlers()
 
     // If a user was already logged in on this device, reopen their db/store
     // before the renderer loads so collections:list etc. work immediately
@@ -96,6 +99,11 @@ app.whenReady().then(() => {
     // institutional session (login screen, guest mode) — session:set
     // triggers it after login instead.
     void syncOfficialTemplates()
+
+    // Push what was queued while the app was closed, pull what other
+    // devices changed. Also a no-op without an account session.
+    startSyncEngine()
+    void syncNow()
 })
 
 app.on('will-quit', () => {

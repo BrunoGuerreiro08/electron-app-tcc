@@ -4,18 +4,24 @@ import { useAuthStore } from '@/store/authStore'
 import { LoginScreen } from '@/components/auth/loginScreen'
 import { DashboardLayout } from './components/layout/layout'
 import { useServerStatusStore } from '@/store/serverStatusStore'
+import { useSyncStore } from '@/store/syncStore'
 import { HashRouter } from 'react-router-dom'
 import { AppRoutes } from './routes'
 
 function App() {
   const { session, initializing, init, handleServerStatus } = useAuthStore()
   const startPolling = useServerStatusStore((s) => s.startPolling)
+  const initSync = useSyncStore((s) => s.init)
   const userId = session?.user.id
   const isGuest = session?.isGuest === true
 
   useEffect(() => {
     init()
   }, [init])
+
+  // Sync runs in the main process; this only mirrors its status and hears
+  // when another device's changes were applied.
+  useEffect(() => initSync(), [initSync])
 
   // Guest mode has no relationship with the institution's server, so it
   // never contacts it — not even the periodic health check. Waits for init

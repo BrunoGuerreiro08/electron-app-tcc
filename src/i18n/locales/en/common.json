@@ -107,5 +107,17 @@
     "deleteCollection": {
         "warning": "This action cannot be undone. To confirm deletion, type the exact code below:",
         "codePlaceholder": "Type confirmation code"
+    },
+    "sync": {
+        "synced": "All changes synced",
+        "syncing": "Syncing…",
+        "pending_one": "{{count}} change waiting to sync",
+        "pending_other": "{{count}} changes waiting to sync",
+        "error": "Sync failed",
+        "errorTooltip": "The server could not apply the changes. They stay saved here and will be retried.",
+        "lastSynced": "Last synced at {{time}}",
+        "neverSynced": "Not synced with the server yet",
+        "syncNow": "Sync now",
+        "detachedRemotely": "Sync was turned off on another device for: {{names}}. They stay here as local-only collections."
     }
 }

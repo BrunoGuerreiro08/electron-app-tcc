@@ -142,4 +142,22 @@ contextBridge.exposeInMainWorld('api', {
             readOnly?: boolean
         }) => ipcRenderer.invoke('exportFiles:saveText', args),
     },
+    sync: {
+        status: () => ipcRenderer.invoke('sync:status'),
+        now: () => ipcRenderer.invoke('sync:now'),
+        setCollectionEnabled: (collectionId: string, enabled: boolean) =>
+            ipcRenderer.invoke('sync:setCollectionEnabled', collectionId, enabled),
+        clearNotices: () => ipcRenderer.invoke('sync:clearNotices'),
+        // Each returns an unsubscribe function, for useEffect cleanups.
+        onStatus: (listener: (status: unknown) => void) => {
+            const handler = (_event: unknown, status: unknown) => listener(status)
+            ipcRenderer.on('sync:status', handler)
+            return () => ipcRenderer.removeListener('sync:status', handler)
+        },
+        onApplied: (listener: () => void) => {
+            const handler = () => listener()
+            ipcRenderer.on('sync:applied', handler)
+            return () => ipcRenderer.removeListener('sync:applied', handler)
+        },
+    },
 })

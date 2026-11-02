@@ -201,5 +201,14 @@
         "reset": "Restaurar",
         "positionLabel": "Posição",
         "dragHandle": "Arraste para reordenar"
+    },
+    "sync": {
+        "enabled": "Sincronizada",
+        "disabled": "Apenas local",
+        "enabledTooltip": "Esta coleção fica salva no servidor e compartilhada com seus outros dispositivos. Clique para parar de sincronizá-la.",
+        "disabledTooltip": "Esta coleção fica apenas neste computador. Clique para voltar a sincronizá-la.",
+        "disableTitle": "Parar de sincronizar esta coleção?",
+        "disableDescription": "A cópia no servidor será apagada. Este e seus outros dispositivos mantêm suas cópias, mas como coleções apenas locais que não se atualizam mais entre si.",
+        "disableConfirm": "Parar de sincronizar"
     }
 }

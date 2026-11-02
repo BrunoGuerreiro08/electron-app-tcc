@@ -33,6 +33,7 @@ import type { ScannedFile } from '@/types/entities'
 import { useTranslation } from 'react-i18next'
 import { tagRepository } from '@/repository/tagRepository'
 import { getContrastYIQ } from '@/lib/generateRandomColor'
+import { useSyncStore } from '@/store/syncStore'
 
 
 export function DocumentLibraryScreen() {
@@ -98,9 +99,12 @@ export function DocumentLibraryScreen() {
         setLoading(false)
     }
 
+    // Also reloads when another device's changes arrive.
+    const dataVersion = useSyncStore((s) => s.dataVersion)
+
     useEffect(() => {
         refresh()
-    }, [filter])
+    }, [filter, dataVersion])
 
     useEffect(() => {
         const handleClickOutside = (event: MouseEvent) => {

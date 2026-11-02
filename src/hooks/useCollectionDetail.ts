@@ -6,6 +6,7 @@ import { documentCategoryLinkRepository } from '@/repository/documentCategoryLin
 import { computeCollectionScore } from '@/services/scoringEngine/computeScore'
 import type { CollectionScoreResult } from '@/services/scoringEngine/types'
 import type { Category, Group, Subgroup } from '@/types/entities'
+import { useSyncStore } from '@/store/syncStore'
 
 export interface LinkedDocument {
     id: string
@@ -96,9 +97,12 @@ export function useCollectionDetail(collectionId: string) {
         setLoading(false)
     }, [collectionId])
 
+    // Also reloads when another device's changes arrive.
+    const dataVersion = useSyncStore((s) => s.dataVersion)
+
     useEffect(() => {
         refresh()
-    }, [refresh])
+    }, [refresh, dataVersion])
 
     return { groups, score, loading, refresh }
 }

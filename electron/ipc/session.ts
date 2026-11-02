@@ -3,6 +3,8 @@ import { loadSession, saveSession, openUserStore, closeUserStore, migrateLegacyP
 import { openUserDb, closeUserDb, getActiveUserId } from '../db'
 import { detectOrphans } from '../fileHandler'
 import { syncOfficialTemplates } from '../templates'
+import { setSyncRecording } from '../sync/recorder'
+import { resetSyncStatus, syncNow } from '../sync/engine'
 
 export function registerSessionHandlers() {
     ipcMain.handle('session:get', () => {
@@ -13,7 +15,7 @@ export function registerSessionHandlers() {
         // transient failure doesn't strand the user. If it still fails, report
         // no session so the renderer shows the login screen instead of a
         // dashboard with no db behind it.
-        return tryOpenUser(session.user.id) ? session : null
+        return tryOpenUser(session) ? session : null
     })
 
     ipcMain.handle('session:set', (_event, session: SessionRecord) => {
@@ -23,6 +25,8 @@ export function registerSessionHandlers() {
         // from and writes to users/<session.user.id>/ only.
         openUserDb(session.user.id)
         openUserStore(session.user.id)
+        // Guests never sync, so their changes aren't queued for the server.
+        setSyncRecording(session.isGuest !== true)
 
         // Re-run orphan detection against the newly active user's files/ dir —
         // relevant on account switch, not just first login.
@@ -31,6 +35,9 @@ export function registerSessionHandlers() {
         // First chance to fetch official templates when the app started on
         // the login screen. Skipped internally for guest sessions.
         void syncOfficialTemplates()
+
+        resetSyncStatus()
+        void syncNow()
     })
 
     // Token refresh / profile edit for the user who is already active: only
@@ -40,10 +47,14 @@ export function registerSessionHandlers() {
             throw new Error('session:update can only change the active user\'s session.')
         }
         saveSession(session)
+        // Usually a renewed token: retry a sync that the old one got refused.
+        void syncNow()
     })
 
     ipcMain.handle('session:clear', () => {
         saveSession(null)
+        setSyncRecording(false)
+        resetSyncStatus()
         closeUserDb()
         closeUserStore()
     })
@@ -64,13 +75,14 @@ export function restoreActiveSession(): SessionRecord | null {
     // A broken db or user folder must not stop the window from opening —
     // the renderer can still show the login screen with the device
     // preferences applied (NFR-10-02).
-    return tryOpenUser(session.user.id) ? session : null
+    return tryOpenUser(session) ? session : null
 }
 
-function tryOpenUser(userId: string): boolean {
+function tryOpenUser(session: SessionRecord): boolean {
     try {
-        openUserDb(userId)
-        openUserStore(userId)
+        openUserDb(session.user.id)
+        openUserStore(session.user.id)
+        setSyncRecording(session.isGuest !== true)
         return true
     } catch (err) {
         console.error('[session] failed to open user db/store:', err)
