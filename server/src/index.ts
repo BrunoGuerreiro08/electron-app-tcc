@@ -5,6 +5,7 @@ import { cors } from 'hono/cors'
 import { initSchema } from './db.js'
 import { authRoutes } from './routes/auth.js'
 import { templateRoutes } from './routes/templates.js'
+import { syncRoutes } from './routes/sync.js'
 
 const MAX_RETRIES = 5;
 const RETRY_DELAY_MS = 3000;
@@ -16,6 +17,7 @@ app.use('*', cors())
 app.get('/health', (c) => c.json({ ok: true }))
 app.route('/auth', authRoutes)
 app.route('/templates', templateRoutes)
+app.route('/sync', syncRoutes)
 
 const port = Number(process.env.PORT ?? 3000)
 
