@@ -41,8 +41,25 @@ export async function initSchema() {
       expires_at TIMESTAMPTZ NOT NULL
     );
 
+    -- Stable identity, so clients can tell "same server, new address" from
+    -- "a different server" and never send one server's token to another.
+    CREATE TABLE IF NOT EXISTS server_meta (
+      key TEXT PRIMARY KEY,
+      value TEXT NOT NULL
+    );
+    INSERT INTO server_meta (key, value) VALUES ('server_id', gen_random_uuid()::text)
+      ON CONFLICT (key) DO NOTHING;
   `)
   await initSyncSchema()
+}
+
+let serverId: string | null = null
+
+export async function getServerId(): Promise<string> {
+  if (serverId) return serverId
+  const { rows } = await pool.query(`SELECT value FROM server_meta WHERE key = 'server_id'`)
+  serverId = rows[0].value as string
+  return serverId
 }
 
 /**
