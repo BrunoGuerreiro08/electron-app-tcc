@@ -162,4 +162,9 @@ contextBridge.exposeInMainWorld('api', {
             return () => ipcRenderer.removeListener('sync:applied', handler)
         },
     },
+    server: {
+        get: () => ipcRenderer.invoke('server:get'),
+        probe: (url: string) => ipcRenderer.invoke('server:probe', url),
+        set: (url: string) => ipcRenderer.invoke('server:set', url),
+    },
 })

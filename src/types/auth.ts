@@ -10,6 +10,8 @@ export interface Session {
     issuedAt: number
     expiresAt: number
     isGuest?: boolean
+    /** Set by the main process: the server that issued this token. */
+    serverId?: string
 }
 
 export type AuthStep = 'email' | 'code' | 'onboarding'
@@ -21,8 +23,17 @@ export type AuthStep = 'email' | 'code' | 'onboarding'
  * - offline:       server unreachable — the local token is trusted as-is
  * - expired:       server rejected the token (revoked); local use continues
  * - guest:         local-only guest mode, no server account
+ * - server-mismatch: the configured server isn't the one that issued the token
+ * - no-server:     no server URL configured on this device
  */
-export type AuthStatus = 'checking' | 'authenticated' | 'offline' | 'expired' | 'guest'
+export type AuthStatus =
+    | 'checking'
+    | 'authenticated'
+    | 'offline'
+    | 'expired'
+    | 'guest'
+    | 'server-mismatch'
+    | 'no-server'
 
 /** The server rejected the session token (401). */
 export class AuthExpiredError extends Error {

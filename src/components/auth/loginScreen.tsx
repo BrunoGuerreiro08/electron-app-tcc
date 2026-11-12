@@ -8,12 +8,33 @@ import { Label } from '@/components/ui/label'
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card'
 import { InputOTP, InputOTPGroup, InputOTPSlot } from '@/components/ui/input-otp'
 import { Sun, Moon, Monitor, User } from 'lucide-react'
-import { useServerStatusStore } from '@/store/serverStatusStore'
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
+import { useServerInfo, useServerStatusStore } from '@/store/serverStatusStore'
+import { useServerConfigStore } from '@/store/serverConfigStore'
 import { ServerStatusIndicator } from '@/components/layout/serverStatusIndicator'
+import { ServerUrlField } from '@/components/settings/serverUrlField'
+import { formatDomains, isEmailAllowed } from '../../../shared/emailPolicy'
+
+type LoginTab = 'login' | 'server'
+
+function hostOf(url: string): string {
+  try {
+    return new URL(url).host
+  } catch {
+    return url
+  }
+}
 
 export function LoginScreen() {
   const { t, i18n } = useTranslation('auth')
   const serverStatus = useServerStatusStore((s) => s.status)
+  const serverConfig = useServerConfigStore((s) => s.config)
+  const { institutionName, allowedEmailDomains } = useServerInfo()
+  // Account sign-in needs a verified, reachable server; guest mode never does.
+  const canSignIn = !!serverConfig?.serverId && serverStatus === 'online'
+  // No server yet: that's the first thing to set up.
+  const [tab, setTab] = useState<LoginTab>(serverConfig ? 'login' : 'server')
+  const [localError, setLocalError] = useState<string | null>(null)
 
   const { step, email, loading, error, requestCode, verifyCode, completeProfile, reset, loginAsGuest } =
     useAuthStore()
@@ -68,44 +89,97 @@ export function LoginScreen() {
           <CardHeader>
             <CardTitle>{t('login.cardTitle')}</CardTitle>
             <CardDescription>
-              {step === 'email' && t('login.description.email')}
+              {step === 'email' && (tab === 'server' ? t('login.description.server') : t('login.description.email'))}
               {step === 'code' && t('login.description.code', { email })}
               {step === 'onboarding' && t('login.description.onboarding')}
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
             {step === 'email' && (
+              <Tabs value={tab} onValueChange={(v) => setTab(v as LoginTab)}>
+                <TabsList className="w-full">
+                  <TabsTrigger value="login" className="flex-1">
+                    {t('login.tabs.signIn')}
+                  </TabsTrigger>
+                  <TabsTrigger value="server" className="flex-1">
+                    {t('login.tabs.server')}
+                  </TabsTrigger>
+                </TabsList>
+
+                <TabsContent value="server" className="pt-2">
+                  {/* A verified server is all sign-in needs: go straight there. */}
+                  <ServerUrlField onSaved={(config) => config.serverId && setTab('login')} />
+                </TabsContent>
+
+                <TabsContent value="login" className="pt-2">
               <form
                 onSubmit={(e) => {
                   e.preventDefault()
+                  if (!isEmailAllowed(emailInput, allowedEmailDomains)) {
+                    setLocalError(t('login.emailStep.domainNotAllowed', { domains: formatDomains(allowedEmailDomains) }))
+                    return
+                  }
                   requestCode(emailInput)
                 }}
                 className="space-y-4"
               >
+                {serverConfig ? (
+                  <div className="flex items-center justify-between gap-2 rounded-md border bg-muted/40 px-3 py-2 text-xs">
+                    <span className="truncate text-muted-foreground">
+                      {t('common:serverConfig.connectedTo', { host: institutionName ?? hostOf(serverConfig.url) })}
+                    </span>
+                    <button
+                      type="button"
+                      className="shrink-0 font-medium underline-offset-2 hover:underline"
+                      onClick={() => setTab('server')}
+                    >
+                      {t('common:serverConfig.change')}
+                    </button>
+                  </div>
+                ) : null}
+
                 <div className="space-y-2">
                   <Label htmlFor="email">{t('login.emailStep.label')}</Label>
                   <Input
                     id="email"
                     type="email"
-                    placeholder={t('login.emailStep.placeholder')}
+                    placeholder={
+                      allowedEmailDomains.length > 0
+                        ? t('login.emailStep.placeholder', { domain: allowedEmailDomains[0] })
+                        : t('login.emailStep.placeholderAny')
+                    }
                     value={emailInput}
-                    onChange={(e) => setEmailInput(e.target.value)}
+                    onChange={(e) => {
+                      setEmailInput(e.target.value)
+                      setLocalError(null)
+                    }}
                     autoFocus
                     aria-describedby="email-hint"
                   />
                   <p id="email-hint" className="text-xs text-muted-foreground">
-                    {t('login.emailStep.hint')}
+                    {allowedEmailDomains.length > 0
+                      ? t('login.emailStep.hint', { domains: formatDomains(allowedEmailDomains) })
+                      : t('login.emailStep.hintAny')}
                   </p>
                 </div>
-                {error && <p className="text-sm text-destructive">{error}</p>}
+                {(localError ?? error) && <p className="text-sm text-destructive">{localError ?? error}</p>}
 
                 <Button
                   type="submit"
                   className="w-full"
-                  disabled={loading || !emailInput || serverStatus === 'offline'}
+                  disabled={loading || !emailInput || !canSignIn}
                 >
                   {loading ? t('login.emailStep.submitLoading') : t('login.emailStep.submitIdle')}
                 </Button>
+                {!canSignIn && (
+                  <button
+                    type="button"
+                    className="block w-full text-center text-xs text-muted-foreground underline-offset-2 hover:underline"
+                    onClick={() => setTab('server')}
+                  >
+                    {serverConfig ? t('login.tabs.serverUnavailable') : t('login.tabs.setUpServer')}
+                  </button>
+                )}
 
                 {/* ADDED: Visual divider and Guest Mode button */}
                 <div className="relative my-4">
@@ -130,6 +204,8 @@ export function LoginScreen() {
                   {t('login.emailStep.guestMode')}
                 </Button>
               </form>
+                </TabsContent>
+              </Tabs>
             )}
 
             {step === 'code' && (

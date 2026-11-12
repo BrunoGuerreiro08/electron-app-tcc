@@ -5,7 +5,7 @@ import { createHash, randomUUID } from 'node:crypto'
 import { app, dialog, type BrowserWindow } from 'electron'
 import { getDb, getActiveUserId } from './db'
 import { recordUpsert } from './sync/recorder'
-import { hasAccountSession } from './store'
+import { getServerConfig, hasAccountSession } from './store'
 import { adoptDroppedFile, writeTempDroppedFile } from './fileHandler'
 import { matchTemplateDocuments, type DocumentMatch, type DocumentMatchSummary } from './templateDocumentMatch'
 import {
@@ -48,15 +48,27 @@ function getImportedTemplatesDir(): string {
  * Local mirror of the server's official templates (see syncOfficialTemplates).
  * Per device, not per user — official templates are the same for everyone —
  * and readable with the server offline. Read-only to everything but the sync.
+ * Scoped by server identity, so switching servers never shows another
+ * server's templates. Null until a server has been verified.
  */
-function getOfficialTemplatesRoot(): string {
-    return path.join(app.getPath('userData'), 'templates')
+function getOfficialTemplatesRoot(): string | null {
+    const serverId = getServerConfig()?.serverId
+    return serverId ? path.join(app.getPath('userData'), 'templates', serverId) : null
 }
 
-function getOfficialTemplatesDir(): string {
-    const dir = path.join(getOfficialTemplatesRoot(), 'official')
+function getOfficialTemplatesDir(): string | null {
+    const root = getOfficialTemplatesRoot()
+    if (!root) return null
+    const dir = path.join(root, 'official')
     fs.mkdirSync(dir, { recursive: true })
     return dir
+}
+
+// Before servers had identities the mirror lived unscoped; it's only a cache.
+function removeLegacyOfficialCache(): void {
+    const legacyRoot = path.join(app.getPath('userData'), 'templates')
+    fs.rmSync(path.join(legacyRoot, 'official'), { recursive: true, force: true })
+    fs.rmSync(path.join(legacyRoot, 'official-index.json'), { force: true })
 }
 
 function slugify(name: string): string {
@@ -106,10 +118,12 @@ export function listOfficialTemplates(): TemplateSummary[] {
     // Official templates are institutional content: not shown to guests,
     // even when another user's sync left them cached on this device.
     if (!hasAccountSession()) return []
+    const dir = getOfficialTemplatesDir()
+    if (!dir) return []
 
     const { entries } = readOfficialIndex()
     const badgeCutoff = Date.now() - CHANGE_BADGE_MS
-    return listTemplatesIn(getOfficialTemplatesDir(), 'official').map((summary) => {
+    return listTemplatesIn(dir, 'official').map((summary) => {
         const entry = entries[summary.fileName]
         return entry?.change && entry.changedAt > badgeCutoff ? { ...summary, change: entry.change } : summary
     })
@@ -125,7 +139,6 @@ export function listImportedTemplates(): TemplateSummary[] {
 // Each sync downloads what changed into the local mirror; the mirror is
 // what the app lists and applies from, so they keep working offline.
 
-const API_BASE = import.meta.env.VITE_API_BASE_URL ?? 'http://localhost:3000'
 const SYNC_TIMEOUT_MS = 5000
 const CHANGE_BADGE_MS = 7 * 24 * 60 * 60 * 1000 // "New"/"Updated" badge lifetime
 
@@ -150,13 +163,16 @@ export type OfficialSyncResult =
     | { ok: true; lastSyncedAt: number; added: number; updated: number; removed: number }
     | { ok: false; lastSyncedAt: number | null }
 
-function getOfficialIndexPath(): string {
-    return path.join(getOfficialTemplatesRoot(), 'official-index.json')
+function getOfficialIndexPath(): string | null {
+    const root = getOfficialTemplatesRoot()
+    return root ? path.join(root, 'official-index.json') : null
 }
 
 function readOfficialIndex(): OfficialIndex {
+    const indexPath = getOfficialIndexPath()
+    if (!indexPath) return { lastSyncedAt: null, entries: {} }
     try {
-        const parsed = JSON.parse(fs.readFileSync(getOfficialIndexPath(), 'utf-8'))
+        const parsed = JSON.parse(fs.readFileSync(indexPath, 'utf-8'))
         return { lastSyncedAt: parsed.lastSyncedAt ?? null, entries: parsed.entries ?? {} }
     } catch {
         return { lastSyncedAt: null, entries: {} }
@@ -181,11 +197,17 @@ async function fetchWithTimeout(url: string): Promise<Response> {
 }
 
 async function runOfficialSync(): Promise<OfficialSyncResult> {
+    removeLegacyOfficialCache()
+    const server = getServerConfig()
+    const dir = getOfficialTemplatesDir()
+    const indexPath = getOfficialIndexPath()
+    if (!server || !dir || !indexPath) return { ok: false, lastSyncedAt: null }
+    const apiBase = server.url
     const index = readOfficialIndex()
 
     let remote: ServerTemplateEntry[]
     try {
-        const res = await fetchWithTimeout(`${API_BASE}/templates`)
+        const res = await fetchWithTimeout(`${apiBase}/templates`)
         remote = ((await res.json()) as { templates: ServerTemplateEntry[] }).templates
             .filter((entry) => isSafeTemplateFileName(entry.fileName))
     } catch (err) {
@@ -193,7 +215,6 @@ async function runOfficialSync(): Promise<OfficialSyncResult> {
         return { ok: false, lastSyncedAt: index.lastSyncedAt }
     }
 
-    const dir = getOfficialTemplatesDir()
     const now = Date.now()
     let added = 0
     let updated = 0
@@ -209,7 +230,7 @@ async function runOfficialSync(): Promise<OfficialSyncResult> {
         if (known?.sha256 === sha256 && fs.existsSync(filePath)) continue
 
         try {
-            const res = await fetchWithTimeout(`${API_BASE}/templates/${encodeURIComponent(fileName)}`)
+            const res = await fetchWithTimeout(`${apiBase}/templates/${encodeURIComponent(fileName)}`)
             const bytes = Buffer.from(await res.arrayBuffer())
             // Same bytes the server hashed, before any decoding.
             if (createHash('sha256').update(bytes).digest('hex') !== sha256) {
@@ -244,7 +265,7 @@ async function runOfficialSync(): Promise<OfficialSyncResult> {
     }
 
     index.lastSyncedAt = now
-    writeFileAtomic(getOfficialIndexPath(), JSON.stringify(index, null, 2))
+    writeFileAtomic(indexPath, JSON.stringify(index, null, 2))
     return { ok: true, lastSyncedAt: now, added, updated, removed }
 }
 
@@ -327,7 +348,9 @@ function resolveTemplatePath(source: { kind: 'official' | 'imported'; fileName: 
     }
     if (source.kind === 'official') {
         if (!hasAccountSession()) throw new Error('Official templates are not available in guest mode.')
-        return path.join(getOfficialTemplatesDir(), source.fileName)
+        const dir = getOfficialTemplatesDir()
+        if (!dir) throw new Error('Official templates are not available until a server is configured.')
+        return path.join(dir, source.fileName)
     }
     return path.join(getImportedTemplatesDir(), source.fileName)
 }

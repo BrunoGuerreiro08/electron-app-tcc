@@ -164,6 +164,11 @@ declare global {
                 onStatus(listener: (status: import('../../shared/syncProtocol').SyncStatus) => void): () => void
                 onApplied(listener: () => void): () => void
             }
+            server: {
+                get(): Promise<import('../../shared/serverUrl').ServerConfig | null>
+                probe(url: string): Promise<import('../../shared/serverUrl').ServerProbeResult>
+                set(url: string): Promise<import('../../shared/serverUrl').ServerSetResult>
+            }
             dossier: {
                 chooseDestination(args: {
                     outputKind: DossierOutputKind

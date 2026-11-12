@@ -1,7 +1,8 @@
 import { randomUUID } from 'node:crypto'
 import { BrowserWindow } from 'electron'
 import { getActiveUserId, getDb } from '../db'
-import { loadSession } from '../store'
+import { getServerConfig, loadSession, type SessionRecord } from '../store'
+import { authorizedFetch, NoServerConfiguredError, ServerMismatchError } from '../server'
 import { getOrBackfillHash, reconcileSyncedFile, relinkMissingFilesByHash } from '../fileHandler'
 import {
     SYNC_APPLY_ORDER,
@@ -25,7 +26,6 @@ import { dropPendingForCollection, enqueueEverything, onOutboxChange, recordDele
  * changes it covers.
  */
 
-const API_BASE = import.meta.env.VITE_API_BASE_URL ?? 'http://localhost:3000'
 const REQUEST_TIMEOUT_MS = 15_000
 const PUSH_DEBOUNCE_MS = 2_000
 const PERIODIC_MS = 60_000
@@ -72,10 +72,9 @@ function writeMeta(key: string, value: string): void {
     getDb().prepare('INSERT INTO sync_meta (key, value) VALUES (?, ?) ON CONFLICT(key) DO UPDATE SET value = excluded.value').run(key, value)
 }
 
-async function request<T>(token: string, path: string, init?: { method: string; body: unknown }): Promise<T> {
-    const res = await fetch(`${API_BASE}${path}`, {
+async function request<T>(session: SessionRecord, path: string, init?: { method: string; body: unknown }): Promise<T> {
+    const res = await authorizedFetch(session, path, {
         method: init?.method ?? 'GET',
-        headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
         body: init ? JSON.stringify(init.body) : undefined,
         signal: AbortSignal.timeout(REQUEST_TIMEOUT_MS),
     })
@@ -85,7 +84,7 @@ async function request<T>(token: string, path: string, init?: { method: string; 
 
 // --- Push -----------------------------------------------------------
 
-async function pushAll(token: string, deviceId: string, assertUser: () => void): Promise<void> {
+async function pushAll(session: SessionRecord, deviceId: string, assertUser: () => void): Promise<void> {
     const db = getDb()
     const rows = db.prepare('SELECT * FROM sync_outbox ORDER BY seq').all() as OutboxRow[]
     if (rows.length === 0) return
@@ -96,7 +95,7 @@ async function pushAll(token: string, deviceId: string, assertUser: () => void):
 
     for (let i = 0; i < ops.length; i += SYNC_PUSH_MAX_OPS) {
         const batch = ops.slice(i, i + SYNC_PUSH_MAX_OPS)
-        const response = await request<SyncPushResponse>(token, '/sync/push', {
+        const response = await request<SyncPushResponse>(session, '/sync/push', {
             method: 'POST',
             body: { deviceId, ops: batch.map((c) => c.op) },
         })
@@ -254,12 +253,12 @@ function applySafely(op: SyncPulledOp): boolean {
 
 // --- Pull -----------------------------------------------------------
 
-async function pullAll(token: string, deviceId: string, assertUser: () => void): Promise<boolean> {
+async function pullAll(session: SessionRecord, deviceId: string, assertUser: () => void): Promise<boolean> {
     const db = getDb()
     let changed = false
 
     if (readMeta('snapshot_done') !== '1') {
-        const snapshot = await request<SyncSnapshotResponse>(token, '/sync/snapshot')
+        const snapshot = await request<SyncSnapshotResponse>(session, '/sync/snapshot')
         assertUser()
         db.transaction(() => {
             for (const type of SYNC_APPLY_ORDER) {
@@ -292,7 +291,7 @@ async function pullAll(token: string, deviceId: string, assertUser: () => void):
     while (hasMore) {
         const since = Number(readMeta('last_pulled_seq') ?? 0)
         const page = await request<SyncPullResponse>(
-            token,
+            session,
             `/sync/pull?since=${since}&deviceId=${encodeURIComponent(deviceId)}`
         )
         assertUser()
@@ -327,7 +326,15 @@ function bootstrapIfNeeded(): void {
 async function runSync(): Promise<void> {
     const session = loadSession()
     const userId = getActiveUserId()
-    if (!session || session.isGuest || !userId || userId !== session.user.id) {
+    const server = getServerConfig()
+    if (
+        !session ||
+        session.isGuest ||
+        !userId ||
+        userId !== session.user.id ||
+        !server?.serverId ||
+        session.serverId !== server.serverId
+    ) {
         setStatus({ state: 'disabled' })
         return
     }
@@ -339,8 +346,8 @@ async function runSync(): Promise<void> {
     try {
         bootstrapIfNeeded()
         const deviceId = readMeta('device_id') as string
-        await pushAll(session.token, deviceId, assertUser)
-        const changed = await pullAll(session.token, deviceId, assertUser)
+        await pushAll(session, deviceId, assertUser)
+        const changed = await pullAll(session, deviceId, assertUser)
         // Files of newly pulled documents may already be in the storage folder.
         if (changed) {
             try {
@@ -353,7 +360,10 @@ async function runSync(): Promise<void> {
         if (changed) broadcast('sync:applied')
     } catch (err) {
         if (err instanceof UserChangedError) return
-        if (err instanceof HttpError && err.status === 401) {
+        // No server yet, or not the one that issued this session: nothing to sync with.
+        if (err instanceof NoServerConfiguredError || err instanceof ServerMismatchError) {
+            setStatus({ state: 'disabled' })
+        } else if (err instanceof HttpError && err.status === 401) {
             // The renderer renews the token; session:update triggers a new run.
             setStatus({ state: 'unauthorized' })
         } else if (err instanceof HttpError) {

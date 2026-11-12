@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
-import { CircleUser, Loader2, ShieldAlert, ShieldCheck, WifiOff } from 'lucide-react'
+import { useNavigate } from 'react-router-dom'
+import { CircleUser, Loader2, ServerOff, ShieldAlert, ShieldCheck, WifiOff } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip'
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog'
@@ -16,6 +17,8 @@ const STYLES: Record<AuthStatus, string> = {
     checking: 'border-border bg-muted/50 text-muted-foreground',
     expired: 'border-destructive/30 bg-destructive/10 text-destructive',
     guest: 'border-border bg-muted/50 text-muted-foreground',
+    'server-mismatch': 'border-destructive/30 bg-destructive/10 text-destructive',
+    'no-server': 'border-amber-500/30 bg-amber-500/10 text-amber-700 dark:text-amber-400',
 }
 
 function StatusIcon({ status, className }: { status: AuthStatus; className?: string }) {
@@ -31,6 +34,9 @@ function StatusIcon({ status, className }: { status: AuthStatus; className?: str
             return <ShieldAlert className={cls} />
         case 'guest':
             return <CircleUser className={cls} />
+        case 'server-mismatch':
+        case 'no-server':
+            return <ServerOff className={cls} />
     }
 }
 
@@ -43,6 +49,7 @@ export function AuthStatusIndicator({ variant = 'full' }: { variant?: 'full' | '
     const authStatus = useAuthStore((s) => s.authStatus)
     const expiresAt = useAuthStore((s) => s.session?.expiresAt)
     const checkServer = useServerStatusStore((s) => s.check)
+    const navigate = useNavigate()
     const [reauthOpen, setReauthOpen] = useState(false)
 
     const label = t(`authStatus.${authStatus}`)
@@ -56,8 +63,15 @@ export function AuthStatusIndicator({ variant = 'full' }: { variant?: 'full' | '
               : t(`authStatus.${authStatus}Tooltip`)
 
     // Offline: click retries the connection. Expired: click opens sign-in.
+    // Server problems: click goes to where the server is configured.
     const onClick =
-        authStatus === 'offline' ? checkServer : authStatus === 'expired' ? () => setReauthOpen(true) : undefined
+        authStatus === 'offline'
+            ? checkServer
+            : authStatus === 'expired'
+              ? () => setReauthOpen(true)
+              : authStatus === 'server-mismatch' || authStatus === 'no-server'
+                ? () => navigate('/settings/preferences')
+                : undefined
 
     const badge =
         variant === 'icon' ? (
@@ -89,6 +103,15 @@ export function AuthStatusIndicator({ variant = 'full' }: { variant?: 'full' | '
                         className="ml-auto shrink-0 font-medium underline-offset-2 hover:underline"
                     >
                         {t('authStatus.reauth.button')}
+                    </button>
+                )}
+                {(authStatus === 'server-mismatch' || authStatus === 'no-server') && (
+                    <button
+                        type="button"
+                        onClick={onClick}
+                        className="ml-auto shrink-0 font-medium underline-offset-2 hover:underline"
+                    >
+                        {t('serverConfig.openSettings')}
                     </button>
                 )}
             </div>

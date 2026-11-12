@@ -45,6 +45,37 @@
             "description": "You will need to re-verify your institutional email address to gain access next time."
         }
     },
+    "serverConfig": {
+        "title": "Server",
+        "description": "The Docenti server used for sign-in, sync and official templates.",
+        "label": "Server address",
+        "placeholder": "e.g. docenti.example.edu.br or 192.168.0.10:3000",
+        "hint": "Ask your institution for the address. You can use guest mode without one.",
+        "save": "Save",
+        "verified": "Connected to a Docenti server.",
+        "currentlyOffline": "Saved, but the server isn't responding right now.",
+        "identityChanged": "This address now answers as a different Docenti server. Save again to use it.",
+        "insecure": "This connection isn't encrypted (http). Sign-in codes and your session can be read by others on the network. Prefer https outside a local network.",
+        "connectedTo": "Server: {{host}}",
+        "change": "Change",
+        "openSettings": "Settings",
+        "institution": "Institution: {{name}}",
+        "allowedDomains": "Accepts emails from {{domains}}.",
+        "anyEmail": "Accepts any email address.",
+        "feedback": {
+            "saved-unverified": "Saved, but the server couldn't be reached. It will be checked again automatically.",
+            "invalid-url": "That doesn't look like a valid address.",
+            "unreachable": "Couldn't reach the server. Check the address and your connection.",
+            "not-docenti": "Something answered at this address, but it isn't a Docenti server."
+        },
+        "switch": {
+            "title": "Switch to a different server?",
+            "description": "This address belongs to a different Docenti server, so you'll be signed out. Your data stays on this computer and comes back if you return to the previous server.",
+            "pending_one": "{{count}} change hasn't been synced yet; it will be sent when you sign in to the previous server again.",
+            "pending_other": "{{count}} changes haven't been synced yet; they will be sent when you sign in to the previous server again.",
+            "confirm": "Sign out and switch"
+        }
+    },
     "serverStatus": {
         "unreachable": "Server unreachable — working offline",
         "reconnectTooltip": "Offline — Click to reconnect"
@@ -59,6 +90,10 @@
         "expiredTooltip": "The server no longer recognizes this session. You can keep using the app; sign in again to edit your profile.",
         "guest": "Guest mode (local only)",
         "guestTooltip": "No server account — your data stays on this computer only.",
+        "server-mismatch": "Different server",
+        "server-mismatchTooltip": "The configured server isn't the one you signed in to, so nothing is sent to it. Click to review the server in Settings, or sign out.",
+        "no-server": "No server configured",
+        "no-serverTooltip": "Sync is paused until a server is set. Click to configure it in Settings.",
         "reauth": {
             "button": "Sign in again",
             "title": "Sign in again",

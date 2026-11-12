@@ -4,6 +4,7 @@ import { useAuthStore } from '@/store/authStore'
 import { LoginScreen } from '@/components/auth/loginScreen'
 import { DashboardLayout } from './components/layout/layout'
 import { useServerStatusStore } from '@/store/serverStatusStore'
+import { useServerConfigStore } from '@/store/serverConfigStore'
 import { useSyncStore } from '@/store/syncStore'
 import { HashRouter } from 'react-router-dom'
 import { AppRoutes } from './routes'
@@ -12,12 +13,18 @@ function App() {
   const { session, initializing, init, handleServerStatus } = useAuthStore()
   const startPolling = useServerStatusStore((s) => s.startPolling)
   const initSync = useSyncStore((s) => s.init)
+  const serverLoaded = useServerConfigStore((s) => s.loaded)
+  const loadServer = useServerConfigStore((s) => s.load)
   const userId = session?.user.id
   const isGuest = session?.isGuest === true
 
   useEffect(() => {
     init()
   }, [init])
+
+  useEffect(() => {
+    void loadServer()
+  }, [loadServer])
 
   // Sync runs in the main process; this only mirrors its status and hears
   // when another device's changes were applied.
@@ -41,7 +48,7 @@ function App() {
     return useServerStatusStore.subscribe(sync)
   }, [userId, isGuest, handleServerStatus])
 
-  if (initializing) {
+  if (initializing || !serverLoaded) {
     /* text-muted-foreground */
     return <div className="flex min-h-screen items-center justify-center text-sm ">Loading…</div>
   }

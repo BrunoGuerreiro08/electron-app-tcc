@@ -1,5 +1,13 @@
 import { ipcMain } from 'electron'
-import { loadSession, saveSession, openUserStore, closeUserStore, migrateLegacyPreferences, type SessionRecord } from '../store'
+import {
+    loadSession,
+    saveSession,
+    openUserStore,
+    closeUserStore,
+    migrateLegacyPreferences,
+    getServerConfig,
+    type SessionRecord,
+} from '../store'
 import { openUserDb, closeUserDb, getActiveUserId } from '../db'
 import { detectOrphans } from '../fileHandler'
 import { syncOfficialTemplates } from '../templates'
@@ -18,7 +26,10 @@ export function registerSessionHandlers() {
         return tryOpenUser(session) ? session : null
     })
 
-    ipcMain.handle('session:set', (_event, session: SessionRecord) => {
+    ipcMain.handle('session:set', (_event, incoming: SessionRecord) => {
+        // Bind the token to the server that issued it (see authorizedFetch).
+        const serverId = incoming.isGuest ? undefined : getServerConfig()?.serverId ?? undefined
+        const session: SessionRecord = { ...incoming, serverId }
         saveSession(session)
 
         // This is the isolation boundary: everything after this line reads
@@ -42,11 +53,12 @@ export function registerSessionHandlers() {
 
     // Token refresh / profile edit for the user who is already active: only
     // the stored record changes, so skip reopening the db and the orphan scan.
-    ipcMain.handle('session:update', (_event, session: SessionRecord) => {
-        if (session.user.id !== getActiveUserId()) {
+    ipcMain.handle('session:update', (_event, incoming: SessionRecord) => {
+        if (incoming.user.id !== getActiveUserId()) {
             throw new Error('session:update can only change the active user\'s session.')
         }
-        saveSession(session)
+        // The server binding is main-owned; a refreshed or re-authed record never changes it.
+        saveSession({ ...incoming, serverId: loadSession()?.serverId })
         // Usually a renewed token: retry a sync that the old one got refused.
         void syncNow()
     })
