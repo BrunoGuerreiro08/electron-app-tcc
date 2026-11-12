@@ -29,6 +29,7 @@ CLAUDE.MD
 *.db-wal
 *.db-shm
 dist-electron/
+release/
 
 # Server directories and files
 server/node_modules/

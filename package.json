@@ -2,12 +2,36 @@
   "name": "Docenti",
   "private": true,
   "version": "0.0.0",
+  "description": "Desktop app for assembling and exporting teaching dossiers",
+  "author": "Bruno Guerreiro - UTFPR",
   "type": "module",
   "main": "dist-electron/main.js",
   "build": {
     "appId": "com.utfpr.docent",
+    "productName": "Docenti",
+    "directories": {
+      "output": "release"
+    },
+    "files": [
+      "dist/**",
+      "dist-electron/**",
+      "public/**",
+      "package.json"
+    ],
+    "asarUnpack": [
+      "**/*.node"
+    ],
     "win": {
       "target": "nsis"
+    },
+    "nsis": {
+      "oneClick": false,
+      "perMachine": false,
+      "allowToChangeInstallationDirectory": true,
+      "createDesktopShortcut": true,
+      "createStartMenuShortcut": true,
+      "deleteAppDataOnUninstall": true,
+      "artifactName": "${productName}-Setup-${version}.${ext}"
     },
     "mac": {
       "target": "dmg"
@@ -16,7 +40,11 @@
       "target": [
         "AppImage",
         "deb"
-      ]
+      ],
+      "category": "Office"
+    },
+    "deb": {
+      "afterRemove": "scripts/linux/after-remove.sh"
     }
   },
   "scripts": {
