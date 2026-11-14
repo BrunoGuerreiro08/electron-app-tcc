@@ -16,13 +16,13 @@
     "changeFolder": "Alterar pasta",
     "logout": "Sair",
     "backToCollection": "Voltar para a Coleção",
-    "exportDossier": "Exportar Dossiê (.pdf)",
     "exportDocsStitched": "Exportar documentos (Unidos)",
     "exportDocsIndividual": "Exportar documentos (Individuais)",
-    "generatingDossier": "Gerando Dossiê…",
     "exportXlsx": "Excel (.xlsx)",
     "exportCsv": "CSV",
-    "exportJson": "JSON"
+    "exportJson": "JSON",
+    "exportPdf": "PDF",
+    "generatingDossier": "Gerando…"
   },
   "nav": {
     "menu": "Menu",
@@ -47,6 +47,37 @@
       "description": "Você precisará verificar seu e-mail institucional novamente para acessar na próxima vez."
     }
   },
+  "serverConfig": {
+    "title": "Servidor",
+    "description": "O servidor Docenti usado para login, sincronização e modelos oficiais.",
+    "label": "Endereço do servidor",
+    "placeholder": "ex.: docenti.exemplo.edu.br ou 192.168.0.10:3000",
+    "hint": "Peça o endereço à sua instituição. O modo convidado funciona sem ele.",
+    "save": "Salvar",
+    "verified": "Conectado a um servidor Docenti.",
+    "currentlyOffline": "Salvo, mas o servidor não está respondendo agora.",
+    "identityChanged": "Este endereço agora responde como outro servidor Docenti. Salve novamente para usá-lo.",
+    "insecure": "Esta conexão não é criptografada (http). Códigos de acesso e sua sessão podem ser lidos por outros na rede. Prefira https fora de uma rede local.",
+    "connectedTo": "Servidor: {{host}}",
+    "change": "Alterar",
+    "openSettings": "Configurações",
+    "institution": "Instituição: {{name}}",
+    "allowedDomains": "Aceita e-mails de {{domains}}.",
+    "anyEmail": "Aceita qualquer endereço de e-mail.",
+    "feedback": {
+      "saved-unverified": "Salvo, mas não foi possível alcançar o servidor. Ele será verificado novamente de forma automática.",
+      "invalid-url": "Isso não parece um endereço válido.",
+      "unreachable": "Não foi possível alcançar o servidor. Verifique o endereço e sua conexão.",
+      "not-docenti": "Algo respondeu neste endereço, mas não é um servidor Docenti."
+    },
+    "switch": {
+      "title": "Trocar para outro servidor?",
+      "description": "Este endereço pertence a outro servidor Docenti, então você será desconectado. Seus dados continuam neste computador e voltam se você retornar ao servidor anterior.",
+      "pending_one": "{{count}} alteração ainda não foi sincronizada; ela será enviada quando você entrar novamente no servidor anterior.",
+      "pending_other": "{{count}} alterações ainda não foram sincronizadas; elas serão enviadas quando você entrar novamente no servidor anterior.",
+      "confirm": "Sair e trocar"
+    }
+  },
   "serverStatus": {
     "unreachable": "Servidor inacessível — trabalhando offline",
     "reconnectTooltip": "Offline — Clique para reconectar"
@@ -61,6 +92,10 @@
     "expiredTooltip": "O servidor não reconhece mais esta sessão. Você pode continuar usando o app; entre novamente para editar o perfil.",
     "guest": "Modo convidado (somente local)",
     "guestTooltip": "Sem conta no servidor — seus dados ficam apenas neste computador.",
+    "server-mismatch": "Servidor diferente",
+    "server-mismatchTooltip": "O servidor configurado não é aquele em que você entrou, então nada é enviado a ele. Clique para revisar o servidor nas Configurações, ou saia da conta.",
+    "no-server": "Nenhum servidor configurado",
+    "no-serverTooltip": "A sincronização está pausada até que um servidor seja definido. Clique para configurá-lo nas Configurações.",
     "reauth": {
       "button": "Entrar novamente",
       "title": "Entrar novamente",
@@ -89,7 +124,8 @@
     "deleting": "Excluindo…",
     "empty": "Nada aqui ainda",
     "error": "Ocorreu um erro",
-    "loadingCollectionData": "Carregando dados da coleção…"
+    "loadingCollectionData": "Carregando dados da coleção…",
+    "notFound": "Página não encontrada."
   },
   "confirmDelete": {
     "title": "Tem certeza?",
@@ -109,5 +145,17 @@
   "deleteCollection": {
     "warning": "Esta ação não pode ser desfeita. Para confirmar a exclusão, digite o código exato abaixo:",
     "codePlaceholder": "Digite o código de confirmação"
+  },
+  "sync": {
+    "synced": "Tudo sincronizado",
+    "syncing": "Sincronizando…",
+    "pending_one": "{{count}} alteração aguardando sincronização",
+    "pending_other": "{{count}} alterações aguardando sincronização",
+    "error": "Falha ao sincronizar",
+    "errorTooltip": "O servidor não conseguiu aplicar as alterações. Elas continuam salvas aqui e serão reenviadas.",
+    "lastSynced": "Última sincronização às {{time}}",
+    "neverSynced": "Ainda não sincronizado com o servidor",
+    "syncNow": "Sincronizar",
+    "detachedRemotely": "A sincronização foi desativada em outro dispositivo para: {{names}}. Elas continuam aqui como coleções apenas locais."
   }
 }

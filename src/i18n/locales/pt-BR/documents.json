@@ -54,7 +54,8 @@
             "link": "Vincular",
             "selectAll": "Selecionar todos",
             "manageTags": "Gerenciar tags",
-            "removeFilter": "Remover filtro"
+            "removeFilter": "Remover filtro",
+            "locate": "Localizar arquivo…"
         },
         "delete": {
             "title": "Excluir \"{{title}}\"?",
@@ -62,6 +63,15 @@
             "description_other": "Isso remove o documento, o arquivo anexado, suas tags e o desvincula de {{count}} categorias. Essa ação não pode ser desfeita.",
             "cancel": "Cancelar",
             "confirm": "Excluir"
+        },
+        "missingLocal": {
+            "badge": "Em outro dispositivo",
+            "tooltip": "Este documento tem um arquivo em outro dispositivo, mas não neste. Coloque-o na sua pasta de documentos ou localize-o."
+        },
+        "locateMismatch": {
+            "title": "Usar um arquivo diferente?",
+            "description": "Este arquivo não é o mesmo anexado no seu outro dispositivo. Usá-lo substitui aquele arquivo em todos os seus dispositivos.",
+            "confirm": "Usar este arquivo"
         }
     },
     "linkCategories": {

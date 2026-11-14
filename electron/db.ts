@@ -186,6 +186,49 @@ function initSchema(db: Database.Database): void {
     // column already exists — nothing to do
   }
 
+  // --- Sync foundations (see electron/sync/recorder.ts) ---
+  // updated_at is what the server compares to drop an older edit that
+  // arrives after a newer one. ADD COLUMN can't take datetime('now') as a
+  // default, so pre-existing rows start NULL ("older than anything").
+  for (const table of ['groups', 'subgroups', 'categories', 'documents', 'tags']) {
+    try {
+      db.exec(`ALTER TABLE ${table} ADD COLUMN updated_at TEXT`)
+    } catch {
+      // column already exists — nothing to do
+    }
+  }
+
+  try {
+    // Per-collection opt-out. 0 = local-only: changes inside it are never
+    // recorded for the server.
+    db.exec(`ALTER TABLE collections ADD COLUMN sync_enabled INTEGER NOT NULL DEFAULT 1`)
+  } catch {
+    // column already exists — nothing to do
+  }
+
+  db.exec(`
+    -- Changes waiting to be pushed, in the order they happened. Written in
+    -- the same transaction as the change itself, so going offline or
+    -- crashing never loses one. Rows leave only once the server acks them.
+    CREATE TABLE IF NOT EXISTS sync_outbox (
+      seq INTEGER PRIMARY KEY AUTOINCREMENT,
+      op_id TEXT NOT NULL UNIQUE,
+      entity_type TEXT NOT NULL,
+      entity_id TEXT NOT NULL,
+      op TEXT NOT NULL,
+      payload TEXT NOT NULL,
+      changed_at TEXT NOT NULL
+    );
+
+    CREATE TABLE IF NOT EXISTS sync_meta (
+      key TEXT PRIMARY KEY,
+      value TEXT NOT NULL
+    );
+  `)
+
+  db.prepare(`INSERT OR IGNORE INTO sync_meta (key, value) VALUES ('device_id', ?)`).run(randomUUID())
+  db.prepare(`INSERT OR IGNORE INTO sync_meta (key, value) VALUES ('last_pulled_seq', '0')`).run()
+
   // --- Data migration: backfill a default "Geral" group for every
   // collection whose subgroups predate this change. Mirrors the existing
   // "default General sub-group" pattern for categories (NFR-02-03), one

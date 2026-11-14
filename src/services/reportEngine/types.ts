@@ -38,6 +38,7 @@ export interface ReportGroupItem {
     name: string
     minPoints: number | null
     maxPoints: number | null
+    bonusRate: number | null
     rawTotal: number
     total: number
     completion: SubgroupCompletionState

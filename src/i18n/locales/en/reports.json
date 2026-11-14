@@ -24,5 +24,12 @@
     },
     "errors": {
         "exportFailed": "Unable to generate the file. Try again."
+    },
+    "dossier": {
+        "written": "{{n}} file(s) generated",
+        "skipped": "{{n}} document(s) without a file, skipped",
+        "failed": "{{n}} file(s) not found on disk",
+        "stitchedHint": "A ZIP with one merged PDF per category, in folders by group and subgroup.",
+        "individualHint": "A ZIP with each document as its own file, in folders by group, subgroup and category."
     }
 }

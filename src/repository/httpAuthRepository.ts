@@ -1,14 +1,15 @@
 import { usePreferencesStore } from '@/store/preferenceStore'
+import { apiBase } from '@/store/serverConfigStore'
 import { AuthExpiredError, type AuthRepository, type Session, type User, type VerifyResult } from '@/types/auth'
 
-const API_BASE = import.meta.env.VITE_API_BASE_URL ?? 'http://localhost:3000'
+// Token-carrying calls are only made after authStore's assertSameServer check.
 
 function currentLang(): 'pt' | 'en' {
     return usePreferencesStore.getState().language.startsWith('en') ? 'en' : 'pt'
 }
 
 async function postAuthed<T>(path: string, token: string, body: unknown, fallbackError: string): Promise<T> {
-    const res = await fetch(`${API_BASE}${path}`, {
+    const res = await fetch(`${apiBase()}${path}`, {
         method: 'POST',
         headers: {
             'Content-Type': 'application/json',
@@ -28,7 +29,7 @@ export const httpAuthRepository: AuthRepository = {
     async requestCode(email: string) {
         const lang = currentLang()
 
-        const res = await fetch(`${API_BASE}/auth/request-otp`, {
+        const res = await fetch(`${apiBase()}/auth/request-otp`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ email, lang }),
@@ -41,7 +42,7 @@ export const httpAuthRepository: AuthRepository = {
     },
 
     async verifyCode(email: string, code: string): Promise<VerifyResult> {
-        const res = await fetch(`${API_BASE}/auth/verify-otp`, {
+        const res = await fetch(`${apiBase()}/auth/verify-otp`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ email, code }),
@@ -61,7 +62,7 @@ export const httpAuthRepository: AuthRepository = {
     },
 
     async completeProfile(token: string, name: string): Promise<User> {
-        const res = await fetch(`${API_BASE}/auth/complete-profile`, {
+        const res = await fetch(`${apiBase()}/auth/complete-profile`, {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
@@ -101,10 +102,14 @@ export const httpAuthRepository: AuthRepository = {
     // Best effort: revokes the token server-side. Offline, the token simply
     // stays in the server db until it expires.
     async logout(token: string): Promise<void> {
-        await fetch(`${API_BASE}/auth/logout`, {
-            method: 'POST',
-            headers: { Authorization: `Bearer ${token}` },
-            signal: AbortSignal.timeout(3000),
-        }).catch(() => {})
+        try {
+            await fetch(`${apiBase()}/auth/logout`, {
+                method: 'POST',
+                headers: { Authorization: `Bearer ${token}` },
+                signal: AbortSignal.timeout(3000),
+            })
+        } catch {
+            // offline or no server configured
+        }
     },
 }

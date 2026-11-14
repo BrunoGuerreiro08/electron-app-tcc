@@ -10,6 +10,8 @@ export interface Collection {
     color: string | null
     created_at: string
     updated_at: string
+    /** 0 = local-only: this collection is not sent to the server. */
+    sync_enabled: number
 }
 
 export interface Group {
@@ -50,7 +52,9 @@ export interface Document {
     hours: number | null
     notes: string | null
     file_path: string | null
-    file_status: 'pending' | 'ready' | 'orphaned'
+    /** missing_local: the file is on another device (synced file_hash, no file here yet). */
+    file_status: 'pending' | 'ready' | 'orphaned' | 'missing_local'
+    file_hash: string | null
 }
 
 export interface Tag {

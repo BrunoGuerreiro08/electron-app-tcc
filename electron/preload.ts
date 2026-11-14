@@ -83,6 +83,8 @@ contextBridge.exposeInMainWorld('api', {
     },
     files: {
         pick: () => ipcRenderer.invoke('files:pick'),
+        locate: (documentId: string, sourcePath: string, force: boolean) =>
+            ipcRenderer.invoke('files:locate', documentId, sourcePath, force),
         attach: (documentId: string, sourcePath: string) =>
             ipcRenderer.invoke('files:attach', documentId, sourcePath),
         remove: (documentId: string) => ipcRenderer.invoke('files:remove', documentId),
@@ -141,5 +143,28 @@ contextBridge.exposeInMainWorld('api', {
             extension: string
             readOnly?: boolean
         }) => ipcRenderer.invoke('exportFiles:saveText', args),
+    },
+    sync: {
+        status: () => ipcRenderer.invoke('sync:status'),
+        now: () => ipcRenderer.invoke('sync:now'),
+        setCollectionEnabled: (collectionId: string, enabled: boolean) =>
+            ipcRenderer.invoke('sync:setCollectionEnabled', collectionId, enabled),
+        clearNotices: () => ipcRenderer.invoke('sync:clearNotices'),
+        // Each returns an unsubscribe function, for useEffect cleanups.
+        onStatus: (listener: (status: unknown) => void) => {
+            const handler = (_event: unknown, status: unknown) => listener(status)
+            ipcRenderer.on('sync:status', handler)
+            return () => ipcRenderer.removeListener('sync:status', handler)
+        },
+        onApplied: (listener: () => void) => {
+            const handler = () => listener()
+            ipcRenderer.on('sync:applied', handler)
+            return () => ipcRenderer.removeListener('sync:applied', handler)
+        },
+    },
+    server: {
+        get: () => ipcRenderer.invoke('server:get'),
+        probe: (url: string) => ipcRenderer.invoke('server:probe', url),
+        set: (url: string) => ipcRenderer.invoke('server:set', url),
     },
 })

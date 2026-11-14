@@ -6,6 +6,7 @@
     },
     "rule": {
         "typeLabel": "Tipo de regra",
+        "typePlaceholder": "Escolha um tipo de regra",
         "types": {
             "flat": "Fixa — N pontos por documento",
             "hours": "Horas — pontos a cada N horas declaradas",

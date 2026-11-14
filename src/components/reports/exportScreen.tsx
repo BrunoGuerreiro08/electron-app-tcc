@@ -122,26 +122,10 @@ export function ExportScreen() {
             if (outcome.cancelled) return
 
             const { plan, result } = outcome
-            const parts = [
-                t('reports:dossier.written', {
-                    defaultValue: '{{n}} arquivo(s) gerado(s)',
-                    n: result?.entriesWritten ?? 0,
-                }),
-            ]
-            if (plan && plan.skipped.length > 0)
-                parts.push(
-                    t('reports:dossier.skipped', {
-                        defaultValue: '{{n}} documento(s) sem arquivo, ignorado(s)',
-                        n: plan.skipped.length,
-                    })
-                )
+            const parts = [t('reports:dossier.written', { n: result?.entriesWritten ?? 0 })]
+            if (plan && plan.skipped.length > 0) parts.push(t('reports:dossier.skipped', { n: plan.skipped.length }))
             if (result && result.failures.length > 0)
-                parts.push(
-                    t('reports:dossier.failed', {
-                        defaultValue: '{{n}} arquivo(s) não encontrado(s) no disco',
-                        n: result.failures.length,
-                    })
-                )
+                parts.push(t('reports:dossier.failed', { n: result.failures.length }))
             setDossierNotice(parts.join(' · '))
         } catch (err) {
             console.error(`Dossier export (${mode}) failed:`, err)
@@ -201,7 +185,7 @@ export function ExportScreen() {
                             className="gap-2"
                         >
                             <Download className="h-4 w-4" />
-                            {exporting === 'pdf' ? t('actions.generatingDossier') : t('actions.exportPdf', 'PDF')}
+                            {exporting === 'pdf' ? t('actions.generatingDossier') : t('actions.exportPdf')}
                         </Button>
                         <Button
                             variant="outline"

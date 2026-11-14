@@ -2,6 +2,14 @@ import { create } from 'zustand'
 import { AuthExpiredError, type AuthStatus, type AuthStep, type Session, type User } from '@/types/auth'
 import { httpAuthRepository } from '@/repository/httpAuthRepository'
 import { useServerStatusStore, type ServerStatus } from '@/store/serverStatusStore'
+import {
+    assertSameServer,
+    isSameServer,
+    NoServerConfiguredError,
+    ServerMismatchError,
+    useServerConfigStore,
+} from '@/store/serverConfigStore'
+import type { ServerSetResult } from '../../shared/serverUrl'
 
 // Renew ahead of time when the app stays open for days.
 const RENEW_BEFORE_MS = 24 * 60 * 60 * 1000
@@ -35,6 +43,10 @@ interface AuthState {
     confirmReauthCode: (code: string) => Promise<void>
     reset: () => void
     logout: () => Promise<void>
+    /** Moving to a different server: revoke on the old one, sign out, then save the new URL. */
+    switchServer: (url: string) => Promise<ServerSetResult>
+    /** Re-reads the session after the main process changed it (e.g. bound it to a server). */
+    reloadSession: () => Promise<void>
 }
 
 let validationInFlight: Promise<void> | null = null
@@ -80,8 +92,7 @@ export const useAuthStore = create<AuthState>((set, get) => ({
                 // showing LoginScreen until onboarding actually completes.
                 set({ pendingSession: session, step: 'onboarding', loading: false })
             } else {
-                await window.api.session.set(session)
-                set({ session, authStatus: 'authenticated', loading: false })
+                set({ session: await persistNewSession(session), authStatus: 'authenticated', loading: false })
             }
         } catch (err) {
             set({ error: (err as Error).message, loading: false })
@@ -94,8 +105,7 @@ export const useAuthStore = create<AuthState>((set, get) => ({
         set({ loading: true, error: null })
         try {
             const user = await httpAuthRepository.completeProfile(pendingSession.token, name)
-            const updatedSession: Session = { ...pendingSession, user }
-            await window.api.session.set(updatedSession)
+            const updatedSession = await persistNewSession({ ...pendingSession, user })
             set({ session: updatedSession, authStatus: 'authenticated', pendingSession: null, loading: false })
         } catch (err) {
             set({ error: (err as Error).message, loading: false })
@@ -151,6 +161,15 @@ export const useAuthStore = create<AuthState>((set, get) => ({
             if (authStatus !== 'offline') set({ authStatus: 'offline' })
             return
         }
+        if (status === 'unconfigured') {
+            if (authStatus !== 'no-server') set({ authStatus: 'no-server' })
+            return
+        }
+        // Never refresh (i.e. send the token) against a server that didn't issue it.
+        if (status === 'mismatch' || (status === 'online' && !isSameServer(session))) {
+            if (authStatus !== 'server-mismatch') set({ authStatus: 'server-mismatch' })
+            return
+        }
         // Expired means the server already rejected this token; retrying on
         // every poll can't fix that — only re-authenticating can.
         if (status !== 'online' || authStatus === 'expired') return
@@ -167,13 +186,14 @@ export const useAuthStore = create<AuthState>((set, get) => ({
             // Only flash "checking" when there's no better-known state yet.
             if (get().authStatus !== 'authenticated') set({ authStatus: 'checking' })
             try {
+                assertSameServer(session)
                 const renewed = await httpAuthRepository.refreshSession(session.token)
                 // Keep anything the server doesn't send (e.g. flags) from the local record.
                 const updated: Session = { ...session, ...renewed }
                 await window.api.session.update(updated)
                 set({ session: updated, authStatus: 'authenticated' })
             } catch (err) {
-                set({ authStatus: err instanceof AuthExpiredError ? 'expired' : 'offline' })
+                set({ authStatus: authStatusForError(err) })
             }
         })().finally(() => {
             validationInFlight = null
@@ -194,22 +214,52 @@ export const useAuthStore = create<AuthState>((set, get) => ({
         if (fresh.user.id !== session.user.id) {
             throw new Error('This code belongs to a different account.')
         }
-        await window.api.session.update(fresh)
-        set({ session: fresh, authStatus: 'authenticated' })
+        // Keeps serverId, which the server response doesn't carry.
+        const updated: Session = { ...session, ...fresh }
+        await window.api.session.update(updated)
+        set({ session: updated, authStatus: 'authenticated' })
     },
 
     reset: () => set({ step: 'email', error: null }),
 
     logout: async () => {
         const session = get().session
-        // Revoke server-side when reachable; offline there's nothing to wait for.
-        if (session && !session.isGuest && useServerStatusStore.getState().status === 'online') {
+        // Revoke server-side when reachable — and only on the server that issued the token.
+        if (
+            session &&
+            !session.isGuest &&
+            isSameServer(session) &&
+            useServerStatusStore.getState().status === 'online'
+        ) {
             await httpAuthRepository.logout(session.token)
         }
         await window.api.session.clear()
         set({ step: 'email', email: '', session: null, authStatus: 'checking', pendingSession: null, error: null })
     },
+
+    switchServer: async (url: string) => {
+        await get().logout()
+        return useServerConfigStore.getState().save(url)
+    },
+
+    reloadSession: async () => {
+        const session = await window.api.session.get()
+        set({ session })
+    },
 }))
+
+// The main process binds the session to the current server; read back its copy.
+async function persistNewSession(session: Session): Promise<Session> {
+    await window.api.session.set(session)
+    return (await window.api.session.get()) ?? session
+}
+
+function authStatusForError(err: unknown): AuthStatus {
+    if (err instanceof AuthExpiredError) return 'expired'
+    if (err instanceof ServerMismatchError) return 'server-mismatch'
+    if (err instanceof NoServerConfiguredError) return 'no-server'
+    return 'offline'
+}
 
 /**
  * Runs a server action with the current token. On a 401, tries to renew
@@ -217,13 +267,18 @@ export const useAuthStore = create<AuthState>((set, get) => ({
  * isn't possible, `authStatus` already says why and the error propagates.
  */
 async function withAuthRetry(get: () => AuthState, action: (session: Session) => Promise<void>): Promise<void> {
+    const run = () => {
+        const session = requireAccountSession(get().session)
+        assertSameServer(session)
+        return action(session)
+    }
     try {
-        await action(requireAccountSession(get().session))
+        await run()
     } catch (err) {
         if (!(err instanceof AuthExpiredError)) throw err
         await get().validateSession()
         if (get().authStatus !== 'authenticated') throw err
-        await action(requireAccountSession(get().session))
+        await run()
     }
 }
 

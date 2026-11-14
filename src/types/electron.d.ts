@@ -77,6 +77,12 @@ declare global {
                 pick: () => Promise<{ ok: true; path: string; size: number } | { ok: false; error: string } | null>
                 attach: (documentId: string, sourcePath: string) =>
                     Promise<{ ok: true; filePath: string } | { ok: false; error: string }>
+                locate: (documentId: string, sourcePath: string, force: boolean) =>
+                    Promise<
+                        | { ok: true; filePath: string }
+                        | { ok: false; error: string }
+                        | { ok: false; mismatch: true }
+                    >
                 remove: (documentId: string) => Promise<void>
                 open: (documentId: string) => Promise<void>
                 detectOrphans: () => Promise<{ orphanedFiles: string[]; missingFiles: string[] }>
@@ -149,6 +155,19 @@ declare global {
                     extension: string
                     readOnly?: boolean
                 }): Promise<{ path: string } | null>
+            }
+            sync: {
+                status(): Promise<import('../../shared/syncProtocol').SyncStatus>
+                now(): Promise<import('../../shared/syncProtocol').SyncStatus>
+                setCollectionEnabled(collectionId: string, enabled: boolean): Promise<void>
+                clearNotices(): Promise<void>
+                onStatus(listener: (status: import('../../shared/syncProtocol').SyncStatus) => void): () => void
+                onApplied(listener: () => void): () => void
+            }
+            server: {
+                get(): Promise<import('../../shared/serverUrl').ServerConfig | null>
+                probe(url: string): Promise<import('../../shared/serverUrl').ServerProbeResult>
+                set(url: string): Promise<import('../../shared/serverUrl').ServerSetResult>
             }
             dossier: {
                 chooseDestination(args: {

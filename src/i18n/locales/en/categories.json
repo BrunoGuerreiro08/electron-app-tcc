@@ -6,6 +6,7 @@
     },
     "rule": {
         "typeLabel": "Rule type",
+        "typePlaceholder": "Choose a rule type",
         "types": {
             "flat": "Flat — N points per document",
             "hours": "Hours — points per N hours declared",

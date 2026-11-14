@@ -24,5 +24,12 @@
     },
     "errors": {
         "exportFailed": "Não foi possível gerar o arquivo. Tente novamente."
+    },
+    "dossier": {
+        "written": "{{n}} arquivo(s) gerado(s)",
+        "skipped": "{{n}} documento(s) sem arquivo, ignorado(s)",
+        "failed": "{{n}} arquivo(s) não encontrado(s) no disco",
+        "stitchedHint": "Um ZIP com um PDF unido por categoria, em pastas por grupo e subgrupo.",
+        "individualHint": "Um ZIP com cada documento como arquivo separado, em pastas por grupo, subgrupo e categoria."
     }
 }

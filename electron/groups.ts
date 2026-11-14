@@ -1,6 +1,7 @@
 import { randomUUID } from 'node:crypto'
 import { getDb } from './db'
 import { getPreferences } from './store'
+import { recordDelete, recordUpsert } from './sync/recorder'
 
 export interface GroupRecord {
     id: string
@@ -86,6 +87,7 @@ export function createGroup(collectionId: string, input: GroupCreateInput): stri
             input.name,
             input.displayOrder ?? 0
         )
+        recordUpsert('group', id, 'create')
         // A group is never without a subgroup, from the moment it exists.
         ensureDefaultSubgroupIfNone(collectionId, id)
     })()
@@ -104,16 +106,19 @@ export function updateGroup(id: string, updates: GroupUpdateInput): void {
 
     validateThresholds(minPoints, maxPoints, bonusRate)
 
-    db.prepare(
-        `UPDATE groups SET name = ?, display_order = ?, min_points = ?, max_points = ?, bonus_rate = ? WHERE id = ?`
-    ).run(
-        updates.name ?? current.name,
-        updates.displayOrder ?? current.display_order,
-        minPoints,
-        maxPoints,
-        bonusRate,
-        id
-    )
+    db.transaction(() => {
+        db.prepare(
+            `UPDATE groups SET name = ?, display_order = ?, min_points = ?, max_points = ?, bonus_rate = ? WHERE id = ?`
+        ).run(
+            updates.name ?? current.name,
+            updates.displayOrder ?? current.display_order,
+            minPoints,
+            maxPoints,
+            bonusRate,
+            id
+        )
+        recordUpsert('group', id, 'update')
+    })()
 }
 
 /**
@@ -136,6 +141,7 @@ export function deleteGroup(id: string): void {
         // ON DELETE CASCADE (db.ts). Never touches documents themselves or
         // their files — same "unlink, don't delete" philosophy already
         // applied to document_category_links elsewhere in the schema.
+        recordDelete('group', id)
         db.prepare('DELETE FROM groups WHERE id = ?').run(id)
 
         // A collection is never left without a group (and that group never
@@ -176,6 +182,7 @@ export function ensureDefaultGroupIfNone(collectionId: string): string | null {
         collectionId,
         defaultStructureName()
     )
+    recordUpsert('group', id, 'create')
     return id
 }
 
@@ -193,5 +200,6 @@ export function ensureDefaultSubgroupIfNone(collectionId: string, groupId: strin
     db.prepare(
         'INSERT INTO subgroups (id, collection_id, group_id, name, display_order) VALUES (?, ?, ?, ?, 0)'
     ).run(id, collectionId, groupId, defaultStructureName())
+    recordUpsert('subgroup', id, 'create')
     return id
 }

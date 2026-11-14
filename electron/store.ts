@@ -2,6 +2,7 @@ import Store from 'electron-store'
 import fs from 'node:fs'
 import path from 'node:path'
 import { app, safeStorage } from 'electron'
+import { EMPTY_SERVER_INFO, type ServerConfig } from '../shared/serverUrl'
 
 export interface SessionRecord {
     user: { id: string; email: string; name: string | null }
@@ -9,7 +10,11 @@ export interface SessionRecord {
     issuedAt: number
     expiresAt: number
     isGuest?: boolean
+    /** Identity of the server that issued the token; absent for guests and pre-existing sessions. */
+    serverId?: string
 }
+
+export type { ServerConfig }
 
 /**
  * What actually lands in global-config.json: the token is encrypted with the
@@ -39,16 +44,30 @@ const DEFAULT_PREFERENCES: Preferences = {
 // app startup). Nothing user-specific belongs here — that's what keeps
 // isolation "full" rather than "mostly". In particular, `storageFolder`
 // is NOT here: it's a per-user choice (see below), not a device setting.
+//
+// `server` is device-level too: it must be known on the login screen.
 interface GlobalStoreSchema {
     session: StoredSession | null
+    server: ServerConfig | null
 }
 
 const globalStore = new Store<GlobalStoreSchema>({
     name: 'global-config',
     defaults: {
         session: null,
+        server: null,
     },
 })
+
+export function getServerConfig(): ServerConfig | null {
+    const stored = globalStore.get('server')
+    // Configs saved before servers published their info lack those fields.
+    return stored ? { ...EMPTY_SERVER_INFO, ...stored } : null
+}
+
+export function setServerConfig(config: ServerConfig | null): void {
+    globalStore.set('server', config)
+}
 
 let warnedWeakEncryption = false
 

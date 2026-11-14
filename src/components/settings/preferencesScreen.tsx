@@ -1,8 +1,21 @@
-import type { ComponentType } from 'react'
+import { useState, type ComponentType } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Check, Monitor, Moon, Sun } from 'lucide-react'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
+import {
+    AlertDialog,
+    AlertDialogAction,
+    AlertDialogCancel,
+    AlertDialogContent,
+    AlertDialogDescription,
+    AlertDialogFooter,
+    AlertDialogHeader,
+    AlertDialogTitle,
+} from '@/components/ui/alert-dialog'
 import { usePreferencesStore } from '@/store/preferenceStore'
+import { useAuthStore } from '@/store/authStore'
+import { useSyncStore } from '@/store/syncStore'
+import { ServerUrlField } from '@/components/settings/serverUrlField'
 import { cn } from '@/lib/utils'
 
 interface Option<T extends string> {
@@ -103,8 +116,52 @@ export function PreferencesScreen() {
                 </CardContent>
             </Card>
 
+            <ServerCard />
+
             <p className="text-sm text-muted-foreground">{t('settings:preferences.autoSave')}</p>
             {error && <p className="text-sm text-destructive">{error}</p>}
         </div>
+    )
+}
+
+function ServerCard() {
+    const { t } = useTranslation()
+    const switchServer = useAuthStore((s) => s.switchServer)
+    const pending = useSyncStore((s) => s.status.pending)
+    const [pendingSwitch, setPendingSwitch] = useState<string | null>(null)
+
+    return (
+        <Card>
+            <CardHeader>
+                <CardTitle className="text-base">{t('serverConfig.title')}</CardTitle>
+                <CardDescription>{t('serverConfig.description')}</CardDescription>
+            </CardHeader>
+            <CardContent>
+                <ServerUrlField onRequiresLogout={setPendingSwitch} />
+            </CardContent>
+
+            <AlertDialog open={pendingSwitch !== null} onOpenChange={(open) => !open && setPendingSwitch(null)}>
+                <AlertDialogContent>
+                    <AlertDialogHeader>
+                        <AlertDialogTitle>{t('serverConfig.switch.title')}</AlertDialogTitle>
+                        <AlertDialogDescription>
+                            {t('serverConfig.switch.description')}
+                            {pending > 0 && ` ${t('serverConfig.switch.pending', { count: pending })}`}
+                        </AlertDialogDescription>
+                    </AlertDialogHeader>
+                    <AlertDialogFooter>
+                        <AlertDialogCancel>{t('actions.cancel')}</AlertDialogCancel>
+                        <AlertDialogAction
+                            onClick={() => {
+                                // Signs out; the app returns to the login screen pointed at the new server.
+                                if (pendingSwitch) void switchServer(pendingSwitch)
+                            }}
+                        >
+                            {t('serverConfig.switch.confirm')}
+                        </AlertDialogAction>
+                    </AlertDialogFooter>
+                </AlertDialogContent>
+            </AlertDialog>
+        </Card>
     )
 }

@@ -4,6 +4,7 @@ import { randomUUID, createHash } from 'node:crypto'
 import { dialog, shell, type BrowserWindow } from 'electron'
 import { getStorageRoot } from './fileStorage'
 import { getDb } from './db'
+import { recordDelete, recordUpsert } from './sync/recorder'
 
 const ALLOWED_EXTENSIONS = ['.pdf', '.jpg', '.jpeg', '.png']
 const MAX_SIZE_BYTES = 20 * 1024 * 1024 // 20 MB
@@ -60,7 +61,10 @@ export function getOrBackfillHash(documentId: string): string | null {
 
     if (!fs.existsSync(row.file_path)) return null
     const hash = sha256File(row.file_path)
-    getDb().prepare('UPDATE documents SET file_hash = ? WHERE id = ?').run(hash, documentId)
+    getDb().transaction(() => {
+        getDb().prepare('UPDATE documents SET file_hash = ? WHERE id = ?').run(hash, documentId)
+        recordUpsert('document', documentId, 'update')
+    })()
     return hash
 }
 
@@ -131,11 +135,12 @@ export function attachFileToDocument(documentId: string, sourcePath: string): At
     const hash = sha256File(destination)
 
     try {
-        getDb().prepare(`UPDATE documents SET file_path = ?, file_status = 'ready', file_hash = ? WHERE id = ?`).run(
-            destination,
-            hash,
-            documentId
-        )
+        getDb().transaction(() => {
+            getDb()
+                .prepare(`UPDATE documents SET file_path = ?, file_status = 'ready', file_hash = ? WHERE id = ?`)
+                .run(destination, hash, documentId)
+            recordUpsert('document', documentId, 'update')
+        })()
     } catch (err) {
         fs.unlinkSync(destination)
         // A DB write failing after a successful copy is genuinely
@@ -184,11 +189,12 @@ export function adoptDroppedFile(documentId: string, fileName: string): AttachRe
     const hash = sha256File(destination)
 
     try {
-        getDb().prepare(`UPDATE documents SET file_path = ?, file_status = 'ready', file_hash = ? WHERE id = ?`).run(
-            destination,
-            hash,
-            documentId
-        )
+        getDb().transaction(() => {
+            getDb()
+                .prepare(`UPDATE documents SET file_path = ?, file_status = 'ready', file_hash = ? WHERE id = ?`)
+                .run(destination, hash, documentId)
+            recordUpsert('document', documentId, 'update')
+        })()
     } catch (err) {
         // Rename it back rather than leaving it stranded under a
         // generated name with nothing pointing at it.
@@ -209,7 +215,13 @@ export function removeFileFromDocument(documentId: string) {
         fs.unlinkSync(row.file_path)
     }
 
-    db.prepare(`UPDATE documents SET file_path = NULL, file_status = 'pending' WHERE id = ?`).run(documentId)
+    // The hash goes too: other devices read a hash as "this document has a file".
+    db.transaction(() => {
+        db.prepare(`UPDATE documents SET file_path = NULL, file_status = 'pending', file_hash = NULL WHERE id = ?`).run(
+            documentId
+        )
+        recordUpsert('document', documentId, 'update')
+    })()
 }
 
 /**
@@ -226,7 +238,10 @@ export function deleteDocumentWithFile(documentId: string) {
         | undefined
 
     // Cascades document_tags and document_category_links.
-    db.prepare('DELETE FROM documents WHERE id = ?').run(documentId)
+    db.transaction(() => {
+        recordDelete('document', documentId)
+        db.prepare('DELETE FROM documents WHERE id = ?').run(documentId)
+    })()
 
     if (row?.file_path) {
         try {
@@ -353,4 +368,114 @@ export function detectDroppedFiles(): ScannedFile[] {
     }
 
     return results
+}
+// --- Files that live on another device -------------------------------------
+//
+// Sync carries a document's file_hash, never the file. A document whose hash
+// this device has no file for is 'missing_local' until a file with that hash
+// turns up in the storage folder (e.g. a Drive-synced one) or the user
+// locates it by hand.
+
+/**
+ * Called after a pulled change touched a document. `previous` is what this
+ * device had before it (undefined for a document new here). Never deletes a
+ * file: one that no longer matches is just unlinked, and shows up as an
+ * orphan instead.
+ */
+export function reconcileSyncedFile(
+    documentId: string,
+    previous: { file_path: unknown; file_hash: unknown } | undefined
+): void {
+    const db = getDb()
+    const row = db.prepare('SELECT file_path, file_hash FROM documents WHERE id = ?').get(documentId) as
+        | { file_path: string | null; file_hash: string | null }
+        | undefined
+    if (!row) return
+
+    if (!row.file_hash) {
+        // No file on the other device either (or it was removed there).
+        db.prepare(`UPDATE documents SET file_path = NULL, file_status = 'pending' WHERE id = ?`).run(documentId)
+        return
+    }
+    // Same file as before, and this device has it.
+    if (row.file_path && previous?.file_hash === row.file_hash) return
+
+    db.prepare(`UPDATE documents SET file_path = NULL, file_status = 'missing_local' WHERE id = ?`).run(documentId)
+}
+
+/**
+ * Links 'missing_local' documents to files with the same hash already in
+ * the storage folder. Only hashes candidates: files named after one of
+ * those documents (synced in from the other device's folder), and files
+ * dropped in by hand. Returns how many were linked.
+ */
+export function relinkMissingFilesByHash(): number {
+    const db = getDb()
+    const missing = db
+        .prepare(`SELECT id, file_hash FROM documents WHERE file_status = 'missing_local' AND file_hash IS NOT NULL`)
+        .all() as { id: string; file_hash: string }[]
+    if (missing.length === 0) return 0
+
+    const hashById = new Map(missing.map((d) => [d.id, d.file_hash]))
+    const idsByHash = new Map<string, string[]>()
+    for (const d of missing) idsByHash.set(d.file_hash, [...(idsByHash.get(d.file_hash) ?? []), d.id])
+
+    const referenced = new Set(
+        (db.prepare('SELECT file_path FROM documents WHERE file_path IS NOT NULL').all() as { file_path: string }[]).map(
+            (r) => path.resolve(r.file_path)
+        )
+    )
+    const linkInPlace = db.prepare(`UPDATE documents SET file_path = ?, file_status = 'ready' WHERE id = ?`)
+    const dir = documentsDir()
+    let linked = 0
+
+    // Each document is linked at most once, even when two share a hash.
+    const claim = (id: string): void => {
+        const hash = hashById.get(id)
+        if (!hash) return
+        hashById.delete(id)
+        idsByHash.set(hash, (idsByHash.get(hash) ?? []).filter((other) => other !== id))
+    }
+
+    for (const entry of fs.readdirSync(dir, { withFileTypes: true })) {
+        if (!entry.isFile()) continue
+        const fullPath = path.join(dir, entry.name)
+        if (referenced.has(path.resolve(fullPath))) continue
+
+        if (isOwnedFilename(entry.name)) {
+            // Already named for its document: link it where it is.
+            const documentId = entry.name.slice(0, 36)
+            const expected = hashById.get(documentId)
+            if (!expected || sha256File(fullPath) !== expected) continue
+            claim(documentId)
+            linkInPlace.run(fullPath, documentId)
+            linked++
+            continue
+        }
+
+        const ext = path.extname(entry.name).toLowerCase()
+        if (!ALLOWED_EXTENSIONS.includes(ext) || fs.statSync(fullPath).size > MAX_SIZE_BYTES) continue
+        const documentId = idsByHash.get(sha256File(fullPath))?.[0]
+        if (!documentId) continue
+        claim(documentId)
+        if (adoptDroppedFile(documentId, entry.name).ok) linked++
+    }
+
+    return linked
+}
+
+type LocateResult = { ok: true; filePath: string } | { ok: false; error: string } | { ok: false; mismatch: true }
+
+/**
+ * "Locate file…" for a document whose file is on another device. A file
+ * whose hash differs from the expected one is only used once the user
+ * confirms (`force`) — it then replaces the file on every device.
+ */
+export function locateMissingFile(documentId: string, sourcePath: string, force: boolean): LocateResult {
+    const row = getDb().prepare('SELECT file_hash FROM documents WHERE id = ?').get(documentId) as
+        | { file_hash: string | null }
+        | undefined
+    if (!row) return { ok: false, error: 'Document not found.' }
+    if (!force && row.file_hash && sha256File(sourcePath) !== row.file_hash) return { ok: false, mismatch: true }
+    return attachFileToDocument(documentId, sourcePath)
 }

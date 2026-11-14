@@ -59,16 +59,6 @@ export type VerificationResult =
     | { status: 'mismatch'; checked: number; discrepancies: ScoreDiscrepancy[] }
     | { status: 'error'; message: string }
 
-export const FIELD_LABELS: Record<DiscrepancyField, string> = {
-    points: 'pontos',
-    raw_total: 'total bruto',
-    total: 'total contabilizado',
-    capped: 'teto atingido',
-    completion: 'situação',
-    bonus: 'excedente (bônus)',
-    total_score: 'total geral',
-}
-
 export function formatValue(v: Value): string {
     if (v === null) return '—'
     if (typeof v === 'number') return formatPoints(v)

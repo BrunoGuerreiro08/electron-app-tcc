@@ -2,6 +2,7 @@
     "title": "Your portfolio",
     "description": "Collections and documents at a glance.",
     "unfiled": {
+        "title_zero": "{{count}} documents not yet linked to a category",
         "title_one": "{{count}} document not yet linked to a category",
         "title_other": "{{count}} documents not yet linked to a category",
         "subtitle": "Click to organize them."
