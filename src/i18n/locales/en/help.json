@@ -1,0 +1,169 @@
+{
+    "docs": {
+        "title": "Documentation",
+        "description": "How to use Docenti, from first sign-in to exporting your dossier.",
+        "sections": {
+            "gettingStarted": {
+                "title": "Getting started",
+                "intro": "Docenti keeps your data on this computer and works without internet. With an institution account you can also sync between devices and get the official templates.",
+                "items": [
+                    "On the sign-in screen, open the \"Server\" tab and enter your institution's server address. When you save, the app checks the server and returns to the \"Sign in\" tab.",
+                    "On the \"Sign in\" tab, type your email and click \"Send code\". Then enter the 6-digit code you received by email.",
+                    "On your first sign-in, enter your name. It appears in the app and in reports.",
+                    "Without an account, use \"Continue as Guest\": everything works on this computer, but without sync or official templates."
+                ]
+            },
+            "collections": {
+                "title": "Collections and structure",
+                "intro": "A collection is a dossier, for example \"2026 Progression\". It is organized into groups, subgroups and categories.",
+                "items": [
+                    "On the home page, click \"New collection\" to start from scratch or \"From template\" to start from a ready-made structure.",
+                    "Inside the collection, use \"New group\", \"New sub-group\" and \"New category\" to build the structure.",
+                    "Use the edit button (pencil) to rename, set minimum and maximum points, or reorder items.",
+                    "Deleting a category only unlinks its documents: they stay in your library."
+                ]
+            },
+            "scoring": {
+                "title": "Scoring",
+                "intro": "Each category has a rule that defines how much each linked document is worth.",
+                "items": [
+                    "Flat: a number of points per document.",
+                    "Hours: points for every N hours entered on the document.",
+                    "Capped: a flat or hours rule, with a cap on the category's total.",
+                    "Capped per document: a flat or hours rule, with a cap for each document.",
+                    "A document's \"Quantity\" field multiplies its points — use 2 when a single certificate covers two activities.",
+                    "Subgroups and groups can have minimum and maximum points. Anything above the maximum isn't counted and shows as \"Exceeded\"; below the minimum shows \"Incomplete\".",
+                    "A group can have a surplus bonus: a percentage of the points earned above the group's minimum."
+                ]
+            },
+            "documents": {
+                "title": "Documents and library",
+                "intro": "The library holds all your supporting documents. A document can be linked to one or more categories, in any collection.",
+                "items": [
+                    "In \"Documents\", click \"New document\", fill in the details, then use \"Attach\" to add the file.",
+                    "Use \"Link\" to associate the document with categories. The \"Unfiled\" tab shows documents without a category yet.",
+                    "Select several documents to assign tags or link categories all at once.",
+                    "Files placed directly in your documents folder are detected: the app lets you know and offers to import them.",
+                    "A document marked \"On another device\" has its file only on another computer. Use \"Locate file…\" to point to where it is on this one."
+                ]
+            },
+            "templates": {
+                "title": "Templates",
+                "intro": "A template is the ready-made structure of a collection: groups, subgroups, categories and scoring rules.",
+                "items": [
+                    "Official templates come from your institution's server and are updated automatically.",
+                    "Imported templates are .json files you received; use \"Import template\" to add them.",
+                    "When creating a collection from a template, you can add a ZIP of documents: the app matches the files to the expected documents and links them for you.",
+                    "To share the structure of one of your collections, use \"Export as template\" inside it."
+                ]
+            },
+            "exporting": {
+                "title": "Exporting",
+                "intro": "On the \"Export\" screen, pick a collection to see the report preview.",
+                "items": [
+                    "The report can be generated as PDF, Excel (.xlsx), CSV or JSON.",
+                    "\"Export documents (Stitched)\" creates a ZIP with one PDF per category, merging its documents.",
+                    "\"Export documents (Individual)\" creates a ZIP with each document as its own file, in folders by group, subgroup and category.",
+                    "The JSON file is what someone else uses to check your collection on the \"Reviews\" screen."
+                ]
+            },
+            "reviews": {
+                "title": "Reviews",
+                "intro": "Reviews let you check someone else's collection from the .json file they exported.",
+                "items": [
+                    "Click \"Import collection (.json)\". The copy is read-only and never mixes with your own collections.",
+                    "The app recalculates the scores. \"Scores verified\" means the numbers match the file's data — not that the documents are authentic.",
+                    "Differences between the sent and recalculated values are marked on each item. In that case, confirm with the sender before approving."
+                ]
+            },
+            "sync": {
+                "title": "Sync",
+                "intro": "With an account, your changes are sent to the server and reach your other devices.",
+                "items": [
+                    "The indicator in the sidebar shows whether everything is synced or how many changes are waiting.",
+                    "Without a connection, keep working as usual: changes are kept and sent when the server is back.",
+                    "Inside a collection, the \"Synced\" / \"Local only\" button controls whether it goes to the server. Local-only collections stay on this computer."
+                ]
+            },
+            "settings": {
+                "title": "Settings",
+                "intro": "\"Settings\" holds your profile and the app's preferences.",
+                "items": [
+                    "Profile: name, email, and the folder where your documents are stored. Changing the folder moves your current files to the new one.",
+                    "Preferences: theme, language and the server address.",
+                    "Switching to another institution's server signs you out. Your data stays on this computer and comes back when you return to the previous server."
+                ]
+            }
+        }
+    },
+    "support": {
+        "title": "Support",
+        "description": "Where to get help when something isn't working.",
+        "server": {
+            "title": "Your server",
+            "runBy": "This server is the responsibility of {{institution}}.",
+            "dependsOn": "Sign-in, email codes, sync and official templates depend on the server. Problems with any of these should be raised with the institution.",
+            "address": "Address",
+            "status": "Status",
+            "statuses": {
+                "online": "Connected",
+                "offline": "Not responding",
+                "mismatch": "Not the expected server",
+                "unconfigured": "Not configured",
+                "checking": "Checking…"
+            },
+            "contactEmail": "Email support",
+            "contactPage": "Open support page",
+            "noContact": "Contact {{institution}}'s IT department or support team.",
+            "noServer": "No server configured. The app works normally on this computer, but without sign-in, sync or official templates.",
+            "guest": "You're in guest mode, with no connection to your institution's server. To use sign-in, sync and official templates, log out and sign in with your email.",
+            "openSettings": "Set up server"
+        },
+        "checks": {
+            "title": "Before asking for help",
+            "items": [
+                "Server not responding: keep using the app as usual. Your changes are kept and synced when the connection is back.",
+                "Code didn't arrive: check your spam folder, wait a few minutes and request a new code.",
+                "\"Session expired\": click \"Sign in again\" in the sidebar. Your data isn't affected.",
+                "\"Different server\": check the server address in Settings → Preferences.",
+                "File not found: in the library, use \"Locate file…\" on the document."
+            ]
+        },
+        "whoToContact": {
+            "title": "Who to contact",
+            "institution": {
+                "title": "Your institution",
+                "items": [
+                    "You can't sign in or your email isn't accepted",
+                    "The sign-in code doesn't arrive",
+                    "Sync failures",
+                    "Official templates missing or out of date"
+                ]
+            },
+            "app": {
+                "title": "The app's developers",
+                "items": [
+                    "The app freezes or closes unexpectedly",
+                    "Scores calculated incorrectly",
+                    "Screens or buttons that don't work",
+                    "Wrong or untranslated text"
+                ]
+            }
+        },
+        "report": {
+            "title": "Report a problem with the app",
+            "intro": "Problems with the app itself are tracked on GitHub. When you open a report, include:",
+            "include": [
+                "What you were doing, step by step",
+                "What you expected to happen and what happened instead",
+                "A screenshot, if possible",
+                "The diagnostic info (button below)"
+            ],
+            "openIssues": "Open GitHub Issues",
+            "copyDiagnostics": "Copy diagnostic info",
+            "copied": "Copied",
+            "copyFailed": "Couldn't copy",
+            "privacy": "The diagnostic info includes the app version, your system and the server. Your email and session are never included."
+        }
+    }
+}

@@ -3,9 +3,44 @@ export interface ServerInfo {
     institutionName: string | null
     /** Empty = any email may sign in. */
     allowedEmailDomains: string[]
+    supportEmail: string | null
+    /** Always http(s) — see safeSupportUrl. */
+    supportUrl: string | null
 }
 
-export const EMPTY_SERVER_INFO: ServerInfo = { institutionName: null, allowedEmailDomains: [] }
+export const EMPTY_SERVER_INFO: ServerInfo = {
+    institutionName: null,
+    allowedEmailDomains: [],
+    supportEmail: null,
+    supportUrl: null,
+}
+
+/** The single place that lists ServerInfo's fields, so a new one can't be dropped on copy. */
+export function pickServerInfo(source: ServerInfo): ServerInfo {
+    return {
+        institutionName: source.institutionName,
+        allowedEmailDomains: source.allowedEmailDomains,
+        supportEmail: source.supportEmail,
+        supportUrl: source.supportUrl,
+    }
+}
+
+/** The app opens this link, so only http(s) is accepted — never file:, javascript: etc. */
+export function safeSupportUrl(value: unknown): string | null {
+    if (typeof value !== 'string' || !value.trim()) return null
+    try {
+        const url = new URL(value.trim())
+        return url.protocol === 'http:' || url.protocol === 'https:' ? url.href : null
+    } catch {
+        return null
+    }
+}
+
+export function safeSupportEmail(value: unknown): string | null {
+    if (typeof value !== 'string') return null
+    const email = value.trim()
+    return /^[^\s@<>()"',;:]+@[^\s@<>()"',;:]+\.[^\s@<>()"',;:]+$/.test(email) ? email : null
+}
 
 /** What a Docenti server answers on GET /health. */
 export interface ServerHealth extends ServerInfo {
@@ -110,5 +145,7 @@ export function parseServerHealth(body: unknown): ServerHealth | null {
         allowedEmailDomains: Array.isArray(b.allowedEmailDomains)
             ? b.allowedEmailDomains.filter((d): d is string => typeof d === 'string' && d.length > 0)
             : [],
+        supportEmail: safeSupportEmail(b.supportEmail),
+        supportUrl: safeSupportUrl(b.supportUrl),
     }
 }

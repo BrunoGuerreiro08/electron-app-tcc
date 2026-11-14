@@ -1,0 +1,169 @@
+{
+    "docs": {
+        "title": "Documentação",
+        "description": "Como usar o Docenti, do primeiro acesso à exportação do dossiê.",
+        "sections": {
+            "gettingStarted": {
+                "title": "Primeiros passos",
+                "intro": "O Docenti guarda seus dados neste computador e funciona sem internet. Com uma conta da instituição, você também sincroniza entre dispositivos e recebe os modelos oficiais.",
+                "items": [
+                    "Na tela de entrada, abra a aba \"Servidor\" e informe o endereço do servidor da sua instituição. Ao salvar, o app confere o servidor e volta para a aba \"Entrar\".",
+                    "Na aba \"Entrar\", digite seu e-mail e clique em \"Enviar código\". Depois, digite o código de 6 dígitos recebido por e-mail.",
+                    "No primeiro acesso, informe seu nome. Ele aparece no app e nos relatórios.",
+                    "Sem conta, use \"Continuar como Convidado\": tudo funciona neste computador, mas sem sincronização e sem modelos oficiais."
+                ]
+            },
+            "collections": {
+                "title": "Coleções e estrutura",
+                "intro": "Uma coleção é um dossiê, por exemplo \"Progressão 2026\". Ela é organizada em grupos, subgrupos e categorias.",
+                "items": [
+                    "Na página inicial, clique em \"Nova coleção\" para começar do zero ou em \"Usar modelo\" para partir de uma estrutura pronta.",
+                    "Dentro da coleção, use \"Novo grupo\", \"Novo subgrupo\" e \"Nova categoria\" para montar a estrutura.",
+                    "Use o botão de editar (lápis) para renomear, definir pontuação mínima e máxima ou reordenar os itens.",
+                    "Excluir uma categoria apenas desvincula os documentos: eles continuam na sua biblioteca."
+                ]
+            },
+            "scoring": {
+                "title": "Pontuação",
+                "intro": "Cada categoria tem uma regra que define quanto vale cada documento vinculado a ela.",
+                "items": [
+                    "Fixa: um número de pontos por documento.",
+                    "Horas: pontos a cada N horas informadas no documento.",
+                    "Limitada: uma regra fixa ou por horas, com um teto para o total da categoria.",
+                    "Limitada por documento: uma regra fixa ou por horas, com um teto para cada documento.",
+                    "O campo \"Quantidade\" do documento multiplica os pontos — use 2 quando um único comprovante cobre duas atividades.",
+                    "Subgrupos e grupos podem ter pontuação mínima e máxima. O que passar do máximo não é contado e aparece como \"Excedido\"; abaixo do mínimo aparece \"Incompleto\".",
+                    "Um grupo pode ter bônus excedente: um percentual dos pontos obtidos acima do mínimo do grupo."
+                ]
+            },
+            "documents": {
+                "title": "Documentos e biblioteca",
+                "intro": "A biblioteca guarda todos os seus comprovantes. Um documento pode ser vinculado a uma ou mais categorias, em qualquer coleção.",
+                "items": [
+                    "Em \"Documentos\", clique em \"Novo documento\", preencha os dados e depois use \"Anexar\" para incluir o arquivo.",
+                    "Use \"Vincular\" para associar o documento a categorias. A aba \"Não arquivados\" mostra os documentos ainda sem categoria.",
+                    "Selecione vários documentos para atribuir tags ou vincular categorias de uma só vez.",
+                    "Arquivos colocados diretamente na pasta de documentos são detectados: o app avisa e permite importá-los.",
+                    "Um documento marcado \"Em outro dispositivo\" tem o arquivo só em outro computador. Use \"Localizar arquivo…\" para indicar onde ele está neste."
+                ]
+            },
+            "templates": {
+                "title": "Modelos",
+                "intro": "Um modelo é a estrutura pronta de uma coleção: grupos, subgrupos, categorias e regras de pontuação.",
+                "items": [
+                    "Modelos oficiais vêm do servidor da sua instituição e são atualizados automaticamente.",
+                    "Modelos importados são arquivos .json que você recebeu; use \"Importar modelo\" para adicioná-los.",
+                    "Ao criar uma coleção a partir de um modelo, você pode adicionar um ZIP de documentos: o app compara os arquivos com os documentos esperados e já faz os vínculos.",
+                    "Para compartilhar a estrutura de uma coleção sua, use \"Exportar como modelo\" dentro dela."
+                ]
+            },
+            "exporting": {
+                "title": "Exportação",
+                "intro": "Na tela \"Exportar\", escolha a coleção para ver a pré-visualização do relatório.",
+                "items": [
+                    "O relatório pode ser gerado em PDF, Excel (.xlsx), CSV ou JSON.",
+                    "\"Exportar documentos (Unidos)\" gera um ZIP com um PDF por categoria, juntando os comprovantes.",
+                    "\"Exportar documentos (Individuais)\" gera um ZIP com cada comprovante separado, em pastas por grupo, subgrupo e categoria.",
+                    "O arquivo JSON é o que outra pessoa usa para conferir sua coleção na tela \"Revisões\"."
+                ]
+            },
+            "reviews": {
+                "title": "Revisões",
+                "intro": "Revisões servem para conferir a coleção de outra pessoa a partir do arquivo .json que ela exportou.",
+                "items": [
+                    "Clique em \"Importar coleção (.json)\". A cópia é somente leitura e não se mistura com as suas coleções.",
+                    "O app recalcula as pontuações. \"Pontuações conferidas\" indica que as contas batem com os dados do arquivo — não que os documentos sejam autênticos.",
+                    "Diferenças entre o valor enviado e o recalculado ficam marcadas em cada item. Nesse caso, confirme com quem enviou antes de aprovar."
+                ]
+            },
+            "sync": {
+                "title": "Sincronização",
+                "intro": "Com uma conta, suas alterações são enviadas ao servidor e chegam aos seus outros dispositivos.",
+                "items": [
+                    "O indicador no menu lateral mostra se tudo está sincronizado ou quantas alterações aguardam envio.",
+                    "Sem conexão, continue trabalhando normalmente: as alterações ficam guardadas e são enviadas quando o servidor voltar.",
+                    "Dentro de uma coleção, o botão \"Sincronizada\" / \"Apenas local\" define se ela vai para o servidor. Coleções apenas locais ficam só neste computador."
+                ]
+            },
+            "settings": {
+                "title": "Configurações",
+                "intro": "Em \"Configurações\" ficam seu perfil e as preferências do app.",
+                "items": [
+                    "Perfil: nome, e-mail e a pasta onde seus documentos são guardados. Ao trocar a pasta, os arquivos atuais são movidos para a nova.",
+                    "Preferências: tema, idioma e o endereço do servidor.",
+                    "Trocar para o servidor de outra instituição encerra a sessão. Seus dados continuam neste computador e voltam quando você retorna ao servidor anterior."
+                ]
+            }
+        }
+    },
+    "support": {
+        "title": "Suporte",
+        "description": "Onde buscar ajuda quando algo não funciona.",
+        "server": {
+            "title": "Seu servidor",
+            "runBy": "Este servidor é de responsabilidade de {{institution}}.",
+            "dependsOn": "Login, envio do código por e-mail, sincronização e modelos oficiais dependem do servidor. Problemas nesses pontos devem ser tratados com a instituição.",
+            "address": "Endereço",
+            "status": "Situação",
+            "statuses": {
+                "online": "Conectado",
+                "offline": "Sem resposta",
+                "mismatch": "Servidor diferente do esperado",
+                "unconfigured": "Não configurado",
+                "checking": "Verificando…"
+            },
+            "contactEmail": "Enviar e-mail ao suporte",
+            "contactPage": "Abrir página de suporte",
+            "noContact": "Procure o setor de TI ou o suporte de {{institution}}.",
+            "noServer": "Nenhum servidor configurado. O app funciona normalmente neste computador, mas sem login, sincronização e modelos oficiais.",
+            "guest": "Você está no modo convidado, sem conexão com o servidor da instituição. Para usar login, sincronização e modelos oficiais, saia e entre com seu e-mail.",
+            "openSettings": "Configurar servidor"
+        },
+        "checks": {
+            "title": "Antes de pedir ajuda",
+            "items": [
+                "Servidor sem resposta: continue usando o app normalmente. Suas alterações ficam guardadas e são sincronizadas quando a conexão voltar.",
+                "Código não chegou: confira a caixa de spam, aguarde alguns minutos e peça um novo código.",
+                "\"Sessão expirada\": clique em \"Entrar novamente\" no menu lateral. Seus dados não são afetados.",
+                "\"Servidor diferente\": confira o endereço do servidor em Configurações → Preferências.",
+                "Arquivo não encontrado: na biblioteca, use \"Localizar arquivo…\" no documento."
+            ]
+        },
+        "whoToContact": {
+            "title": "A quem recorrer",
+            "institution": {
+                "title": "Sua instituição",
+                "items": [
+                    "Não consegue entrar ou o e-mail não é aceito",
+                    "O código de acesso não chega",
+                    "Falhas de sincronização",
+                    "Modelos oficiais ausentes ou desatualizados"
+                ]
+            },
+            "app": {
+                "title": "Desenvolvedores do app",
+                "items": [
+                    "O app trava ou fecha sozinho",
+                    "Pontuação calculada de forma errada",
+                    "Telas ou botões que não funcionam",
+                    "Textos errados ou sem tradução"
+                ]
+            }
+        },
+        "report": {
+            "title": "Relatar um problema no app",
+            "intro": "Problemas no próprio app são acompanhados no GitHub. Ao abrir um relato, inclua:",
+            "include": [
+                "O que você estava fazendo, passo a passo",
+                "O que esperava que acontecesse e o que aconteceu",
+                "Uma captura de tela, se possível",
+                "As informações de diagnóstico (botão abaixo)"
+            ],
+            "openIssues": "Abrir GitHub Issues",
+            "copyDiagnostics": "Copiar informações de diagnóstico",
+            "copied": "Copiado",
+            "copyFailed": "Não foi possível copiar",
+            "privacy": "O diagnóstico inclui a versão do app, o sistema e o servidor. Seu e-mail e sua sessão nunca são incluídos."
+        }
+    }
+}

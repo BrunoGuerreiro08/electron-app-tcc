@@ -3,7 +3,8 @@ import { serve } from '@hono/node-server'
 import { Hono } from 'hono'
 import { cors } from 'hono/cors'
 import { getServerId, initSchema } from './db.js'
-import { ALLOWED_EMAIL_DOMAINS, INSTITUTION_NAME } from './emailPolicy.js'
+import { ALLOWED_EMAIL_DOMAINS } from './emailPolicy.js'
+import { INSTITUTION_NAME, SUPPORT_EMAIL, SUPPORT_URL, institutionWarnings } from './institution.js'
 import { authRoutes } from './routes/auth.js'
 import { templateRoutes } from './routes/templates.js'
 import { syncRoutes } from './routes/sync.js'
@@ -25,6 +26,8 @@ app.get('/health', async (c) =>
         apiVersion: 1,
         institutionName: INSTITUTION_NAME,
         allowedEmailDomains: ALLOWED_EMAIL_DOMAINS,
+        supportEmail: SUPPORT_EMAIL,
+        supportUrl: SUPPORT_URL,
     })
 )
 app.route('/auth', authRoutes)
@@ -42,6 +45,7 @@ function startServer(retryCount = 0) {
             if (ALLOWED_EMAIL_DOMAINS.length === 0) {
                 console.warn('ALLOWED_EMAIL_DOMAINS not set — any email can sign in.');
             }
+            for (const warning of institutionWarnings()) console.warn(warning);
         })
         .catch((err) => {
             console.error(`Failed to initialize schema (Attempt ${retryCount + 1}/${MAX_RETRIES}):`, err.message);

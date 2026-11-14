@@ -1,7 +1,13 @@
 import { ipcMain } from 'electron'
 import { getServerConfig, loadSession, saveSession, setServerConfig } from '../store'
 import { probeServer } from '../server'
-import { EMPTY_SERVER_INFO, normalizeServerUrl, type ServerConfig, type ServerSetResult } from '../../shared/serverUrl'
+import {
+    EMPTY_SERVER_INFO,
+    normalizeServerUrl,
+    pickServerInfo,
+    type ServerConfig,
+    type ServerSetResult,
+} from '../../shared/serverUrl'
 import { syncOfficialTemplates } from '../templates'
 import { resetSyncStatus, syncNow } from '../sync/engine'
 
@@ -32,12 +38,7 @@ export function registerServerHandlers() {
             return { ok: false, reason: 'requires-logout' }
         }
 
-        const config: ServerConfig = {
-            url,
-            serverId: probe.serverId,
-            institutionName: probe.institutionName,
-            allowedEmailDomains: probe.allowedEmailDomains,
-        }
+        const config: ServerConfig = { url, serverId: probe.serverId, ...pickServerInfo(probe) }
         setServerConfig(config)
         // Session from before servers had identities: there was only ever one server.
         if (account && !account.serverId) saveSession({ ...account, serverId: probe.serverId })

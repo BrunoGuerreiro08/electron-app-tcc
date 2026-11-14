@@ -89,3 +89,27 @@ describe('parseServerHealth', () => {
         expect(parseServerHealth({ ok: true })).toBeNull()
     })
 })
+
+describe('support contact from /health', () => {
+    const base = { ok: true, app: 'docenti', serverId: '3f2a9c1e-8b7d-4e6f-a5c4-1d2e3f4a5b6c', apiVersion: 1 }
+
+    it('keeps a valid support email and http(s) page', () => {
+        const health = parseServerHealth({ ...base, supportEmail: ' ti@utfpr.edu.br ', supportUrl: 'https://utfpr.edu.br/ti' })
+        expect(health).toMatchObject({ supportEmail: 'ti@utfpr.edu.br', supportUrl: 'https://utfpr.edu.br/ti' })
+    })
+
+    it.each(['javascript:alert(1)', 'file:///etc/passwd', 'data:text/html,hi', 'not a url', 42])(
+        'drops the support page %j',
+        (supportUrl) => {
+            expect(parseServerHealth({ ...base, supportUrl })?.supportUrl).toBeNull()
+        }
+    )
+
+    it.each(['not-an-email', 'a@b', 'x@y.z<script>', ''])('drops the support email %j', (supportEmail) => {
+        expect(parseServerHealth({ ...base, supportEmail })?.supportEmail).toBeNull()
+    })
+
+    it('defaults both to null for servers that do not send them', () => {
+        expect(parseServerHealth(base)).toMatchObject({ supportEmail: null, supportUrl: null })
+    })
+})

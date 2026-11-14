@@ -22,6 +22,7 @@ import { startSyncEngine, syncNow } from './sync/engine'
 import { registerDossierHandlers } from './ipc/dossier'
 import { registerExportFileHandlers } from './ipc/exportFiles'
 import { registerServerHandlers } from './ipc/server'
+import { registerAppHandlers } from './ipc/app'
 
 const __filename = fileURLToPath(import.meta.url)
 const __dirname = path.dirname(__filename)
@@ -87,6 +88,7 @@ app.whenReady().then(() => {
     registerExportFileHandlers()
     registerSyncHandlers()
     registerServerHandlers()
+    registerAppHandlers()
 
     // If a user was already logged in on this device, reopen their db/store
     // before the renderer loads so collections:list etc. work immediately

@@ -8,6 +8,8 @@ import { ReviewsScreen } from '@/components/reviews/reviewScreen'
 import { ReviewDetailScreen } from '@/components/reviews/reviewDetailsScreen'
 import { ProfileScreen } from '@/components/settings/profileScreen'
 import { PreferencesScreen } from '@/components/settings/preferencesScreen'
+import { DocumentationScreen } from '@/components/help/documentationScreen'
+import { SupportScreen } from '@/components/help/supportScreen'
 
 function NotFound() {
     const { t } = useTranslation()
@@ -31,6 +33,10 @@ export function AppRoutes() {
             <Route path="/settings/preferences" element={<PreferencesScreen />} />
             {/* Old name of the preferences tab */}
             <Route path="/settings/security" element={<Navigate to="/settings/preferences" replace />} />
+
+            <Route path="/help" element={<Navigate to="/help/docs" replace />} />
+            <Route path="/help/docs" element={<DocumentationScreen />} />
+            <Route path="/help/support" element={<SupportScreen />} />
 
             <Route path="/404" element={<NotFound />} />
 

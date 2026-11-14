@@ -167,4 +167,8 @@ contextBridge.exposeInMainWorld('api', {
         probe: (url: string) => ipcRenderer.invoke('server:probe', url),
         set: (url: string) => ipcRenderer.invoke('server:set', url),
     },
+    app: {
+        info: () => ipcRenderer.invoke('app:info'),
+        openExternal: (url: string) => ipcRenderer.invoke('app:openExternal', url),
+    },
 })

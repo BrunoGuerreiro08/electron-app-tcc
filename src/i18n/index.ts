@@ -12,6 +12,7 @@ import enDocuments from './locales/en/documents.json'
 import enReports from './locales/en/reports.json'
 import enReviews from './locales/en/reviews.json'
 import enSettings from './locales/en/settings.json'
+import enHelp from './locales/en/help.json'
 
 // Portuguese (Brazil)
 import ptAuth from './locales/pt-BR/auth.json'
@@ -23,6 +24,7 @@ import ptDocuments from './locales/pt-BR/documents.json'
 import ptReports from './locales/pt-BR/reports.json'
 import ptReviews from './locales/pt-BR/reviews.json'
 import ptSettings from './locales/pt-BR/settings.json'
+import ptHelp from './locales/pt-BR/help.json'
 
 export const SUPPORTED_LANGUAGES = ['en', 'pt-BR'] as const
 export type SupportedLanguage = (typeof SUPPORTED_LANGUAGES)[number]
@@ -38,6 +40,7 @@ export const resources = {
         reports: enReports,
         reviews: enReviews,
         settings: enSettings,
+        help: enHelp,
     },
     'pt-BR': {
         auth: ptAuth,
@@ -49,6 +52,7 @@ export const resources = {
         reports: ptReports,
         reviews: ptReviews,
         settings: ptSettings,
+        help: ptHelp,
     },
 } as const
 
@@ -56,7 +60,7 @@ i18n.use(initReactI18next).init({
     resources,
     lng: 'pt-BR',
     fallbackLng: 'pt-BR',
-    ns: ['auth', 'common', 'collections', 'categories', 'home', 'certificates', 'reports', 'settings'],
+    ns: ['auth', 'common', 'collections', 'categories', 'home', 'documents', 'reports', 'reviews', 'settings', 'help'],
     defaultNS: 'common',
     fallbackNS: 'common',
     interpolation: { escapeValue: false }, // React already escapes

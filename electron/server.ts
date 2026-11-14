@@ -1,5 +1,5 @@
 import { getServerConfig, type SessionRecord } from './store'
-import { normalizeServerUrl, parseServerHealth, type ServerProbeResult } from '../shared/serverUrl'
+import { normalizeServerUrl, parseServerHealth, pickServerInfo, type ServerProbeResult } from '../shared/serverUrl'
 
 const PROBE_TIMEOUT_MS = 5000
 
@@ -27,13 +27,7 @@ export async function probeServer(input: string): Promise<ServerProbeResult> {
     }
     const health = res.ok ? parseServerHealth(await res.json().catch(() => null)) : null
     if (!health) return { ok: false, reason: 'not-docenti' }
-    return {
-        ok: true,
-        url,
-        serverId: health.serverId,
-        institutionName: health.institutionName,
-        allowedEmailDomains: health.allowedEmailDomains,
-    }
+    return { ok: true, url, serverId: health.serverId, ...pickServerInfo(health) }
 }
 
 /** Base URL for unauthenticated requests (e.g. official templates). */

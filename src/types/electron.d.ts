@@ -169,6 +169,10 @@ declare global {
                 probe(url: string): Promise<import('../../shared/serverUrl').ServerProbeResult>
                 set(url: string): Promise<import('../../shared/serverUrl').ServerSetResult>
             }
+            app: {
+                info(): Promise<import('./app').AppInfo>
+                openExternal(url: string): Promise<void>
+            }
             dossier: {
                 chooseDestination(args: {
                     outputKind: DossierOutputKind

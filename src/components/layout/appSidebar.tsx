@@ -343,7 +343,7 @@ export function AppSidebar() {
                                 <SidebarMenuItem>
                                     <CollapsibleTrigger asChild>
                                         <SidebarMenuButton
-                                            tooltip="Ajuda"
+                                            tooltip={t('nav.help')}
                                             isActive={location.pathname.startsWith("/help")}
                                         >
                                             <BookOpen className="h-4 w-4 shrink-0" />

@@ -16,6 +16,9 @@ const STATIC_LABEL_KEYS: Record<string, string> = {
     reviews: 'nav.review',
     export: 'nav.export',
     report: 'nav.export',
+    help: 'nav.help',
+    docs: 'nav.documentation',
+    support: 'nav.support',
 }
 
 const SKIP_AS_CRUMB = new Set(['collections'])

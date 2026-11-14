@@ -2,7 +2,7 @@ import { useMemo } from 'react'
 import { create } from 'zustand'
 import { checkServerHealth } from '@/repository/healthRepository'
 import { useServerConfigStore } from '@/store/serverConfigStore'
-import { EMPTY_SERVER_INFO, type ServerHealth, type ServerInfo } from '../../shared/serverUrl'
+import { EMPTY_SERVER_INFO, pickServerInfo, type ServerHealth, type ServerInfo } from '../../shared/serverUrl'
 
 /**
  * - unconfigured: no server URL saved yet
@@ -57,17 +57,15 @@ export const useServerStatusStore = create<ServerStatusState>((set, get) => ({
 }))
 
 /**
- * Institution name and allowed email domains: live from the server when it's
- * online (so policy changes show up), else what was saved with the URL.
+ * Institution name, allowed email domains and support contact: live from the
+ * server when it's online (so changes show up), else what was saved with the URL.
  */
 export function useServerInfo(): ServerInfo {
     const config = useServerConfigStore((s) => s.config)
     const status = useServerStatusStore((s) => s.status)
     const health = useServerStatusStore((s) => s.health)
     const source = status === 'online' && health ? health : config
-    const institutionName = source?.institutionName ?? EMPTY_SERVER_INFO.institutionName
-    const allowedEmailDomains = source?.allowedEmailDomains ?? EMPTY_SERVER_INFO.allowedEmailDomains
-    return useMemo(() => ({ institutionName, allowedEmailDomains }), [institutionName, allowedEmailDomains])
+    return useMemo(() => pickServerInfo({ ...EMPTY_SERVER_INFO, ...source }), [source])
 }
 
 // A new URL takes effect right away instead of at the next poll.
