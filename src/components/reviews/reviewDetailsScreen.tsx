@@ -5,7 +5,7 @@ import { ArrowLeft, ChevronRight, Eye, Paperclip, AlertCircle } from 'lucide-rea
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { reviewRepository } from '@/repository/reviewRepository'
-import { completionLabel, describeRule } from '@/services/reportEngine/exporters/shared'
+import { describeRule } from '@/services/reportEngine/exporters/shared'
 import { keyOf, verifySnapshotScores, type ScoreDiscrepancy } from '@/services/collectionImport/verifyScores'
 import { verifyTemplateOrigin } from '@/services/collectionImport/verifyTemplateOrigin'
 import { MismatchTag, TemplateOriginNotice, VerificationNotice } from './verificationNotice'
@@ -176,7 +176,7 @@ export function ReviewView({ review, onBack }: { review: StoredReview; onBack?: 
                                         </Badge>
                                     )}
                                     {group.score.completion && (
-                                        <Badge variant="secondary">{completionLabel(group.score.completion)}</Badge>
+                                        <Badge variant="secondary">{t(`collections:completion.${group.score.completion}`)}</Badge>
                                     )}
                                     <MismatchTag items={flagged.get(keyOf.group(gi))} />
                                     <span className="font-bold text-sm">{pts(group.score.total)} pts</span>
@@ -200,7 +200,7 @@ export function ReviewView({ review, onBack }: { review: StoredReview; onBack?: 
                                                     </span>
                                                 )}
                                                 {sub.score.completion && (
-                                                    <Badge variant="secondary">{completionLabel(sub.score.completion)}</Badge>
+                                                    <Badge variant="secondary">{t(`collections:completion.${sub.score.completion}`)}</Badge>
                                                 )}
                                                 {sub.score.raw_total !== sub.score.total && (
                                                     <span className="text-xs text-muted-foreground">

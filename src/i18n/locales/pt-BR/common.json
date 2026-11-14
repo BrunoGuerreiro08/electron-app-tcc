@@ -20,7 +20,9 @@
     "exportDocsIndividual": "Exportar documentos (Individuais)",
     "exportXlsx": "Excel (.xlsx)",
     "exportCsv": "CSV",
-    "exportJson": "JSON"
+    "exportJson": "JSON",
+    "exportPdf": "PDF",
+    "generatingDossier": "Gerando…"
   },
   "nav": {
     "menu": "Menu",
@@ -122,7 +124,8 @@
     "deleting": "Excluindo…",
     "empty": "Nada aqui ainda",
     "error": "Ocorreu um erro",
-    "loadingCollectionData": "Carregando dados da coleção…"
+    "loadingCollectionData": "Carregando dados da coleção…",
+    "notFound": "Página não encontrada."
   },
   "confirmDelete": {
     "title": "Tem certeza?",

@@ -63,7 +63,23 @@
         "notJson": "O arquivo não é um JSON válido.",
         "saveFailed": "Não foi possível salvar a revisão. Tente novamente."
     },
+    "template": {
+        "unmodified": "A estrutura corresponde ao modelo \"{{name}}\" sem alterações.",
+        "modified": "Criada a partir do modelo \"{{name}}\", com alterações na estrutura.",
+        "disputed": "O rótulo do arquivo e a estrutura recalculada divergem sobre a correspondência com o modelo \"{{name}}\". Confirme com quem enviou."
+    },
     "verify": {
+        "fields": {
+            "points": "pontos",
+            "raw_total": "total bruto",
+            "total": "total contabilizado",
+            "capped": "teto atingido",
+            "completion": "situação",
+            "bonus": "excedente (bônus)",
+            "total_score": "total geral"
+        },
+        "yes": "sim",
+        "no": "não",
         "ok": {
             "title": "Pontuações conferidas",
             "body": "O recálculo com o motor de pontuação deste aplicativo coincide com os valores enviados ({{n}} valores conferidos). Isso confirma que as contas estão consistentes com os dados do arquivo, não que os documentos sejam autênticos."

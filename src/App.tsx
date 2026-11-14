@@ -1,5 +1,6 @@
 import './index.css'
 import { useEffect } from 'react'
+import { useTranslation } from 'react-i18next'
 import { useAuthStore } from '@/store/authStore'
 import { LoginScreen } from '@/components/auth/loginScreen'
 import { DashboardLayout } from './components/layout/layout'
@@ -10,6 +11,7 @@ import { HashRouter } from 'react-router-dom'
 import { AppRoutes } from './routes'
 
 function App() {
+  const { t } = useTranslation()
   const { session, initializing, init, handleServerStatus } = useAuthStore()
   const startPolling = useServerStatusStore((s) => s.startPolling)
   const initSync = useSyncStore((s) => s.init)
@@ -50,7 +52,7 @@ function App() {
 
   if (initializing || !serverLoaded) {
     /* text-muted-foreground */
-    return <div className="flex min-h-screen items-center justify-center text-sm ">Loading…</div>
+    return <div className="flex min-h-screen items-center justify-center text-sm ">{t('states.loading')}</div>
   }
 
   if (!session) {

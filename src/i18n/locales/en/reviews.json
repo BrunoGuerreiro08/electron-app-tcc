@@ -63,7 +63,23 @@
         "notJson": "The file is not a valid JSON.",
         "saveFailed": "Could not save the review. Please try again."
     },
+    "template": {
+        "unmodified": "Structure matches the template \"{{name}}\" unchanged.",
+        "modified": "Created from the template \"{{name}}\", with changes to its structure.",
+        "disputed": "The file's label and the recalculated structure disagree about whether it still matches the template \"{{name}}\". Confirm with the sender."
+    },
     "verify": {
+        "fields": {
+            "points": "points",
+            "raw_total": "raw total",
+            "total": "counted total",
+            "capped": "cap reached",
+            "completion": "status",
+            "bonus": "surplus (bonus)",
+            "total_score": "overall total"
+        },
+        "yes": "yes",
+        "no": "no",
         "ok": {
             "title": "Scores verified",
             "body": "Recalculation with this app's scoring engine matches the sent values ({{n}} values checked). This confirms calculations are consistent with file data, not that documents are authentic."

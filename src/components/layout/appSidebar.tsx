@@ -425,11 +425,11 @@ export function AppSidebar() {
                                 <AlertDialogHeader>
                                     <AlertDialogTitle>{t('sidebar.logoutConfirm.title')}</AlertDialogTitle>
                                     <AlertDialogDescription>
-                                        {t('sidebar.logoutConfirm.title')}
+                                        {t('sidebar.logoutConfirm.description')}
                                     </AlertDialogDescription>
                                 </AlertDialogHeader>
                                 <AlertDialogFooter>
-                                    <AlertDialogCancel>Cancel</AlertDialogCancel>
+                                    <AlertDialogCancel>{t('actions.cancel')}</AlertDialogCancel>
                                     <AlertDialogAction
                                         onClick={logout}
                                         className="bg-destructive text-destructive-foreground hover:bg-destructive/90"

@@ -83,7 +83,7 @@ export function BulkTagsDialog({ selectedIds, open, onOpenChange, onChanged }: B
                             </label>
                         ))}
                         {allTags.length === 0 && (
-                            <p className="text-sm text-muted-foreground text-center py-4">No tags available.</p>
+                            <p className="text-sm text-muted-foreground text-center py-4">{t('tags.empty')}</p>
                         )}
                     </div>
 

@@ -1,11 +1,21 @@
 import { useTranslation } from 'react-i18next'
 import { AlertCircle, CheckCircle } from 'lucide-react'
-import {
-    FIELD_LABELS,
-    formatValue,
-    type ScoreDiscrepancy,
-    type VerificationResult,
-} from '@/services/collectionImport/verifyScores'
+import { formatValue, type ScoreDiscrepancy, type VerificationResult } from '@/services/collectionImport/verifyScores'
+
+const COMPLETION_STATES = ['incomplete', 'complete', 'exceeded']
+
+/** Field names and yes/no/completion values in the UI language; numbers keep formatValue. */
+function useDiscrepancyText() {
+    const { t } = useTranslation('reviews')
+    return {
+        field: (field: ScoreDiscrepancy['field']) => t(`verify.fields.${field}`),
+        value: (v: ScoreDiscrepancy['sent']) => {
+            if (typeof v === 'boolean') return t(v ? 'verify.yes' : 'verify.no')
+            if (typeof v === 'string' && COMPLETION_STATES.includes(v)) return t(`collections:completion.${v}`)
+            return formatValue(v)
+        },
+    }
+}
 
 /**
  * Outcome of re-running this app's scoring engine over a received snapshot.
@@ -21,6 +31,7 @@ export function VerificationNotice({
     limit?: number
 }) {
     const { t } = useTranslation('reviews')
+    const text = useDiscrepancyText()
 
     if (verification.status === 'verified') {
         return (
@@ -29,11 +40,7 @@ export function VerificationNotice({
                 <div>
                     <p className="font-medium">{t('verify.ok.title')}</p>
                     <p className="text-muted-foreground">
-                        {t('verify.ok.body', {
-                            defaultValue:
-                                'O recálculo com o motor de pontuação deste aplicativo coincide com os valores enviados ({{n}} valores conferidos). Isso confirma que as contas estão consistentes com os dados do arquivo, não que os documentos sejam autênticos.',
-                            n: verification.checked,
-                        })}
+                        {t('verify.ok.body', { n: verification.checked })}
                     </p>
                 </div>
             </div>
@@ -60,10 +67,7 @@ export function VerificationNotice({
                 <AlertCircle className="h-4 w-4 mt-0.5 text-amber-600 shrink-0" />
                 <div>
                     <p className="font-medium">
-                        {t('verify.mismatch.title', {
-                            defaultValue: '{{n}} diferença(s) entre os valores enviados e o recálculo',
-                            n: discrepancies.length,
-                        })}
+                        {t('verify.mismatch.title', { n: discrepancies.length })}
                     </p>
                     <p className="text-muted-foreground">
                         {t('verify.mismatch.body')}
@@ -73,18 +77,15 @@ export function VerificationNotice({
             <ul className="list-disc pl-9 space-y-0.5 text-xs">
                 {shown.map((d, i) => (
                     <li key={i}>
-                        <span className="text-foreground">{d.label}</span> — {FIELD_LABELS[d.field]}:{' '}
-                        {t('verify.sent')} {formatValue(d.sent)}, {t('verify.recomputed')}{' '}
-                        {formatValue(d.recomputed)}
+                        <span className="text-foreground">{d.label}</span> — {text.field(d.field)}:{' '}
+                        {t('verify.sent')} {text.value(d.sent)}, {t('verify.recomputed')}{' '}
+                        {text.value(d.recomputed)}
                     </li>
                 ))}
             </ul>
             {discrepancies.length > shown.length && (
                 <p className="pl-9 text-xs text-muted-foreground">
-                    {t('verify.more', {
-                        defaultValue: 'e mais {{n}} — todas ficam marcadas na revisão.',
-                        n: discrepancies.length - shown.length,
-                    })}
+                    {t('verify.more', { n: discrepancies.length - shown.length })}
                 </p>
             )}
         </div>
@@ -93,15 +94,22 @@ export function VerificationNotice({
 
 /** Small inline marker placed next to a number that the recalculation disagrees with. */
 export function MismatchTag({ items }: { items?: ScoreDiscrepancy[] }) {
+    const { t } = useTranslation('reviews')
+    const text = useDiscrepancyText()
     if (!items || items.length === 0) return null
     return (
         <span
             className="text-xs font-medium text-amber-600"
-            title={items.map((d) => `${FIELD_LABELS[d.field]}: enviado ${formatValue(d.sent)}, recalculado ${formatValue(d.recomputed)}`).join('\n')}
+            title={items
+                .map(
+                    (d) =>
+                        `${text.field(d.field)}: ${t('verify.sent')} ${text.value(d.sent)}, ${t('verify.recomputed')} ${text.value(d.recomputed)}`
+                )
+                .join('\n')}
         >
             {items.map((d, i) => (
                 <span key={i} className="mr-1">
-                    ≠ {FIELD_LABELS[d.field]} {formatValue(d.recomputed)}
+                    ≠ {text.field(d.field)} {text.value(d.recomputed)}
                 </span>
             ))}
         </span>

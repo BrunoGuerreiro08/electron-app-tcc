@@ -1,4 +1,5 @@
 import { Routes, Route, Navigate } from 'react-router-dom'
+import { useTranslation } from 'react-i18next'
 import { HomeScreen } from '@/components/home/homeScreen'
 import { CollectionDetailScreen } from '@/components/collections/collectionDetailScreen'
 import { DocumentLibraryScreen } from '@/components/documents/documentLibraryScreen'
@@ -8,12 +9,9 @@ import { ReviewDetailScreen } from '@/components/reviews/reviewDetailsScreen'
 import { ProfileScreen } from '@/components/settings/profileScreen'
 import { PreferencesScreen } from '@/components/settings/preferencesScreen'
 
-function ComingSoon({ label }: { label: string }) {
-    return (
-        <div className="p-8 text-sm text-muted-foreground">
-            {label} — coming soon.
-        </div>
-    )
+function NotFound() {
+    const { t } = useTranslation()
+    return <div className="p-8 text-sm text-muted-foreground">{t('states.notFound')}</div>
 }
 
 export function AppRoutes() {
@@ -34,7 +32,7 @@ export function AppRoutes() {
             {/* Old name of the preferences tab */}
             <Route path="/settings/security" element={<Navigate to="/settings/preferences" replace />} />
 
-            <Route path="/404" element={<ComingSoon label="Página Não Encontrada (404)" />} />
+            <Route path="/404" element={<NotFound />} />
 
             <Route path="*" element={<Navigate to="/404" replace />} />
         </Routes>
