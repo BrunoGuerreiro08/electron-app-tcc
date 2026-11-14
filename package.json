@@ -1,9 +1,12 @@
 {
   "name": "Docenti",
   "private": true,
-  "version": "0.0.0",
+  "version": "1.0.0",
   "description": "Desktop app for assembling and exporting teaching dossiers",
-  "author": "Bruno Guerreiro - UTFPR",
+  "author": {
+    "name": "Bruno Guerreiro - UTFPR",
+    "email": "brunoguerreiro2012@gmail.com"
+  },
   "type": "module",
   "main": "dist-electron/main.js",
   "build": {
